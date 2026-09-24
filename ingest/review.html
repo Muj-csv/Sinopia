@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Sinopia corpus review</title>
+<style>
+  body { font-family: system-ui, sans-serif; margin: 1.5rem; background: #111; color: #eee; }
+  h1 { font-size: 1.1rem; }
+  p.hint { color: #aaa; font-size: 0.85rem; max-width: 60em; }
+  #toolbar { position: sticky; top: 0; background: #111; padding: 0.5rem 0; display: flex; gap: 1rem; align-items: center; border-bottom: 1px solid #333; }
+  #toolbar button { padding: 0.4rem 0.8rem; }
+  #count { color: #aaa; font-size: 0.85rem; }
+  #grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 0.75rem; margin-top: 1rem; }
+  .card { border: 1px solid #333; border-radius: 6px; padding: 0.5rem; background: #1a1a1a; }
+  .card.excluded { opacity: 0.35; border-color: #c33; }
+  .card img { width: 100%; height: 140px; object-fit: cover; border-radius: 4px; background: #222; display: block; }
+  .card .meta { font-size: 0.72rem; color: #bbb; margin-top: 0.3rem; word-break: break-word; }
+  .card label { display: flex; gap: 0.4rem; align-items: center; margin-top: 0.3rem; font-size: 0.8rem; }
+  textarea { width: 100%; height: 100px; margin-top: 0.5rem; font-family: monospace; font-size: 0.8rem; }
+</style>
+</head>
+<body>
+<h1>Sinopia corpus review</h1>
+<p class="hint">
+  Phase 2 task 3: review the ingested corpus for nudity / inappropriate content before the demo (ARCHITECTURE.md §8, PRD.md risk table). Uncheck nothing to keep; check "exclude" on anything that shouldn't ship. This page can't write files directly (static, no backend) &mdash; use "Copy exclude list" and paste the result into <code>ingest/exclude.txt</code>, then re-run <code>ingest.py</code> to drop those ids.
+  <br>Serve this directory locally to avoid file:// CORS issues, e.g. from <code>ingest/</code>: <code>python -m http.server 8000</code>, then open <code>http://localhost:8000/review.html</code>.
+</p>
+<div id="toolbar">
+  <button id="copy-btn">Copy exclude list</button>
+  <span id="count"></span>
+</div>
+<textarea id="output" readonly placeholder="Excluded ids will appear here after you click Copy exclude list."></textarea>
+<div id="grid">Loading out/index.v1.json&hellip;</div>
+
+<script>
+const INDEX_PATH = './out/index.v1.json';
+const EXCLUDE_PATH = './exclude.txt';
+const excluded = new Set();
+
+async function loadExisting() {
+  try {
+    const res = await fetch(EXCLUDE_PATH);
+    if (!res.ok) return;
+    const text = await res.text();
+    for (const line of text.split('\n')) {
+      const id = line.split('#')[0].trim();
+      if (id) excluded.add(id);
+    }
+  } catch {
+    // exclude.txt doesn't exist yet; fine.
+  }
+}
+
+function updateCount() {
+  document.getElementById('count').textContent = `${excluded.size} marked for exclusion`;
+}
+
+function render(entries) {
+  const grid = document.getElementById('grid');
+  grid.innerHTML = '';
+  for (const e of entries) {
+    const card = document.createElement('div');
+    card.className = 'card' + (excluded.has(e.id) ? ' excluded' : '');
+
+    const img = document.createElement('img');
+    img.src = e.thumb;
+    img.loading = 'lazy';
+    img.alt = e.title || e.id;
+    card.appendChild(img);
+
+    const meta = document.createElement('div');
+    meta.className = 'meta';
+    meta.innerHTML = `<strong>${escapeHtml(e.title || '(untitled)')}</strong><br>
+      ${escapeHtml(e.creator)} &middot; ${escapeHtml(e.license)}<br>
+      <a href="${e.landing}" target="_blank" rel="noopener" style="color:#8ab">source</a> &middot; id ${e.id.slice(0, 8)}&hellip;`;
+    card.appendChild(meta);
+
+    const label = document.createElement('label');
+    const checkbox = document.createElement('input');
+    checkbox.type = 'checkbox';
+    checkbox.checked = excluded.has(e.id);
+    checkbox.addEventListener('change', () => {
+      if (checkbox.checked) excluded.add(e.id); else excluded.delete(e.id);
+      card.classList.toggle('excluded', checkbox.checked);
+      updateCount();
+    });
+    label.appendChild(checkbox);
+    label.appendChild(document.createTextNode('exclude'));
+    card.appendChild(label);
+
+    grid.appendChild(card);
+  }
+  updateCount();
+}
+
+function escapeHtml(s) {
+  return String(s ?? '').replace(/[&<>"']/g, (c) => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
+  }[c]));
+}
+
+document.getElementById('copy-btn').addEventListener('click', async () => {
+  const lines = [...excluded].sort().join('\n');
+  const output = document.getElementById('output');
+  output.value = lines;
+  try {
+    await navigator.clipboard.writeText(lines);
+    output.placeholder = 'Copied to clipboard.';
+  } catch {
+    output.select();
+  }
+});
+
+(async () => {
+  await loadExisting();
+  const res = await fetch(INDEX_PATH);
+  const entries = await res.json();
+  render(entries);
+})();
+</script>
+</body>
+</html>

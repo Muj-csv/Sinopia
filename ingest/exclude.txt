@@ -1,0 +1,8 @@
+# Openverse ids to drop from the corpus, one per line. # starts a comment.
+# Populate this from ingest/review.html (Phase 2 task 3) after a human
+# reviews the full corpus for nudity / inappropriate content
+# (ARCHITECTURE.md §8, PRD.md risk table), then re-run ingest.py.
+#
+# Empty: no full-corpus review has happened yet (see spike/RESULTS.md-style
+# status note in the Phase 2 report - this repo only has a small proof-of-
+# pipeline sample so far, not the real >=2000-entry corpus).

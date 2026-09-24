@@ -4,8 +4,10 @@ __pycache__/
 .venv/
 *.egg-info/
 
-# Ingest / spike outputs (regeneratable; index.v1.json is versioned deliberately)
+# Ingest / spike outputs (regeneratable; web/public/index.v1.json is the
+# versioned, reviewed copy - see ingest/review.html and ingest/exclude.txt)
 spike/out/
+ingest/out/
 *.task
 
 # Editor / OS
