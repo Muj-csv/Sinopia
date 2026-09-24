@@ -1,0 +1,70 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://sinopia/shared/index.schema.json",
+  "title": "Sinopia reference index entry",
+  "description": "One entry in index.v1.json, per ARCHITECTURE.md §9. Entries missing license, creator or source URL are dropped at ingest.",
+  "type": "object",
+  "required": ["id", "provider", "thumb", "landing", "license", "creator", "title", "attribution", "j", "v", "sig"],
+  "properties": {
+    "id": { "type": "string", "description": "Openverse record id, deduplication key" },
+    "provider": { "type": "string", "description": "Upstream source, e.g. wikimedia, flickr" },
+    "thumb": { "type": "string", "format": "uri", "description": "Hotlinked thumbnail URL; never re-hosted" },
+    "landing": { "type": "string", "format": "uri", "description": "Source page URL" },
+    "license": { "type": "string" },
+    "license_version": { "type": "string" },
+    "creator": { "type": "string" },
+    "title": { "type": "string" },
+    "attribution": { "type": "string", "description": "Precomputed title-author-source-license line" },
+    "j": {
+      "type": "array",
+      "description": "13 core joints x (x, y) normalized coordinates, flattened",
+      "items": { "type": "number" },
+      "minItems": 26,
+      "maxItems": 26
+    },
+    "v": {
+      "type": "array",
+      "description": "Per-joint visibility, 13 core joints",
+      "items": { "type": "number", "minimum": 0, "maximum": 1 },
+      "minItems": 13,
+      "maxItems": 13
+    },
+    "sig": {
+      "type": "object",
+      "description": "Pose signature, see ARCHITECTURE.md §4. Values are null when the underlying joint is missing.",
+      "properties": {
+        "torso_lean": { "type": ["number", "null"] },
+        "head_offset_x": { "type": ["number", "null"] },
+        "head_offset_y": { "type": ["number", "null"] },
+        "shoulder_tilt": { "type": ["number", "null"] },
+        "pelvis_tilt": { "type": ["number", "null"] },
+        "tilt_contrast": { "type": ["number", "null"] },
+        "upper_arm_L": { "type": ["number", "null"] },
+        "upper_arm_R": { "type": ["number", "null"] },
+        "forearm_L": { "type": ["number", "null"] },
+        "forearm_R": { "type": ["number", "null"] },
+        "elbow_L": { "type": ["number", "null"] },
+        "elbow_R": { "type": ["number", "null"] },
+        "thigh_L": { "type": ["number", "null"] },
+        "thigh_R": { "type": ["number", "null"] },
+        "shin_L": { "type": ["number", "null"] },
+        "shin_R": { "type": ["number", "null"] },
+        "knee_L": { "type": ["number", "null"] },
+        "knee_R": { "type": ["number", "null"] },
+        "ratio_upper_arm_L": { "type": ["number", "null"] },
+        "ratio_upper_arm_R": { "type": ["number", "null"] },
+        "ratio_forearm_L": { "type": ["number", "null"] },
+        "ratio_forearm_R": { "type": ["number", "null"] },
+        "ratio_thigh_L": { "type": ["number", "null"] },
+        "ratio_thigh_R": { "type": ["number", "null"] },
+        "ratio_shin_L": { "type": ["number", "null"] },
+        "ratio_shin_R": { "type": ["number", "null"] },
+        "balance_offset": { "type": ["number", "null"] },
+        "weight_side": { "type": ["string", "null"], "enum": ["L", "R", "even", null] },
+        "line_of_action": { "type": ["number", "null"] },
+        "curvature": { "type": ["number", "null"] }
+      },
+      "additionalProperties": false
+    }
+  }
+}

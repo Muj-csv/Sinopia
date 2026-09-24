@@ -1,0 +1,40 @@
+{
+  "$comment": "Tolerances, weights and thresholds from ARCHITECTURE.md §5-6. Both signature.py and signature.ts / match.ts must read from here, never hard-code these values.",
+  "tolerances": {
+    "angle_deg": 45,
+    "normalized_distance": 0.5
+  },
+  "region_weights": {
+    "gesture": 2,
+    "torso": 1.5,
+    "pelvis": 1.5,
+    "shoulders": 1,
+    "left_arm": 1,
+    "right_arm": 1,
+    "left_leg": 1,
+    "right_leg": 1
+  },
+  "ratio_weight_within_limb": 0.25,
+  "family_thresholds": {
+    "same_gesture": {
+      "min_region_score": 80,
+      "regions": "all_available"
+    },
+    "same_upper_body": {
+      "min_region_score": 80,
+      "regions": ["torso", "shoulders", "left_arm", "right_arm"],
+      "excluded_leg_max_score": 70
+    },
+    "same_lower_body": {
+      "min_region_score": 80,
+      "regions": ["pelvis", "left_leg", "right_leg"],
+      "excluded_arm_max_score": 70
+    }
+  },
+  "countercheck": {
+    "percentile_low": 2,
+    "percentile_high": 98,
+    "min_match_score": 70,
+    "min_matches_required": 1
+  }
+}
