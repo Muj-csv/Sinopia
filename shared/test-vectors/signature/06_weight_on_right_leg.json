@@ -1,0 +1,31 @@
+{
+  "name": "weight_on_right_leg",
+  "description": "Baseline with ankles moved so the right ankle sits under the torso centre and lower in frame than the left. Expected values generated from the hand-verified reference implementation (signature.py, cross-checked against vectors 01-03) rather than derived by hand, since weight_side/line_of_action/curvature compound several already-verified formulas.",
+  "joints": {
+    "nose": { "x": 0, "y": 0, "v": 1 },
+    "shoulder_L": { "x": -1, "y": 2, "v": 1 },
+    "shoulder_R": { "x": 1, "y": 2, "v": 1 },
+    "elbow_L": { "x": -1, "y": 5, "v": 1 },
+    "elbow_R": { "x": 1, "y": 5, "v": 1 },
+    "wrist_L": { "x": -1, "y": 8, "v": 1 },
+    "wrist_R": { "x": 1, "y": 8, "v": 1 },
+    "hip_L": { "x": -0.8, "y": 8, "v": 1 },
+    "hip_R": { "x": 0.8, "y": 8, "v": 1 },
+    "knee_L": { "x": -0.8, "y": 12, "v": 1 },
+    "knee_R": { "x": 0.8, "y": 12, "v": 1 },
+    "ankle_L": { "x": -2, "y": 15, "v": 1 },
+    "ankle_R": { "x": 0.5, "y": 17, "v": 1 }
+  },
+  "expected": {
+    "weight_side": "R",
+    "balance_offset": 0.125,
+    "line_of_action": 91.6847,
+    "curvature": 0.0392,
+    "thigh_L": -90,
+    "thigh_R": -90,
+    "shin_L": -111.8014,
+    "shin_R": -93.4336,
+    "knee_L": 158.1986,
+    "knee_R": 176.5664
+  }
+}

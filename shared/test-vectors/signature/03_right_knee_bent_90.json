@@ -1,0 +1,30 @@
+{
+  "name": "right_knee_bent_90",
+  "description": "Perturbation of vector 01: right ankle moved so the right shin is perpendicular to the right thigh (knee_R = 90 deg), same shin length. Only Right-leg fields should differ from vector 01.",
+  "joints": {
+    "nose": { "x": 0, "y": 0, "v": 1 },
+    "shoulder_L": { "x": -1, "y": 2, "v": 1 },
+    "shoulder_R": { "x": 1, "y": 2, "v": 1 },
+    "elbow_L": { "x": -1, "y": 5, "v": 1 },
+    "elbow_R": { "x": 1, "y": 5, "v": 1 },
+    "wrist_L": { "x": -1, "y": 8, "v": 1 },
+    "wrist_R": { "x": 1, "y": 8, "v": 1 },
+    "hip_L": { "x": -0.8, "y": 8, "v": 1 },
+    "hip_R": { "x": 0.8, "y": 8, "v": 1 },
+    "knee_L": { "x": -0.8, "y": 12, "v": 1 },
+    "knee_R": { "x": 0.8, "y": 12, "v": 1 },
+    "ankle_L": { "x": -0.8, "y": 16, "v": 1 },
+    "ankle_R": { "x": 4.8, "y": 12, "v": 1 }
+  },
+  "expected": {
+    "shin_R": 0,
+    "knee_R": 90,
+    "ratio_shin_R": 0.6667,
+    "knee_L": 180,
+    "pelvis_tilt": 0,
+    "thigh_R": -90,
+    "thigh_L": -90,
+    "elbow_L": 180,
+    "elbow_R": 180
+  }
+}

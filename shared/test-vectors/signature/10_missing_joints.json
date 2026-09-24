@@ -1,0 +1,36 @@
+{
+  "name": "missing_joints",
+  "description": "Baseline with knee_L entirely absent (key missing) and wrist_R present but below the visibility threshold (v=0.1 < 0.3). Any feature needing a missing/invisible joint must be null; everything else keeps its vector-01 value. Covers both the 'key absent' and 'visibility too low' paths.",
+  "joints": {
+    "nose": { "x": 0, "y": 0, "v": 1 },
+    "shoulder_L": { "x": -1, "y": 2, "v": 1 },
+    "shoulder_R": { "x": 1, "y": 2, "v": 1 },
+    "elbow_L": { "x": -1, "y": 5, "v": 1 },
+    "elbow_R": { "x": 1, "y": 5, "v": 1 },
+    "wrist_L": { "x": -1, "y": 8, "v": 1 },
+    "wrist_R": { "x": 1, "y": 8, "v": 0.1 },
+    "hip_L": { "x": -0.8, "y": 8, "v": 1 },
+    "hip_R": { "x": 0.8, "y": 8, "v": 1 },
+    "knee_R": { "x": 0.8, "y": 12, "v": 1 },
+    "ankle_L": { "x": -0.8, "y": 16, "v": 1 },
+    "ankle_R": { "x": 0.8, "y": 16, "v": 1 }
+  },
+  "expected": {
+    "torso_lean": 0,
+    "pelvis_tilt": 0,
+    "shoulder_tilt": 0,
+    "upper_arm_L": -90,
+    "upper_arm_R": -90,
+    "forearm_R": null,
+    "elbow_R": null,
+    "ratio_forearm_R": null,
+    "thigh_L": null,
+    "ratio_thigh_L": null,
+    "knee_L": null,
+    "shin_L": null,
+    "ratio_shin_L": null,
+    "thigh_R": -90,
+    "balance_offset": 0,
+    "weight_side": "even"
+  }
+}

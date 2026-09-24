@@ -1,0 +1,25 @@
+{
+  "name": "shoulder_tilt_contrapposto",
+  "description": "Baseline shoulders rotated -15 degrees about the shoulder midpoint (hips level, unchanged). Tests shoulder_tilt and tilt_contrast (contrapposto).",
+  "joints": {
+    "nose": { "x": 0, "y": 0, "v": 1 },
+    "shoulder_L": { "x": -0.96592583, "y": 1.74118095, "v": 1 },
+    "shoulder_R": { "x": 0.96592583, "y": 2.25881905, "v": 1 },
+    "elbow_L": { "x": -1, "y": 5, "v": 1 },
+    "elbow_R": { "x": 1, "y": 5, "v": 1 },
+    "wrist_L": { "x": -1, "y": 8, "v": 1 },
+    "wrist_R": { "x": 1, "y": 8, "v": 1 },
+    "hip_L": { "x": -0.8, "y": 8, "v": 1 },
+    "hip_R": { "x": 0.8, "y": 8, "v": 1 },
+    "knee_L": { "x": -0.8, "y": 12, "v": 1 },
+    "knee_R": { "x": 0.8, "y": 12, "v": 1 },
+    "ankle_L": { "x": -0.8, "y": 16, "v": 1 },
+    "ankle_R": { "x": 0.8, "y": 16, "v": 1 }
+  },
+  "expected": {
+    "shoulder_tilt": -15,
+    "pelvis_tilt": 0,
+    "tilt_contrast": -15,
+    "torso_lean": 0
+  }
+}

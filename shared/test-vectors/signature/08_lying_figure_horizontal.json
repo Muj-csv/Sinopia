@@ -1,0 +1,25 @@
+{
+  "name": "lying_figure_horizontal",
+  "description": "Spine horizontal instead of vertical (ADR-002/003: no rotation normalization). torso_lean/shoulder_tilt/pelvis_tilt must land near +/-90 deg, clearly distinct from a standing figure's ~0 deg, so a lying figure never gets normalized to look upright.",
+  "joints": {
+    "nose": { "x": -3, "y": 8, "v": 1 },
+    "shoulder_L": { "x": 0, "y": 7, "v": 1 },
+    "shoulder_R": { "x": 0, "y": 9, "v": 1 },
+    "elbow_L": { "x": 3, "y": 7, "v": 1 },
+    "elbow_R": { "x": 3, "y": 9, "v": 1 },
+    "wrist_L": { "x": 6, "y": 7, "v": 1 },
+    "wrist_R": { "x": 6, "y": 9, "v": 1 },
+    "hip_L": { "x": 10, "y": 7.2, "v": 1 },
+    "hip_R": { "x": 10, "y": 8.8, "v": 1 },
+    "knee_L": { "x": 13, "y": 7.2, "v": 1 },
+    "knee_R": { "x": 13, "y": 8.8, "v": 1 },
+    "ankle_L": { "x": 16, "y": 7.2, "v": 1 },
+    "ankle_R": { "x": 16, "y": 8.8, "v": 1 }
+  },
+  "expected": {
+    "torso_lean": -90,
+    "shoulder_tilt": -90,
+    "pelvis_tilt": -90,
+    "tilt_contrast": 0
+  }
+}

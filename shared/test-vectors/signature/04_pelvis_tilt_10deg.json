@@ -1,0 +1,25 @@
+{
+  "name": "pelvis_tilt_10deg",
+  "description": "Baseline hips rotated 10 degrees about the hip midpoint (torso length and shoulder position unchanged). Tests pelvis_tilt and tilt_contrast directly.",
+  "joints": {
+    "nose": { "x": 0, "y": 0, "v": 1 },
+    "shoulder_L": { "x": -1, "y": 2, "v": 1 },
+    "shoulder_R": { "x": 1, "y": 2, "v": 1 },
+    "elbow_L": { "x": -1, "y": 5, "v": 1 },
+    "elbow_R": { "x": 1, "y": 5, "v": 1 },
+    "wrist_L": { "x": -1, "y": 8, "v": 1 },
+    "wrist_R": { "x": 1, "y": 8, "v": 1 },
+    "hip_L": { "x": -0.78784620, "y": 8.13891854, "v": 1 },
+    "hip_R": { "x": 0.78784620, "y": 7.86108146, "v": 1 },
+    "knee_L": { "x": -0.8, "y": 12, "v": 1 },
+    "knee_R": { "x": 0.8, "y": 12, "v": 1 },
+    "ankle_L": { "x": -0.8, "y": 16, "v": 1 },
+    "ankle_R": { "x": 0.8, "y": 16, "v": 1 }
+  },
+  "expected": {
+    "pelvis_tilt": 10,
+    "shoulder_tilt": 0,
+    "tilt_contrast": -10,
+    "torso_lean": 0
+  }
+}

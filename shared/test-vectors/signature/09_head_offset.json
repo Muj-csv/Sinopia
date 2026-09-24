@@ -1,0 +1,24 @@
+{
+  "name": "head_offset",
+  "description": "Baseline with the nose moved off to the side and up, isolating head_offset_x/y. torso_lean stays at the vector-01 value as a sanity check (nose doesn't feed torso_lean).",
+  "joints": {
+    "nose": { "x": 3, "y": -2, "v": 1 },
+    "shoulder_L": { "x": -1, "y": 2, "v": 1 },
+    "shoulder_R": { "x": 1, "y": 2, "v": 1 },
+    "elbow_L": { "x": -1, "y": 5, "v": 1 },
+    "elbow_R": { "x": 1, "y": 5, "v": 1 },
+    "wrist_L": { "x": -1, "y": 8, "v": 1 },
+    "wrist_R": { "x": 1, "y": 8, "v": 1 },
+    "hip_L": { "x": -0.8, "y": 8, "v": 1 },
+    "hip_R": { "x": 0.8, "y": 8, "v": 1 },
+    "knee_L": { "x": -0.8, "y": 12, "v": 1 },
+    "knee_R": { "x": 0.8, "y": 12, "v": 1 },
+    "ankle_L": { "x": -0.8, "y": 16, "v": 1 },
+    "ankle_R": { "x": 0.8, "y": 16, "v": 1 }
+  },
+  "expected": {
+    "head_offset_x": 0.5,
+    "head_offset_y": 0.6667,
+    "torso_lean": 0
+  }
+}

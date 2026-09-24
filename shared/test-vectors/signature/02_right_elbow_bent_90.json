@@ -1,0 +1,32 @@
+{
+  "name": "right_elbow_bent_90",
+  "description": "Perturbation of vector 01: right wrist moved so the right forearm is perpendicular to the right upper arm (elbow_R = 90 deg), same forearm length. Only Right-arm fields should differ from vector 01; everything else (elbow_L, pelvis_tilt, etc.) must stay at its vector-01 value.",
+  "joints": {
+    "nose": { "x": 0, "y": 0, "v": 1 },
+    "shoulder_L": { "x": -1, "y": 2, "v": 1 },
+    "shoulder_R": { "x": 1, "y": 2, "v": 1 },
+    "elbow_L": { "x": -1, "y": 5, "v": 1 },
+    "elbow_R": { "x": 1, "y": 5, "v": 1 },
+    "wrist_L": { "x": -1, "y": 8, "v": 1 },
+    "wrist_R": { "x": 4, "y": 5, "v": 1 },
+    "hip_L": { "x": -0.8, "y": 8, "v": 1 },
+    "hip_R": { "x": 0.8, "y": 8, "v": 1 },
+    "knee_L": { "x": -0.8, "y": 12, "v": 1 },
+    "knee_R": { "x": 0.8, "y": 12, "v": 1 },
+    "ankle_L": { "x": -0.8, "y": 16, "v": 1 },
+    "ankle_R": { "x": 0.8, "y": 16, "v": 1 }
+  },
+  "expected": {
+    "forearm_R": 0,
+    "elbow_R": 90,
+    "ratio_forearm_R": 0.5,
+    "elbow_L": 180,
+    "pelvis_tilt": 0,
+    "shoulder_tilt": 0,
+    "torso_lean": 0,
+    "thigh_L": -90,
+    "thigh_R": -90,
+    "knee_L": 180,
+    "knee_R": 180
+  }
+}

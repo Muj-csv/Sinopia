@@ -1,0 +1,31 @@
+{
+  "name": "weight_on_left_leg",
+  "description": "Mirror-image configuration of vector 06 (left ankle under torso centre, lower in frame). Expected values generated from the reference implementation, same rationale as vector 06; also serves as a cross-check that L/R results are antisymmetric to vector 06.",
+  "joints": {
+    "nose": { "x": 0, "y": 0, "v": 1 },
+    "shoulder_L": { "x": -1, "y": 2, "v": 1 },
+    "shoulder_R": { "x": 1, "y": 2, "v": 1 },
+    "elbow_L": { "x": -1, "y": 5, "v": 1 },
+    "elbow_R": { "x": 1, "y": 5, "v": 1 },
+    "wrist_L": { "x": -1, "y": 8, "v": 1 },
+    "wrist_R": { "x": 1, "y": 8, "v": 1 },
+    "hip_L": { "x": -0.8, "y": 8, "v": 1 },
+    "hip_R": { "x": 0.8, "y": 8, "v": 1 },
+    "knee_L": { "x": -0.8, "y": 12, "v": 1 },
+    "knee_R": { "x": 0.8, "y": 12, "v": 1 },
+    "ankle_L": { "x": -0.5, "y": 17, "v": 1 },
+    "ankle_R": { "x": 2, "y": 15, "v": 1 }
+  },
+  "expected": {
+    "weight_side": "L",
+    "balance_offset": -0.125,
+    "line_of_action": 88.3153,
+    "curvature": -0.0392,
+    "thigh_L": -90,
+    "thigh_R": -90,
+    "shin_L": -86.5664,
+    "shin_R": -68.1986,
+    "knee_L": 176.5664,
+    "knee_R": 158.1986
+  }
+}
