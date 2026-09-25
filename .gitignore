@@ -9,6 +9,7 @@ __pycache__/
 spike/out/
 ingest/out/
 *.task
+web/public/mediapipe-wasm/
 
 # Editor / OS
 .vscode/*
