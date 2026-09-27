@@ -1,0 +1,192 @@
+.reference-panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  width: 320px;
+  max-width: 100%;
+  border-left: 1px solid var(--color-border);
+  background: var(--color-surface);
+  overflow-y: auto;
+}
+
+@media (max-width: 640px) {
+  .reference-panel {
+    width: 100%;
+    border-left: none;
+    border-top: 1px solid var(--color-border);
+    border-radius: var(--radius-sheet) var(--radius-sheet) 0 0;
+    max-height: 60vh;
+  }
+}
+
+.reference-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.reference-panel-header button {
+  min-height: 44px;
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-control);
+  border: 1px solid var(--color-border);
+  background: var(--color-surface-raised);
+  color: var(--color-text-primary);
+}
+
+.reference-search {
+  min-height: 44px;
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-control);
+  border: 1px solid var(--color-border);
+  background: var(--color-surface-raised);
+  color: var(--color-text-primary);
+}
+
+.reference-angle-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+.reference-angle-chips button {
+  min-height: 32px;
+  padding: var(--space-1) var(--space-3);
+  border-radius: 999px;
+  border: 1px solid var(--color-border);
+  background: var(--color-surface-raised);
+  color: var(--color-text-secondary);
+  font-size: var(--text-caption);
+}
+.reference-angle-chips button.active {
+  border-color: var(--color-accent);
+  color: var(--color-accent);
+}
+
+.reference-status {
+  color: var(--color-text-secondary);
+  font-size: var(--text-caption);
+}
+.reference-status button {
+  color: var(--color-accent);
+  text-decoration: underline;
+  background: none;
+  border: none;
+  padding: 0;
+}
+
+.reference-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--space-2);
+}
+
+.reference-skeleton {
+  aspect-ratio: 1;
+  border-radius: var(--radius-control);
+  background: var(--color-surface-raised);
+  animation: reference-pulse 1.2s ease-in-out infinite;
+}
+@keyframes reference-pulse {
+  0%,
+  100% {
+    opacity: 0.6;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+.reference-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.reference-thumb {
+  padding: 0;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-control);
+  overflow: hidden;
+  background: none;
+  cursor: pointer;
+}
+.reference-thumb img {
+  width: 100%;
+  aspect-ratio: 1;
+  object-fit: cover;
+  display: block;
+}
+
+.reference-pin {
+  min-height: 32px;
+  font-size: var(--text-caption);
+  border-radius: var(--radius-control);
+  border: 1px solid var(--color-border);
+  background: var(--color-surface-raised);
+  color: var(--color-text-secondary);
+}
+.reference-pin.active {
+  border-color: var(--color-accent);
+  color: var(--color-accent);
+}
+
+.reference-license {
+  font-size: var(--text-caption);
+  color: var(--color-text-secondary);
+  text-decoration: none;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.reference-license:hover {
+  text-decoration: underline;
+}
+
+.reference-footer {
+  font-size: var(--text-caption);
+  color: var(--color-text-secondary);
+  border-top: 1px solid var(--color-border);
+  padding-top: var(--space-2);
+}
+
+.reference-lightbox {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 20;
+  cursor: zoom-out;
+}
+.reference-lightbox img {
+  max-width: 90vw;
+  max-height: 90vh;
+  object-fit: contain;
+}
+
+.pinned-reference {
+  position: fixed;
+  bottom: var(--space-4);
+  right: var(--space-4);
+  width: 96px;
+  border: 2px solid var(--color-accent);
+  border-radius: var(--radius-control);
+  overflow: hidden;
+  z-index: 15;
+  background: var(--color-surface);
+}
+.pinned-reference img {
+  width: 100%;
+  aspect-ratio: 1;
+  object-fit: cover;
+  display: block;
+}
+.pinned-reference button {
+  width: 100%;
+  font-size: var(--text-caption);
+  padding: var(--space-1);
+  border: none;
+  background: var(--color-surface-raised);
+  color: var(--color-text-secondary);
+}

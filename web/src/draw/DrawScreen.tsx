@@ -8,6 +8,9 @@ import type Konva from 'konva'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { getDraft, updateDraft, type Draft } from '../lib/draftStore'
+import { PinnedReference } from '../references/PinnedReference'
+import { ReferencePanel } from '../references/ReferencePanel'
+import type { Reference } from '../references/referencesClient'
 import { DrawCanvas, type Tool } from './DrawCanvas'
 import './draw.css'
 import { exportFresco } from './exportFresco'
@@ -42,6 +45,8 @@ export function DrawScreen() {
   const [exporting, setExporting] = useState(false)
   const navigate = useNavigate()
   const [resuming, setResuming] = useState(false)
+  const [referenceOpen, setReferenceOpen] = useState(false)
+  const [pinnedReference, setPinnedReference] = useState<Reference | null>(null)
 
   useEffect(() => {
     if (draftId === null) return
@@ -141,50 +146,66 @@ export function DrawScreen() {
   }
 
   return (
-    <div className="draw-screen">
-      {resuming && (
-        <p className="draw-status">
-          Continuing your sinopia from {new Date(draft.updatedAt).toLocaleTimeString()}
-        </p>
+    <div className="draw-screen-layout">
+      <div className="draw-screen">
+        {resuming && (
+          <p className="draw-status">
+            Continuing your sinopia from {new Date(draft.updatedAt).toLocaleTimeString()}
+          </p>
+        )}
+
+        <DrawCanvas
+          stageRef={stageRef}
+          photoUrl={photoUrl}
+          width={draft.width}
+          height={draft.height}
+          history={history}
+          activeLayer={activeLayer}
+          layerVisible={layerVisible}
+          tool={tool}
+          onStrokeComplete={addStroke}
+        />
+
+        <ToolRail
+          tool={tool}
+          onToolChange={setTool}
+          recentColors={recentColors}
+          activeLayer={activeLayer}
+          onActiveLayerChange={setActiveLayer}
+          layerVisible={layerVisible}
+          onLayerVisibleChange={(i, v) =>
+            setLayerVisible((prev) => prev.map((x, idx) => (idx === i ? v : x)))
+          }
+          onClearLayer={clearLayer}
+          canUndo={canUndo(history)}
+          canRedo={canRedo(history)}
+          onUndo={() => setHistory(undo)}
+          onRedo={() => setHistory(redo)}
+          referenceOpen={referenceOpen}
+          onToggleReference={() => setReferenceOpen((v) => !v)}
+        />
+
+        <button
+          type="button"
+          className="draw-finish"
+          disabled={!hasAnyStroke(history) || exporting}
+          onClick={finish}
+        >
+          {exporting ? 'Exporting...' : 'Finish'}
+        </button>
+      </div>
+
+      {referenceOpen && (
+        <ReferencePanel
+          onClose={() => setReferenceOpen(false)}
+          pinned={pinnedReference}
+          onPin={setPinnedReference}
+        />
       )}
 
-      <DrawCanvas
-        stageRef={stageRef}
-        photoUrl={photoUrl}
-        width={draft.width}
-        height={draft.height}
-        history={history}
-        activeLayer={activeLayer}
-        layerVisible={layerVisible}
-        tool={tool}
-        onStrokeComplete={addStroke}
-      />
-
-      <ToolRail
-        tool={tool}
-        onToolChange={setTool}
-        recentColors={recentColors}
-        activeLayer={activeLayer}
-        onActiveLayerChange={setActiveLayer}
-        layerVisible={layerVisible}
-        onLayerVisibleChange={(i, v) =>
-          setLayerVisible((prev) => prev.map((x, idx) => (idx === i ? v : x)))
-        }
-        onClearLayer={clearLayer}
-        canUndo={canUndo(history)}
-        canRedo={canRedo(history)}
-        onUndo={() => setHistory(undo)}
-        onRedo={() => setHistory(redo)}
-      />
-
-      <button
-        type="button"
-        className="draw-finish"
-        disabled={!hasAnyStroke(history) || exporting}
-        onClick={finish}
-      >
-        {exporting ? 'Exporting...' : 'Finish'}
-      </button>
+      {pinnedReference !== null && (
+        <PinnedReference reference={pinnedReference} onUnpin={() => setPinnedReference(null)} />
+      )}
     </div>
   )
 }

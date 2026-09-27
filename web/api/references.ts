@@ -86,6 +86,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const openverseRes = await fetch(`${SEARCH_URL}?${params}`, {
       headers: { Authorization: `Bearer ${token}` },
     })
+    if (openverseRes.status === 429) {
+      res.status(429).json({ error: 'Too many searches right now' })
+      return
+    }
     if (!openverseRes.ok) {
       res.status(502).json({ error: 'Openverse request failed' })
       return
