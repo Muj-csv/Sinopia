@@ -2,13 +2,13 @@
 
 # Sinopia
 
-**Your underdrawing, checked against real bodies.**
+**Draw on the real world. Leave it where you found it.**
 
-*Sinopia* (the reddish underdrawing painters sketched beneath a fresco)
-**S**ketch **I**nterpreted **N**ext to **O**bserved **P**hotographic **I**nstances of **A**natomy
+*Sinopia* (the reddish underdrawing a fresco painter sketched on the wall before painting)
 
 ![Status](https://img.shields.io/badge/status-in%20development-orange)
-![Platform](https://img.shields.io/badge/platform-web-5A67D8)
+![Platform](https://img.shields.io/badge/platform-web%20%2F%20PWA-5A67D8)
+![Cost](https://img.shields.io/badge/cost-%240%20open%20stack-2F3B4C)
 ![Hackathon](https://img.shields.io/badge/GIBC%20V2-Track%2003%20Open-blue)
 
 </div>
@@ -19,137 +19,147 @@
 
 ## Overview
 
-People learning gesture drawing make quick, rough figure sketches. When a sketch looks wrong, they usually can't say *why*: is the pelvis tilted the wrong way, is the weight leg not under the body, does the arm bend in a way a body can't? Poses can't be described in words, and comparing a drawing with a photo by eye is the very skill they're still learning.
+You photograph a real place and draw your own interpretation on top of it: a creature on the rooftops, a fire hydrant that isn't there, a street as you remember it. When you're unsure how something looks, a reference panel beside the canvas finds openly licensed photos of anything you're drawing.
 
-Sinopia turns a gesture sketch into evidence. It reads the body structure of your sketch as a **pose signature** (torso lean, shoulder and pelvis tilt, limb angles, balance, line of action). It then finds openly licensed photographs of real people whose body mechanics match, and shows **region by region where your drawing agrees with real bodies and where it differs**.
-
-> Pose-search tools help you *find* a pose. Sinopia shows you how the pose *you drew* compares with reality.
+A finished piece is a **fresco**. Keep it private in your **Sketchbook**, or publish it to the **globe**, pinned where you took the photo. Anyone can spin the globe, open your fresco, slide between the real photo and your drawing, and see every other fresco made at the same spot: **same wall, different eyes**.
 
 ## Features
 
 | Feature | Status |
 |---|---|
-| Sketch input: upload, camera photo, or draw in the browser | Planned |
-| Skeleton detection with drag-to-fix joints (manual placement always available) | Planned |
-| Pose signature: tilts, bends, balance, line of action | Planned |
-| Structural matching against real photographs (mirror-aware) | Planned |
-| Gesture families: same gesture / same upper body / same lower body | Planned |
-| Evidence view: sketch vs photo, overlay, region-by-region similarity, largest differences | Planned |
-| Lock a relationship (e.g. torso + right arm) and search around it | Planned |
-| License and attribution on every reference | Planned |
-| Counter-check: "uncommon in this reference set" | Planned, supporting |
-| Step-by-step construction guide | Later |
+| Capture a photo with its GPS spot (from the photo or your phone), draggable pin | Planned |
+| Draw over the photo: brush, eraser, colors, layers, undo/redo | Planned |
+| Reference panel: search anything you're drawing, with license and source on every image | Planned |
+| Sketchbook: your private album of frescoes | Planned |
+| Publish to the globe, pinned at the exact spot or just the neighborhood | Planned |
+| Globe with clustered pins, from world view to street level | Planned |
+| Fresco viewer with a Reality ↔ Drawing slider | Planned |
+| Same Wall: other frescoes made within 50 m | Planned |
+| Report a fresco | Planned |
+| Street-level view of the real spot beside the fresco | Planned, if time |
+| In-browser safety check before publishing | Planned, if time |
 
 ## How it works
 
 ```mermaid
 flowchart LR
-  S[Your sketch] --> K[Skeleton\n(auto or by hand)]
-  K --> P[Pose signature]
-  P --> M[Structural match\nagainst real photos]
-  M --> F[Gesture families]
-  M --> E[Evidence view:\nwhere your drawing\nagrees and differs]
-  E --> L[Reference with\nlicense + attribution]
+  P[Photo of a real place] --> D[Draw your interpretation]
+  R[Reference panel] -.-> D
+  D --> F[Fresco]
+  F --> S[Sketchbook\nprivate]
+  F --> G[Globe\npublic]
+  G --> V[Viewer: real ↔ drawing\nSame Wall · street view]
 ```
 
-1. **Sketch.** Upload or draw a rough gesture. A 20-second sketch is enough.
-2. **Read.** Sinopia finds the skeleton; drag any joint that's off, or place them yourself.
-3. **Signature.** The pose becomes named measurements: "torso lean +17°, pelvis tilt −8°, weight on the right leg".
-4. **Evidence.** Real photographs with matching mechanics, grouped into gesture families.
-5. **Compare.** Put your sketch beside any reference to see per-region similarity and the biggest differences, e.g. "Pelvis tilt: yours −8°, reference +3°".
-
-Sinopia describes **pose geometry similarity**. It doesn't grade your drawing or call it "correct"; stylized poses are allowed.
+1. **Capture.** Take or upload a photo; Sinopia reads where and when it was taken.
+2. **Draw.** Sketch over the photo on your phone or laptop. The photo itself is never changed.
+3. **Reference.** Type what you're drawing ("fire hydrant", "shiba inu") and keep the results beside the canvas.
+4. **Keep or share.** Save to your Sketchbook, or publish to the globe at the exact spot or neighborhood level.
+5. **Explore.** Open any fresco, compare it with the real place, and see how others drew the same wall.
 
 ## Privacy and licensing
 
-- **Your sketch never leaves your device.** All processing runs in the browser.
-- **References come from openly licensed sources.** Every displayed result carries the license information reported by its source, plus attribution metadata. Entries with missing licensing metadata are excluded. License information is as reported upstream, so check it at the source before reuse.
-- **No images are stored or re-hosted.** Sinopia stores pose measurements and links only.
+- **You choose what's public.** Frescoes are private by default; publishing is per fresco and can be undone any time.
+- **Your exact location stays yours.** The precise spot is stored where only you can read it; the public pin is either the exact spot (your choice, with a warning) or snapped to the neighborhood. Photo metadata (EXIF, including GPS) is stripped before upload.
+- **References come from openly licensed sources** via Openverse. Each shows the license, creator and source as reported upstream; check it at the source before reuse. Sinopia doesn't store reference images.
+- **Your frescoes are your work.** Sinopia's code is open source; the artwork belongs to the artists.
 
-## Tech stack
+## Tech stack ($0)
 
 | Layer | Technology |
 |---|---|
-| Web app | TypeScript, Vite, React |
-| Pose detection | MediaPipe Pose Landmarker (in the browser, WASM) |
-| Reference index | Python ingest pipeline over the Openverse API |
-| Hosting | Static hosting (no backend) |
-| Tests | Vitest, pytest, shared test vectors |
+| Web app | TypeScript, Vite, React (PWA) |
+| Drawing | Konva, Perfect Freehand |
+| Database, auth, storage | Supabase (Postgres + PostGIS, Row Level Security) |
+| Hosting | Vercel |
+| Globe and maps | MapLibre GL JS, OpenFreeMap tiles, OpenStreetMap data |
+| Geocoding | Nominatim (reverse), Photon (search) |
+| References | Openverse API |
+| Street-level imagery | Mapillary, Panoramax |
+| Tests | Vitest, Playwright, PGlite (schema tests) |
 
 ## Getting started
 
 > Setup steps will be confirmed once the first build lands.
 
+**Hosting:** Vercel (existing account), importing `Muj-csv/Sinopia` with root directory `web/`. Account setup and every key/value the team needs to send back: [docs/SETUP.md](docs/SETUP.md).
+
 **Requirements**
 - Node.js 20+
-- Python 3.11+ (only to rebuild the reference index)
+- A free Supabase project (Vercel account already exists)
+- (optional) A free Mapillary client token and Openverse API client
 
 **Run the app**
 ```bash
-git clone https://github.com/<org>/sinopia.git
-cd sinopia/web
+git clone https://github.com/Muj-csv/Sinopia.git
+cd Sinopia/web
+cp .env.example .env.local   # fill in VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY, VITE_MAPILLARY_TOKEN
 npm install
 npm run dev
 ```
 
-**Rebuild the reference index (optional)**
+**Set up the database**
 ```bash
-cd ingest
-pip install -r requirements.txt
-pytest
-python ingest.py --limit 3000
+# In the Supabase SQL editor (or with the Supabase CLI), run:
+supabase/migrations/0001_init.sql      # from docs/schema.sql
+# Optional local check of the schema and privacy rules:
+npm i @electric-sql/pglite @electric-sql/pglite-postgis && node docs/schema.test.mjs
 ```
+
+**Environment on Vercel:** `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`, `VITE_MAPILLARY_TOKEN`, `OPENVERSE_CLIENT_ID`, `OPENVERSE_CLIENT_SECRET` (the last two server-side only).
 
 ## Project structure
 
 ```
-web/       The Sinopia web app (capture, pose signature, matching, evidence view)
-ingest/    Builds the reference index from openly licensed photos
-shared/    Rule constants, index schema and test vectors used by both
-spike/     Early detection experiments on real sketches
-docs/      PRD, architecture, implementation plan, decisions, build phases
+web/                The Sinopia web app (capture, draw, references, sketchbook, globe, viewer)
+web/api/            Vercel function: references proxy (Openverse)
+supabase/           Migrations (tables, Row Level Security, storage policies)
+scripts/            Seed script for demo frescoes
+docs/               Concept, PRD, architecture, plan, decisions, design, build phases
 ```
 
 ## Documentation
 
+- [Concept (one page)](docs/CONCEPT.md)
 - [Product requirements](docs/PRD.md)
-- [Architecture](docs/ARCHITECTURE.md)
+- [Architecture](docs/ARCHITECTURE.md) · [Database schema](docs/schema.sql)
 - [Implementation plan](docs/IMPLEMENTATION_PLAN.md)
-- [Decision log](docs/DECISIONS.md)
+- [Decision log](docs/DECISIONS.md) · [Validation](docs/VALIDATION.md)
+- [Design brief](docs/design/DESIGN_BRIEF.md) · [UX map](docs/design/UX_MAP.md)
+- [Setup checklist (accounts, keys)](docs/SETUP.md)
 
 ## Known limitations
 
-- **2D analysis.** Foreshortening affects apparent limb lengths, so ratios are labelled "apparent" and weighted lightly.
-- **Detection on drawings is imperfect.** The pose model is trained on photos, so manual joint placement is always available.
-- **The reference set is small** (a few thousand images), so "uncommon" means uncommon *in this set*.
-- Licensing depends on metadata reported by the source.
-
-## Related work
-
-- Pose-search tools: Aphrite Pose Search, PoseSearch (Bodies in Motion), x6ud/pose-search, Pose Arch
-- Sketch → 3D pose: Posematic; Sketch2Pose (ACM TOG 2022)
-- Gesture-practice libraries: Line of Action, Quickposes
-
-These tools help you find or build a pose. Sinopia compares the structure of your own drawing against real bodies.
+- **Free tiers:** storage and bandwidth are limited, so images are compressed; a free Supabase project pauses after 7 days without use.
+- **Street-level imagery** from open sources doesn't cover everywhere; where there's none, the viewer shows the map.
+- **Reference licenses** are as reported by the source.
+- **Moderation** is basic during the hackathon: one report hides a fresco until the team reviews it.
 
 ## Roadmap
 
 - [ ] MVP for GIBC V2 (see [implementation plan](docs/IMPLEMENTATION_PLAN.md))
-- [ ] Step-by-step construction guide (line of action → stick figure → masses → form)
-- [ ] Larger reference set
-- [ ] Camera-angle-aware (3D) matching
+- [ ] Suggest reference words from what you're drawing
+- [ ] "Draw this wall too": respond to someone's fresco at the same place
+- [ ] Place timelines: the same wall across years
+- [ ] Collections and map stories
 
 ## Team
 
+GIBC requires real full names on Devpost; the 5 below are still placeholders pending names from the team (see `docs/SETUP.md`).
+
 | Name | Role |
 |---|---|
-| Jum Flores | Team lead |
-| _TBD_ | _TBD_ |
+| Ian Patrick Flores | Lead — Supabase, schema + privacy, save/publish/unpublish/delete, merges & deploys |
+| _TBD (P2)_ | Drawing canvas — Konva, layers, brush, undo/redo, autosave |
+| _TBD (P3)_ | Capture — camera/upload, EXIF GPS, pin picker, place name, compression; Reality ↔ Drawing slider |
+| _TBD (P4)_ | Globe and viewer — MapLibre globe, clustering, Photon search, Same Wall, street-level if time |
+| _TBD (P5)_ | References — `/api/references` proxy, reference panel, Sketchbook screens |
+| _TBD (P6)_ | Design and QA — app shell, component states, seeded frescoes, phone testing, Devpost |
 
 ## License
 
-_To be decided before submission._
+MIT for code. Frescoes belong to their artists.
 
 ## Acknowledgments
 
-Built for the **Global Innovation Build Challenge V2**. Reference images courtesy of their creators via openly licensed sources; see the attribution on each result.
+Built for the **Global Innovation Build Challenge V2**. Map data © OpenStreetMap contributors; tiles by OpenFreeMap / OpenMapTiles. Reference images courtesy of their creators via Openverse; street-level imagery from Mapillary and Panoramax contributors.

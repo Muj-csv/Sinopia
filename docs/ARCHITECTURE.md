@@ -1,146 +1,218 @@
 # Sinopia: Architecture
 
+*v1.0 · 2026-09-27 · implements `PRD.md` v1.0*
+
 ## 1. Overview
 
-Sinopia has two parts that never talk to each other at runtime:
-
-1. **Ingest (offline, run by the team):** a Python script fetches openly licensed photos of people from Openverse, detects joints, computes each photo's **pose signature**, and writes a static index plus corpus statistics. It stores numbers and links only, never images.
-2. **App (static website):** reads a sketch, detects or lets the user place joints, computes the same signature in TypeScript, compares it against the index region by region, groups the results into gesture families, and renders the evidence view. Thumbnails load straight from their source hosts.
-
-No backend, no database, no accounts.
+Sinopia is a mobile-first single-page web app on Vercel that talks directly to Supabase (Postgres + PostGIS, Auth, Storage) with the public anon key. Row Level Security and storage policies do the access control, so there's no custom backend. One small Vercel function proxies the Openverse reference search, to keep the Openverse client secret off the browser and to cache results. Everything else (maps, street-level imagery, geocoding) is called from the browser against free, open services.
 
 ```mermaid
 flowchart LR
-  subgraph Ingest["Offline ingest"]
-    OV[(Openverse API)] --> I[ingest.py\nlicense + mature filter\nMediaPipe → joints → signature]
-    I --> IDX[index.json + stats.json]
+  subgraph Browser["Browser (Vite + React + TS)"]
+    CAP[Capture\nexifr · compression] --> DRAW[Canvas\nKonva + Perfect Freehand]
+    DRAW --> FIN[Finish + save]
+    REF[Reference panel]
+    GLOBE[Globe\nMapLibre + OpenFreeMap]
+    VIEW[Fresco viewer\nslider · Same Wall · street view]
+    SB[Sketchbook]
   end
-  IDX --> APP
-  subgraph Browser["User's browser"]
-    APP[Static app] --> MP[MediaPipe Pose\n(WASM)]
-    APP --> SIG[signature.ts]
-    SIG --> MATCH[match.ts\nregions · mirror · lock]
-    MATCH --> FAM[families.ts]
-    MATCH --> EV[Evidence view]
+  subgraph Vercel
+    FN["/api/references\n(Openverse proxy + cache)"]
   end
-  U((Learner)) -->|sketch| APP
-  APP -->|thumbnails| H[(Source image hosts)]
+  subgraph Supabase["Supabase Free"]
+    AUTH[Auth\nGoogle · GitHub]
+    DB[(Postgres + PostGIS\nRLS)]
+    ST[(Storage\nsketchbook · globe)]
+  end
+  REF --> FN --> OV[(Openverse API)]
+  FIN --> ST
+  FIN --> DB
+  GLOBE -->|rpc globe_points| DB
+  VIEW -->|rpc same_wall| DB
+  VIEW --> MLY[(Mapillary / Panoramax)]
+  CAP --> NOM[(Nominatim\nreverse geocode)]
+  GLOBE --> PH[(Photon\nplace search)]
+  GLOBE --> OFM[(OpenFreeMap tiles)]
+  SB --> DB
+  SB --> ST
 ```
 
 ## 2. Components
 
 | Component | Responsibility | Justifies |
 |---|---|---|
-| `ingest/ingest.py` | Query Openverse (license + mature filters), detect joints, keep single-person images with ≥ 9 visible core joints, compute signatures, write index + stats | FR-008, NFR-004 |
-| `ingest/signature.py` + `web/src/pose/signature.ts` | Pose signature, identical in both languages | FR-003, NFR-005 |
-| `shared/test-vectors/` | Joint sets → expected signatures and region scores | NFR-005 |
-| `web/src/capture/` | Upload, camera, canvas drawing; preprocessing; detection; joint editor with sketch background | FR-001–002 |
-| `web/src/pose/match.ts` | Region scores, mirror handling, locked regions, top-K | FR-004, FR-007 |
-| `web/src/pose/families.ts` | Group candidates into gesture families | FR-005 |
-| `web/src/evidence/` | Side-by-side view, overlay alignment, region bars, largest differences | FR-006 |
-| `web/src/pose/countercheck.ts` | Percentile checks against `stats.json` | FR-009 |
-| `web/src/eval/` | Evaluation page | FR-010 |
+| `src/auth/` | Supabase OAuth (Google, GitHub), session, sign-in gate on create/publish/report | FR-001 |
+| `src/capture/` | Camera/upload, EXIF read (exifr), location fallback, draggable pin (MapLibre mini-map), reverse geocode (Nominatim), resize + WebP + thumbnail (browser-image-compression / canvas) | FR-002, FR-003, NFR-001 |
+| `src/draw/` | Konva stage: photo layer (locked) + 3 drawing layers; Perfect Freehand strokes; eraser; colors; undo/redo stack; pinch/pan; draft autosave (IndexedDB via idb-keyval); export drawing layer (transparent WebP) and composite | FR-004 |
+| `src/references/` | Search UI, results panel/bottom sheet, angle chips, license display; calls `/api/references` | FR-005, NFR-004 |
+| `api/references.ts` | Vercel function: validate query, call Openverse with client credentials, trim fields, `Cache-Control: s-maxage=86400` | FR-005, NFR-005 |
+| `src/frescoes/` | Finish form, save (upload + insert), publish/unpublish (copy to/remove from `globe`), delete | FR-006–FR-008, FR-012 |
+| `src/globe/` | MapLibre globe, GeoJSON source with clustering from `globe_points()`, preview card, Photon search | FR-009 |
+| `src/viewer/` | Fresco viewer, Reality ↔ Drawing slider, `same_wall()`, street-level panel, report dialog | FR-010, FR-011, FR-013, FR-015 |
+| `src/sketchbook/` | Owner's frescoes grouped by place/month, carousel | FR-012 |
+| `src/safety/` *(if time)* | nsfwjs check before publish, lazy-loaded | FR-016 |
+| `docs/schema.sql` → `supabase/migrations/0001_init.sql` | Tables, triggers, RLS, RPCs, buckets, storage policies | NFR-001, NFR-005 |
+| `scripts/seed.ts` | Upload the team's demo frescoes with a seed account | FR-014 |
 
-## 3. Joints and normalization
+## 3. Key flows
 
-- **Core joints (13):** nose, L/R shoulder, L/R elbow, L/R wrist, L/R hip, L/R knee, L/R ankle. Hands, feet and face detail are ignored (too noisy on sketches).
-- **Coordinates:** image coordinates converted to y-up. Origin at the hip midpoint; scale by torso length (hip midpoint → shoulder midpoint). **No rotation normalization**: a lying figure must not match a standing one.
-- **Visibility:** joints with visibility < 0.3 are treated as missing; any feature that uses a missing joint is missing too.
+### Save and publish
 
-## 4. Pose signature
-
-All angles are in degrees, measured from the positive x-axis (or from vertical where stated), with differences computed on the circle (−180°…180°).
-
-| Group | Features |
-|---|---|
-| Torso | `torso_lean` (hip-mid → shoulder-mid vs vertical), `head_offset` (nose relative to shoulder-mid, / torso length, x and y) |
-| Shoulders | `shoulder_tilt` (L→R shoulder line vs horizontal) |
-| Pelvis | `pelvis_tilt` (L→R hip line vs horizontal), `tilt_contrast` = shoulder_tilt − pelvis_tilt (contrapposto) |
-| Arms | segment angles: upper arm L/R (shoulder → elbow), forearm L/R (elbow → wrist); bends: elbow L/R (interior angle) |
-| Legs | segment angles: thigh L/R (hip → knee), shin L/R (knee → ankle); bends: knee L/R |
-| Ratios | apparent lengths / torso length for the 8 segments (labelled *apparent*: 2D, affected by foreshortening) |
-| Gesture | `balance_offset` (horizontal offset of the shoulder-hip centre from the ankle midpoint, / torso length), `weight_side` (the ankle nearer to under the centre and lower in the frame; L / R / even), `line_of_action` (angle from the support ankle to the nose), `curvature` (signed distance of the hip midpoint from that line, / torso length) |
-
-**Mirror:** swap L/R labels and negate x-dependent angles. Matching scores both the original and the mirror and keeps the better one (toggle, default on).
-
-## 5. Structural match
-
-- **Regions and features:**
-  - Torso: `torso_lean`, `head_offset`
-  - Shoulders: `shoulder_tilt`
-  - Pelvis: `pelvis_tilt`, `tilt_contrast`
-  - Left / Right arm: segment angles + elbow bend
-  - Left / Right leg: segment angles + knee bend
-  - Gesture: `line_of_action`, `curvature`, `balance_offset`
-- **Region similarity (0–100):** `100 × max(0, 1 − mean(|Δ| / tolerance))`, with tolerance 45° for angles and 0.5 for normalized distances. Missing features are skipped; a region with no usable features is excluded.
-- **Overall:** weighted mean of the available regions (default weights: Gesture 2, Torso 1.5, Pelvis 1.5, Shoulders 1, each limb 1). Ratios get weight 0.25, inside their limb.
-- **Locked regions (FR-007):** only the selected regions count; all others get weight 0.
-- **Ranking:** a linear scan over the index, then a partial sort for the top 60 (families) and top 24 (grid). Around 3,000 entries × ~30 features stays well under 50 ms.
-
-These formulas are simple on purpose, so every number shown in the evidence view can be explained. All tolerances and weights live in `shared/rules.json`.
-
-## 6. Gesture families (FR-005)
-
-From the top 60 by overall score:
-- **Same gesture:** every available region ≥ 80.
-- **Same upper body:** Torso, Shoulders and both arms ≥ 80, and at least one leg < 70.
-- **Same lower body:** Pelvis and both legs ≥ 80, and at least one arm < 70.
-
-A reference can appear in only one family, in that order. The rest stay under "Related".
-
-## 7. Evidence view (FR-006)
-
-- **Overlay:** translate the reference skeleton so its hip midpoint sits on the sketch's hip midpoint, then scale it by the ratio of torso lengths. Mirror it too if the mirrored version matched.
-- **Region bars:** the region scores for this pair.
-- **Largest differences:** the 3 features with the biggest |Δ|, written as "Pelvis tilt: yours −8°, reference +3° (11° apart)".
-- **Toggles:** Sketch / Skeleton / Photo / Overlay.
-- **Wording:** "pose geometry similarity" and "difference from this reference".
-
-## 8. Corpus, licensing and content
-
-- **Openverse query:** image search with commercial-use and modification allowed (→ CC0, Public Domain Mark, CC BY, CC BY-SA), mature content excluded, photographs only. **Check the exact parameter names against the live API in Phase 0.**
-- **Search terms:** favour dynamic poses (dance, sport, martial arts, climbing, parkour, yoga, workers lifting, running, throwing), plus everyday standing, sitting and reaching.
-- **Exclusions:** drop records missing license, creator or source URL. Keep single-person images with ≥ 9 visible core joints. Deduplicate by ID.
-- **Review:** one teammate reviews the whole corpus for nudity and inappropriate content before the demo.
-- **Storage:** keypoints, signature and URLs only. Thumbnails are hotlinked. A broken thumbnail shows a placeholder plus the source link.
-
-## 9. Data files
-
-```text
-index.json   [{ id, provider, thumb, landing, license, license_version, creator, title,
-                attribution, j: number[26], v: number[13], sig: {…signature…} }]
-stats.json   { count, features: { <name>: { p2, p5, p50, p95, p98 } } }
-rules.json   { tolerances, region_weights, family_thresholds, countercheck }
+```mermaid
+sequenceDiagram
+  participant U as Artist
+  participant App
+  participant ST as Storage
+  participant DB as Postgres
+  U->>App: Finish (title, visibility, precision)
+  App->>App: export drawing.webp, composite.webp, thumb.webp (photo.webp already prepared)
+  App->>ST: upload 4 files to sketchbook/<uid>/<fid>/
+  App->>DB: insert frescoes (private) + fresco_locations (exact point)
+  Note over DB: trigger: public_location = null
+  alt Publish
+    App->>ST: upload the same 4 files to globe/<uid>/<fid>/
+    App->>DB: update frescoes set visibility='public', pin_precision
+    Note over DB: trigger: public_location = exact or snapped point
+  end
 ```
 
-Size target: ≤ 1.5 MB gzipped for ~3,000 entries. The index is versioned in the repo (`index.v1.json`) and rebuilt wholesale.
+Unpublish reverses it: `update visibility='private'` (trigger clears the public point), then delete `globe/<uid>/<fid>/*`. If a storage step fails after the database step, the app retries and surfaces "Couldn't finish publishing, try again"; a fresco with visibility `private` is always safe even if public files linger, because the globe only lists `public` rows.
 
-## 10. Stack
+### Explore
 
-| Layer | Choice |
+1. Globe loads → `rpc('globe_points')` (≤ 5,000 rows: id, title, thumb path, lng/lat) → MapLibre GeoJSON source with `cluster: true`.
+2. Tap pin → preview card with thumbnail from `globe` bucket public URL.
+3. Open → `frescoes` row (RLS returns only public or own) → composite + photo URLs → slider.
+4. `rpc('same_wall', {p_fresco, p_radius_m: 50})` → strip.
+5. *(if time)* Mapillary search: `GET https://graph.mapillary.com/images?fields=id,computed_geometry&bbox=<±0.0006°>&limit=5` with the client token → nearest image within 60 m → MapillaryJS viewer; else Panoramax STAC search (`https://api.panoramax.xyz/api/search?bbox=…&limit=5`) → its viewer; else map only.
+
+## 4. Data model
+
+Full SQL, tested locally (PGlite + PostGIS with Supabase stubs, 17 checks in `docs/schema.test.mjs`): **`docs/schema.sql`**. Summary:
+
+```mermaid
+erDiagram
+  PROFILES ||--o{ FRESCOES : owns
+  FRESCOES ||--|| FRESCO_LOCATIONS : "exact point (owner-only)"
+  FRESCOES ||--o{ REPORTS : receives
+  PROFILES ||--o{ REPORTS : files
+  PROFILES {
+    uuid id PK
+    text display_name
+  }
+  FRESCOES {
+    uuid id PK
+    uuid owner_id FK
+    text title
+    text caption
+    text memory
+    text_array tags
+    enum visibility
+    enum pin_precision
+    geography public_location
+    text place_name
+    timestamptz captured_at
+    text photo_path
+    text drawing_path
+    text composite_path
+    text thumb_path
+    enum moderation
+    int report_count
+  }
+  FRESCO_LOCATIONS {
+    uuid fresco_id PK
+    uuid owner_id
+    geography location
+  }
+  REPORTS {
+    uuid id PK
+    uuid fresco_id FK
+    uuid reporter_id FK
+    text reason
+  }
+```
+
+Design choices:
+- **Exact point in its own table.** RLS filters rows, not columns; a public fresco row must never carry the exact point.
+- **`public_location` is derived by a trigger**, never written by the client (column grants forbid it): `exact` → the point; `neighborhood` → snapped to a 0.005° grid (~550 m); `private` → null.
+- **Moderation fields are not updatable by users** (column grants). One report flags a fresco; flagged frescoes are hidden from everyone but the owner.
+- **Read functions are `security invoker`**, so RLS applies inside them.
+
+## 5. Security and privacy
+
+- **Keys:** browser gets `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`, `VITE_MAPILLARY_TOKEN` (a client token, designed for browsers). Server-only (Vercel env): `OPENVERSE_CLIENT_ID`, `OPENVERSE_CLIENT_SECRET`. The Supabase service-role key is used only by `scripts/seed.ts` on a teammate's machine, never committed.
+- **RLS on every table**, storage policies scoped to `<uid>/` folders; `globe` bucket is public-read, `sketchbook` is private.
+- **EXIF stripped** by re-encoding every image through canvas → WebP before upload.
+- **Neighborhood by default**; street-level view hidden for neighborhood-precision frescoes.
+- **Auth:** OAuth only (Google, GitHub). Supabase's built-in email sender is heavily rate-limited on free projects, so no magic links.
+- **Inputs:** length checks in the database; tags limited to 5 × 24 chars in the UI; reference query ≤ 60 chars, stripped of control characters in the function.
+- **Vercel function:** only `GET /api/references?q=&page=`; rejects other methods; no user data passes through it.
+- **Map key hygiene:** OpenFreeMap needs no key. The Mapillary token is scoped to read; rotate it after the hackathon if the repo is public.
+
+## 6. Stack ($0, checked 2026-09-27)
+
+| Layer | Choice | Cost / license | Why this one |
+|---|---|---|---|
+| App | Vite + React + TypeScript (PWA via vite-plugin-pwa) | MIT | Static SPA; simplest on Vercel; no SSR needed |
+| Hosting | Vercel Hobby | Free, non-commercial | Git push → deploy; `api/` functions included. Fallback: Cloudflare Pages |
+| Database / Auth / Storage | Supabase Free | Free: 500 MB DB, 1 GB storage, 5 GB egress, 50k MAU; pauses after 7 idle days | Postgres + PostGIS + OAuth + storage in one free project |
+| Globe and maps | MapLibre GL JS v5 (globe projection, clustering) | BSD-3 | Open source; no key |
+| Tiles | OpenFreeMap ("Positron" or "Liberty" style) | Free, no key, no limits | Attribution required |
+| Place search | Photon (photon.komoot.io) | Free public API, fair use | Supports search-as-you-type |
+| Reverse geocoding | Nominatim (OSM) | Free; ≤ 1 request/second; no autocomplete | One call per new fresco |
+| EXIF | exifr | MIT | Fast, reads GPS + time |
+| Image compression | browser-image-compression | MIT | WebP, size targets, web worker |
+| Drawing | Konva + react-konva, Perfect Freehand | MIT | Layers + natural strokes; tldraw avoided (needs a production license key) |
+| Drafts | idb-keyval (IndexedDB) | Apache-2.0 | Tiny |
+| References | Openverse API via `/api/references` | Free; register a client for higher limits | Openly licensed images incl. Wikimedia Commons and Flickr, with license fields |
+| Street-level *(if time)* | Mapillary API v4 + MapillaryJS; Panoramax API + viewer as fallback | Free token; imagery CC BY-SA / open | Google Street View avoided (billing card required) |
+| Safety *(if time)* | nsfwjs (TensorFlow.js) | MIT | Runs in the browser, lazy-loaded at publish |
+| Weather *(if time)* | Open-Meteo historical API | Free, no key, non-commercial | One call per fresco |
+| Tests | Vitest, Playwright (smoke), `docs/schema.test.mjs` (PGlite) | MIT/Apache | — |
+
+## 7. Performance and free-tier budget
+
+| Budget | Target | How |
+|---|---|---|
+| Composite / photo / drawing | ≤ 350 KB each at 1600 px WebP | browser-image-compression, quality 0.8 |
+| Thumbnail | ≤ 40 KB at 400 px | Globe cards and Sketchbook use only thumbnails |
+| Storage per fresco | ~1 MB (4 images) in `sketchbook` + ~1 MB in `globe` if public | ~500 public frescoes fit in 1 GB with headroom; plenty for the hackathon |
+| Egress | 5 GB/month | Thumbnails everywhere except the open viewer; `Cache-Control` on uploads (`cacheControl: '31536000'`, files are immutable per fresco) |
+| Globe payload | ≤ 5,000 points, ~300 KB JSON | Single RPC; clustering in MapLibre |
+| JS bundle | ≤ 350 KB gzipped initial | Lazy-load drawing, viewer, safety model and MapillaryJS by route |
+
+**10× growth:** the first things to break are storage (1 GB) and egress (5 GB). Past ~2,000 public frescoes, move images to Cloudflare R2's free tier or pay for Supabase Pro; past ~5,000 globe points, switch `globe_points` to a bounding-box query.
+
+## 8. Failure behaviour
+
+| Dependency down | What the user sees |
 |---|---|
-| App | Vite + TypeScript + React (D-001) |
-| Pose model | MediaPipe Pose Landmarker: `@mediapipe/tasks-vision` in the browser, `mediapipe` in Python, same `.task` model file, self-hosted |
-| Ingest | Python 3.11 |
-| Hosting | Free static host (Cloudflare Pages / Vercel / GitHub Pages; verify current free-tier limits) |
-| Tests | Vitest (signature, match, families, counter-check) + pytest (signature, ingest smoke), both on `shared/test-vectors/` |
+| EXIF has no GPS | "No location in this photo. Use my current location / Place it on the map" |
+| Geolocation denied | Map picker only |
+| Nominatim fails or is slow (> 3 s) | Place name left blank and editable; saving continues |
+| Openverse / function fails | "References are unavailable right now" + retry; drawing unaffected |
+| Upload fails mid-save | Draft stays in IndexedDB; "Saved as draft on this device; retry upload" |
+| Supabase paused / unreachable | Globe shows "The gallery is waking up" with retry; creating works offline as a draft |
+| Mapillary / Panoramax have nothing nearby | Map of the spot + "No street-level imagery here yet" |
+| Tiles fail | Globe falls back to a plain sphere with pins (no basemap) |
 
-## 11. Architecture decisions
+## 9. Architecture decisions
 
-**ADR-001: Static app + prebuilt index, no backend.** *Proposed.* Nothing in the requirements needs a server; privacy (NFR-001) and $0 cost (NFR-003) come for free. Trade-off: the corpus is fixed at build time. Revisit past ~50k entries.
+**ADR-001: Supabase directly from the browser, secured by RLS, instead of a custom API server.** *Proposed.* Every read and write is a single-table operation or a small RPC; RLS and storage policies express all the access rules (tested in `schema.test.mjs`). Trade-off: business rules live in SQL; mistakes in policies are security bugs, so policies are tested before UI work. Revisit if moderation or feeds need server logic.
 
-**ADR-002: Match structure (signature) rather than raw joint distance.** *Proposed.* Joint-coordinate distance treats all differences alike and can't explain itself. Region scores over named features (tilts, bends, balance, line of action) match *mechanics* and produce explanations for the evidence view. Trade-off: signature code must be identical in two languages (NFR-005).
+**ADR-002: Two storage buckets (private `sketchbook`, public `globe`) with copies on publish.** *Proposed.* Public images load from a CDN URL without auth calls; private images are never publicly addressable. Trade-off: publishing doubles storage for that fresco; unpublish must delete the copies.
 
-**ADR-003: 2D image-plane analysis, not 3D.** *Proposed.* Learners draw what the camera sees, and 3D lifting from sketches is unreliable. Trade-off: foreshortening distorts ratios (handled by low weight and "apparent" labels). 3D matching is a later option.
+**ADR-003: Exact location in an owner-only table; public point derived by trigger.** *Proposed.* Row-level security can't hide one column, and client-computed "fuzzing" can be bypassed. Trade-off: one extra insert per fresco.
 
-**ADR-004: Openverse as the only source.** *Proposed.* It already covers Wikimedia Commons and Flickr with consistent license fields. One integration, one license format.
+**ADR-004: Open map stack (MapLibre + OpenFreeMap + Photon + Nominatim + Mapillary/Panoramax) instead of Google Maps.** *Proposed.* Meets the $0/no-card rule and has no key to leak. Trade-off: street-level coverage is thinner than Google's; the viewer must look complete without it.
 
-**ADR-005: Manual joint placement is a first-class path.** *Proposed.* Automatic detection on drawings is uncertain. Making manual placement over the sketch a normal step means the product works either way, and the Phase 0 result only changes which path is the default.
+**ADR-005: Openverse as the only reference source, through a caching proxy.** *Proposed.* One integration, consistent license fields, free. Trade-off: fewer polished product-style photos than Unsplash/Pexels; those can be added later behind the same function.
 
-## 12. Testing
+**ADR-006: No generative AI.** *Proposed.* The product is the artist's own interpretation; references are real, licensed photos.
 
-- **Signature vectors:** hand-made joint sets with known angles, e.g. a right elbow bent at exactly 90° gives `elbow_R = 90`. Both languages must pass.
-- **Perturbation tests:** rotate one limb of a reference skeleton by a known angle, and check that only that feature and region change, by that amount.
-- **Mirror test:** a mirrored skeleton scores 100 against the original with mirror on.
-- **Families:** synthetic candidates land in the expected family.
-- **Evaluation page:** automatic detection rate on the team's ~30 sketches (from Phase 0), plus the perturbation results.
+## 10. Testing
+
+- **Database:** `node docs/schema.test.mjs` (privacy, precision snapping, Same Wall, reports, storage folders); repeat the key checks against the real Supabase project in Phase 0 using two test accounts.
+- **Unit (Vitest):** EXIF parsing fallbacks, image pipeline output sizes and stripped metadata, undo/redo stack, reference response mapping (license fields present), pin precision UI → payload.
+- **Smoke (Playwright, desktop + mobile viewport):** sign in with a test user → upload fixture photo → draw 3 strokes → save private → publish → globe shows pin → viewer shows slider and Same Wall → unpublish → pin gone.
+- **Manual on a real phone:** drawing latency, camera capture, bottom-sheet references while drawing.

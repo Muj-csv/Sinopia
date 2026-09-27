@@ -1,19 +1,22 @@
-# Phase 2: Corpus + index
+# Phase 2: References
 
-**Goal:** 2–3k openly licensed single-person references with signatures.
-**Implements:** FR-008 (ingest side), NFR-004; builds the `index.json` and `stats.json` used by FR-004–005 and FR-009.
+**When:** Sep 28 (parallel with Phase 1). **Owner:** P5.
+**Goal:** a reference for anything, without leaving the canvas.
+**Implements:** FR-005, NFR-004.
 
 ## Tasks
-1. `ingest/ingest.py`: paginate Openverse over the search-term list (ARCHITECTURE §8) with the Phase 0 field names; retry with backoff; filter; detect joints; keep single-person images with ≥ 9 visible core joints; compute signatures with `signature.py`; build the attribution line; dedupe by ID.
-2. Write `index.v1.json` (schema in `shared/index.schema.json`) and `stats.json` (per-feature p2/p5/p50/p95/p98).
-3. `ingest/review.html` (a simple local page of thumbnails) so a teammate can review content and exclude IDs via `ingest/exclude.txt`.
+1. `src/references/`: a Reference button in the drawing toolbar opens a side panel (desktop, ≥ md) or a draggable bottom sheet (phone) that doesn't block the canvas; search box (≤ 60 chars) with debounce 400 ms; results grid of thumbnails from `/api/references`; tap to enlarge; pin one reference to keep it visible while drawing.
+2. Every result shows license (e.g. "CC BY 2.0"), creator and a source link; the NFR-004 statement appears once in the panel footer. Hide results missing license or source.
+3. Angle chips (*if time in this phase*): "side view", "from above", "close-up" run the query with that suffix.
+4. States per UX_MAP: idle (suggested words), loading, no results, error with retry, rate-limited.
+5. Session cache of queries in memory; the function's CDN cache handles repeats across users.
 
 ## Acceptance
-- ≥ 2,000 entries; 0 entries missing license, creator or source URL.
-- Index validates against the schema; review completed with an exclusion list committed.
-- Gzipped index ≤ 1.5 MB.
+- "fire hydrant", "shiba inu", "vending machine", "jeepney", "torii gate" each return ≥ 6 licensed results in ≤ 2 s on 4G.
+- Drawing continues with the panel open; the pinned reference stays visible.
+- No reference image is uploaded to Supabase.
 
 ## Don't touch
-The web UI (except copying the index into `web/public/`).
+Drawing internals (use the toolbar slot P2 provides), save flow.
 
-Stop and report entry counts by search term.
+Stop and report the five test searches' result counts and times.
