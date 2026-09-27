@@ -38,6 +38,7 @@ A finished piece is a **fresco**. Keep it private in your **Sketchbook**, or pub
 | Report a fresco | Done |
 | Street-level view of the real spot beside the fresco | Done |
 | In-browser safety check before publishing | Done |
+| Weather at capture ("light rain, 24°C") | Done |
 
 ## How it works
 
@@ -75,12 +76,12 @@ flowchart LR
 | Globe and maps | MapLibre GL JS, OpenFreeMap tiles, OpenStreetMap data |
 | Geocoding | Nominatim (reverse), Photon (search) |
 | References | Openverse API |
-| Street-level imagery | Mapillary, Panoramax |
+| Street-level imagery | Mapillary (MapillaryJS viewer), Panoramax fallback |
+| Safety check | nsfwjs (TensorFlow.js), lazy-loaded at publish |
+| Weather | Open-Meteo historical API |
 | Tests | Vitest, Playwright, PGlite (schema tests) |
 
 ## Getting started
-
-> Setup steps will be confirmed once the first build lands.
 
 **Hosting:** Vercel (existing account), importing `Muj-csv/Sinopia` with root directory `web/`. Account setup and every key/value the team needs to send back: [docs/SETUP.md](docs/SETUP.md).
 
@@ -111,7 +112,7 @@ npm i @electric-sql/pglite @electric-sql/pglite-postgis && node docs/schema.test
 ## Project structure
 
 ```
-web/                The Sinopia web app (capture, draw, references, sketchbook, globe, viewer)
+web/                The Sinopia web app (capture, draw, references, frescoes, sketchbook, globe, viewer, safety)
 web/api/            Vercel function: references proxy (Openverse)
 supabase/           Migrations (tables, Row Level Security, storage policies)
 scripts/            Seed script for demo frescoes
@@ -145,16 +146,15 @@ docs/               Concept, PRD, architecture, plan, decisions, design, build p
 
 ## Team
 
-GIBC requires real full names on Devpost; the 5 below are still placeholders pending names from the team (see `docs/SETUP.md`).
-
-| Name | Role |
+| Name | Contact |
 |---|---|
-| Ian Patrick Flores | Lead — Supabase, schema + privacy, save/publish/unpublish/delete, merges & deploys |
-| _TBD (P2)_ | Drawing canvas — Konva, layers, brush, undo/redo, autosave |
-| _TBD (P3)_ | Capture — camera/upload, EXIF GPS, pin picker, place name, compression; Reality ↔ Drawing slider |
-| _TBD (P4)_ | Globe and viewer — MapLibre globe, clustering, Photon search, Same Wall, street-level if time |
-| _TBD (P5)_ | References — `/api/references` proxy, reference panel, Sketchbook screens |
-| _TBD (P6)_ | Design and QA — app shell, component states, seeded frescoes, phone testing, Devpost |
+| Ian Patrick A. Flores | [muj.flores@gmail.com](mailto:muj.flores@gmail.com) · [GitHub](https://github.com/Muj-csv) |
+| Jace Matthew M. Catriz | [ecaj.2007@gmail.com](mailto:ecaj.2007@gmail.com) · [GitHub](https://github.com/anonymouslugaw) |
+| Fiona S. Guiao | [fsguiao@gmail.com](mailto:fsguiao@gmail.com) · [GitHub](https://github.com/pyonaa) |
+| Mary Princess Angel L. Dizon | [dizon.maryprincessangel@gmail.com](mailto:dizon.maryprincessangel@gmail.com) · [GitHub](https://github.com/mpadizon) |
+| Joey T. Cuison | [joeycuison333@gmail.com](mailto:joeycuison333@gmail.com) · [GitHub](https://github.com/joeycuison333-stack) |
+| Eiko G. Yaiki | [emii.milk06@gmail.com](mailto:emii.milk06@gmail.com) · [GitHub](https://github.com/gomezeiko) |
+| Mark Jemiel P. Guevarra | [jemielguevarra10@gmail.com](mailto:jemielguevarra10@gmail.com) · [GitHub](https://github.com/NeatKnight18586) |
 
 ## License
 
