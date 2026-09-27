@@ -1,0 +1,96 @@
+.draw-screen {
+  padding: var(--space-3);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.draw-status {
+  color: var(--color-text-secondary);
+  font-size: var(--text-caption);
+}
+
+.draw-canvas-container {
+  max-width: 100%;
+  overflow: auto;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-card);
+  touch-action: none;
+}
+
+.draw-finish {
+  min-height: 44px;
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-control);
+  border: none;
+  background: var(--color-accent);
+  color: var(--color-text-on-accent);
+  align-self: flex-start;
+}
+.draw-finish:disabled {
+  opacity: 0.5;
+}
+
+.tool-rail {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-card);
+  background: var(--color-surface);
+}
+
+.tool-rail-group {
+  display: flex;
+  gap: var(--space-2);
+}
+
+.tool-rail button {
+  min-width: 44px;
+  min-height: 44px;
+  padding: var(--space-2);
+  border-radius: var(--radius-control);
+  border: 1px solid var(--color-border);
+  background: var(--color-surface-raised);
+  color: var(--color-text-primary);
+}
+.tool-rail button:hover {
+  background: var(--color-surface-hover);
+}
+.tool-rail button.active {
+  border-color: var(--color-accent);
+  color: var(--color-accent);
+}
+.tool-rail button:disabled {
+  opacity: 0.4;
+}
+
+.tool-rail-colors button {
+  min-width: 32px;
+  min-height: 32px;
+  border-radius: 50%;
+  padding: 0;
+}
+.tool-rail-colors button.active {
+  outline: 2px solid var(--color-focus-ring);
+  outline-offset: 2px;
+}
+
+.tool-rail-slider {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  font-size: var(--text-caption);
+  color: var(--color-text-secondary);
+}
+
+.tool-rail-layers {
+  flex-direction: column;
+  gap: var(--space-1);
+}
+.tool-rail-layer {
+  display: flex;
+  gap: var(--space-1);
+}

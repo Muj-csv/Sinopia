@@ -1,0 +1,103 @@
+.capture-sheet,
+.pin-check {
+  padding: var(--space-5);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.capture-sheet-subtitle {
+  color: var(--color-text-secondary);
+}
+
+.capture-sheet-options {
+  display: flex;
+  gap: var(--space-3);
+}
+
+.capture-option {
+  flex: 1;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-control);
+  border: 1px solid var(--color-border);
+  background: var(--color-surface-raised);
+  color: var(--color-text-primary);
+  cursor: pointer;
+}
+.capture-option:hover {
+  background: var(--color-surface-hover);
+}
+.capture-option input {
+  display: none;
+}
+
+.capture-status {
+  color: var(--color-text-secondary);
+  font-size: var(--text-caption);
+}
+.capture-status-error {
+  color: var(--color-danger);
+}
+
+.capture-drafts h3 {
+  font-size: var(--text-caption);
+  color: var(--color-text-secondary);
+  margin-bottom: var(--space-2);
+}
+.capture-drafts ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+.capture-drafts button {
+  width: 100%;
+  min-height: 44px;
+  text-align: left;
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-control);
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-text-primary);
+}
+
+.pin-picker-map {
+  height: 320px;
+  border-radius: var(--radius-card);
+  overflow: hidden;
+  border: 1px solid var(--color-border);
+}
+
+.pin-check-place {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  font-size: var(--text-caption);
+  color: var(--color-text-secondary);
+}
+.pin-check-place input {
+  min-height: 44px;
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-control);
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-text-primary);
+}
+
+.pin-check-confirm {
+  min-height: 44px;
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-control);
+  border: none;
+  background: var(--color-accent);
+  color: var(--color-text-on-accent);
+}
+.pin-check-confirm:disabled {
+  opacity: 0.5;
+}
