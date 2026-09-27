@@ -19,6 +19,9 @@ const SketchbookPage = lazy(() =>
 const ProfilePage = lazy(() =>
   import('./auth/ProfilePage').then((m) => ({ default: m.ProfilePage })),
 )
+const FrescoViewer = lazy(() =>
+  import('./viewer/FrescoViewer').then((m) => ({ default: m.FrescoViewer })),
+)
 
 const NAV_ITEMS = [
   { to: '/', label: 'Globe', end: true },
@@ -51,6 +54,7 @@ function App() {
             <Route path="/new/finish" element={<FinishForm />} />
             <Route path="/sketchbook" element={<SketchbookPage />} />
             <Route path="/me" element={<ProfilePage />} />
+            <Route path="/f/:id" element={<FrescoViewer />} />
           </Routes>
         </Suspense>
       </main>

@@ -1,10 +1,8 @@
 /** MapLibre mini-map with a draggable marker, same no-key OpenFreeMap setup as GlobePage.tsx. */
 import * as maplibregl from 'maplibre-gl'
 import 'maplibre-gl/dist/maplibre-gl.css'
-import maplibreWorkerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url'
 import { useEffect, useRef } from 'react'
-
-maplibregl.setWorkerUrl(maplibreWorkerUrl)
+import '../lib/maplibreWorker'
 
 const OPENFREEMAP_STYLE = 'https://tiles.openfreemap.org/styles/positron'
 const DEFAULT_CENTER: [number, number] = [121.05, 14.6] // Metro Manila fallback

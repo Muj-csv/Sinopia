@@ -32,10 +32,10 @@ A finished piece is a **fresco**. Keep it private in your **Sketchbook**, or pub
 | Reference panel: search anything you're drawing, with license and source on every image | Done |
 | Sketchbook: your private album of frescoes | Done |
 | Publish to the globe, pinned at the exact spot or just the neighborhood | Done |
-| Globe with clustered pins, from world view to street level | Planned |
-| Fresco viewer with a Reality ↔ Drawing slider | Planned |
-| Same Wall: other frescoes made within 50 m | Planned |
-| Report a fresco | Planned |
+| Globe with clustered pins, from world view to street level | Done |
+| Fresco viewer with a Reality ↔ Drawing slider | Done |
+| Same Wall: other frescoes made within 50 m | Done |
+| Report a fresco | Done |
 | Street-level view of the real spot beside the fresco | Planned, if time |
 | In-browser safety check before publishing | Planned, if time |
 
