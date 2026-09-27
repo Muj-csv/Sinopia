@@ -86,3 +86,47 @@ updates the same rows rather than duplicating the globe.
   a copy, which is the state `publishFresco()` would have left them in.
 - `public_location` is never written by this script. The database derives it,
   the same as for a real publish (ADR-003).
+
+---
+
+# Openverse credentials
+
+`api/references.ts` works without credentials, but Openverse throttles
+anonymous callers at **20/min, 200/day**. A registered and verified client gets
+**100/min, 10,000/day**. That gap only matters at one moment — when several
+people search at once during a demo — which is exactly the moment you cannot
+afford the reference panel to fail.
+
+## Register
+
+```bash
+node scripts/register-openverse.mjs you@example.com
+```
+
+Writes `OPENVERSE_CLIENT_ID` and `OPENVERSE_CLIENT_SECRET` into
+`web/.env.local` (gitignored) and prints only a masked confirmation, so it is
+safe to run in a shared terminal. Read the values out of the file afterwards
+and copy them into Vercel.
+
+**Then click the verification link Openverse emails you.** It is single-use: a
+second click returns `HTTP 500 "Invalid verification code. Did you validate
+your credentials already?"`, which despite the 500 usually means it already
+worked. Don't trust that message either way — check instead.
+
+## Check
+
+```bash
+node scripts/check-openverse.mjs
+```
+
+Requests a token, makes one real search, and reports the throttle tier:
+
+- `oauth2_client_credentials_burst: 100/min` → verified
+- `anon_burst: 20/min` → registered but not verified
+
+It judges the authenticated response on its own rather than comparing it
+against an anonymous one. The comparison is the obvious experiment and it is
+wrong: Openverse sits behind a CDN, so an anonymous request can be served a
+cached response carrying an authenticated request's throttle headers, making
+the two look identical whatever the real tier is. The script sends a cache
+buster for the same reason.
