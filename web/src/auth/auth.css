@@ -59,3 +59,68 @@
   color: var(--color-danger);
   font-size: var(--text-caption);
 }
+
+/* '/about' (D-017): licences and credits. Theme variables only. */
+.about-page {
+  padding: var(--space-5);
+  max-width: 44rem;
+  color: var(--color-text-primary);
+}
+.about-page h2 {
+  font-family: var(--font-display);
+  font-size: var(--text-h1);
+  color: var(--color-accent);
+}
+.about-page h3 {
+  font-family: var(--font-display);
+  font-size: var(--text-h3);
+  margin-top: var(--space-6);
+  margin-bottom: var(--space-2);
+}
+.about-page p {
+  line-height: 1.6;
+  margin-bottom: var(--space-3);
+}
+.about-lede {
+  font-family: var(--font-display);
+  font-size: var(--text-h3);
+  color: var(--color-text-secondary);
+}
+.about-credits {
+  list-style: none;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+.about-credits li {
+  padding-bottom: var(--space-3);
+  border-bottom: 1px solid var(--color-border);
+}
+.about-credits a {
+  color: var(--color-accent);
+}
+.about-credit-what {
+  color: var(--color-text-primary);
+}
+.about-credit-terms {
+  display: block;
+  margin-top: var(--space-1);
+  font-size: var(--text-caption);
+  color: var(--color-text-secondary);
+}
+.about-back {
+  margin-top: var(--space-6);
+}
+.about-back a {
+  color: var(--color-accent);
+}
+
+/* Unknown route (UX_MAP has no such screen; keep it quiet and recoverable). */
+.not-found-screen {
+  padding: var(--space-5);
+  color: var(--color-text-secondary);
+}
+.not-found-screen a {
+  color: var(--color-accent);
+}

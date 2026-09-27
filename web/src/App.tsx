@@ -1,5 +1,5 @@
 import { Suspense, lazy } from 'react'
-import { NavLink, Route, Routes } from 'react-router-dom'
+import { Link, NavLink, Route, Routes } from 'react-router-dom'
 import { AuthGate } from './auth/AuthGate'
 
 // Lazy-loaded per route (ARCHITECTURE.md §7: keep the initial bundle small;
@@ -19,6 +19,7 @@ const SketchbookPage = lazy(() =>
 const ProfilePage = lazy(() =>
   import('./auth/ProfilePage').then((m) => ({ default: m.ProfilePage })),
 )
+const AboutPage = lazy(() => import('./auth/AboutPage').then((m) => ({ default: m.AboutPage })))
 const FrescoViewer = lazy(() =>
   import('./viewer/FrescoViewer').then((m) => ({ default: m.FrescoViewer })),
 )
@@ -54,7 +55,19 @@ function App() {
             <Route path="/new/finish" element={<FinishForm />} />
             <Route path="/sketchbook" element={<SketchbookPage />} />
             <Route path="/me" element={<ProfilePage />} />
+            <Route path="/about" element={<AboutPage />} />
             <Route path="/f/:id" element={<FrescoViewer />} />
+            <Route
+              path="*"
+              element={
+                <section className="not-found-screen">
+                  <h2>Nothing here</h2>
+                  <p>
+                    That page doesn&apos;t exist. <Link to="/">Back to the globe</Link>
+                  </p>
+                </section>
+              }
+            />
           </Routes>
         </Suspense>
       </main>

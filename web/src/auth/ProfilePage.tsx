@@ -1,5 +1,6 @@
 /** PHASE-3 task 1: profile display name (editable), sign out. */
 import { useEffect, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useSession } from '../lib/useSession'
 import './auth.css'
@@ -71,6 +72,9 @@ export function ProfilePage() {
       <section className="placeholder-screen">
         <h2>Profile</h2>
         <SignInPrompt />
+        <p className="about-back">
+          <Link to="/about">About Sinopia, licences and credits</Link>
+        </p>
       </section>
     )
   }
@@ -79,6 +83,9 @@ export function ProfilePage() {
     <section className="placeholder-screen">
       <h2>Profile</h2>
       <ProfileEditor userId={session.user.id} />
+      <p className="about-back">
+        <Link to="/about">About Sinopia, licences and credits</Link>
+      </p>
     </section>
   )
 }
