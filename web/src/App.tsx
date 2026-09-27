@@ -4,7 +4,11 @@ import { NavLink, Route, Routes } from 'react-router-dom'
 // Lazy-loaded per route (ARCHITECTURE.md §7: keep the initial bundle small;
 // Konva and MapLibre are the two heaviest dependencies).
 const GlobePage = lazy(() => import('./globe/GlobePage').then((m) => ({ default: m.GlobePage })))
-const DrawSpike = lazy(() => import('./draw/DrawSpike').then((m) => ({ default: m.DrawSpike })))
+const CaptureSheet = lazy(() =>
+  import('./capture/CaptureSheet').then((m) => ({ default: m.CaptureSheet })),
+)
+const PinCheck = lazy(() => import('./capture/PinCheck').then((m) => ({ default: m.PinCheck })))
+const DrawScreen = lazy(() => import('./draw/DrawScreen').then((m) => ({ default: m.DrawScreen })))
 const SketchbookPage = lazy(() =>
   import('./sketchbook/SketchbookPage').then((m) => ({ default: m.SketchbookPage })),
 )
@@ -30,7 +34,9 @@ function App() {
         <Suspense fallback={null}>
           <Routes>
             <Route path="/" element={<GlobePage />} />
-            <Route path="/new" element={<DrawSpike />} />
+            <Route path="/new" element={<CaptureSheet />} />
+            <Route path="/new/pin" element={<PinCheck />} />
+            <Route path="/new/draw" element={<DrawScreen />} />
             <Route path="/sketchbook" element={<SketchbookPage />} />
             <Route path="/me" element={<ProfilePage />} />
           </Routes>
