@@ -34,3 +34,5 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run test:schema
+      # scripts/seed.ts is not covered by the web job (different tsconfig, Node APIs).
+      - run: npm run typecheck:scripts

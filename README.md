@@ -39,6 +39,8 @@ A finished piece is a **fresco**. Keep it private in your **Sketchbook**, or pub
 | Street-level view of the real spot beside the fresco | Done |
 | In-browser safety check before publishing | Done |
 | Weather at capture ("light rain, 24°C") | Done |
+| About page: licences, privacy and credits | Done |
+| Seeded demo frescoes on the globe | Script ready, artwork pending |
 
 ## How it works
 
@@ -115,7 +117,7 @@ npm i @electric-sql/pglite @electric-sql/pglite-postgis && node docs/schema.test
 web/                The Sinopia web app (capture, draw, references, frescoes, sketchbook, globe, viewer, safety)
 web/api/            Vercel function: references proxy (Openverse)
 supabase/           Migrations (tables, Row Level Security, storage policies)
-scripts/            Seed script for demo frescoes
+scripts/            Seed script for the demo frescoes on the globe (see scripts/README.md)
 docs/               Concept, PRD, architecture, plan, decisions, design, build phases
 ```
 
