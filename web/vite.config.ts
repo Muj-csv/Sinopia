@@ -18,6 +18,13 @@ export default defineConfig({
         display: 'standalone',
         icons: [],
       },
+      workbox: {
+        // nsfwjs's TensorFlow.js model weight shards (tens of MB total) are
+        // lazy-loaded on demand at publish time (PHASE-5a task 2) -- they
+        // should never be part of the offline app-shell precache, and some
+        // exceed workbox's default 2MB precache limit and fail the build.
+        globIgnores: ['**/group1-shard*.js', '**/model.min-*.js'],
+      },
     }),
   ],
   test: {

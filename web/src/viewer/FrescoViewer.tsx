@@ -14,6 +14,8 @@ import { ReportDialog } from './ReportDialog'
 import { RevealSlider } from './RevealSlider'
 import { SameWallStrip } from './SameWallStrip'
 import { SpotMap } from './SpotMap'
+import { StreetLevelPanel } from './StreetLevelPanel'
+import { formatWeather, fetchWeatherAt, type WeatherResult } from './weather'
 import './viewer.css'
 
 type FrescoWithArtist = FrescoRow & { profiles: { display_name: string } | null }
@@ -29,6 +31,7 @@ export function FrescoViewer() {
   const [compositeUrl, setCompositeUrl] = useState<string | null>(null)
   const [reporting, setReporting] = useState(false)
   const [spot, setSpot] = useState<{ lng: number; lat: number } | null>(null)
+  const [weather, setWeather] = useState<WeatherResult | null>(null)
 
   useEffect(() => {
     if (id === undefined) return
@@ -73,6 +76,18 @@ export function FrescoViewer() {
     }
   }, [fresco])
 
+  useEffect(() => {
+    if (spot === null || fresco === null) return
+    const date = fresco.captured_at ?? fresco.created_at
+    let cancelled = false
+    fetchWeatherAt(spot.lat, spot.lng, date).then((result) => {
+      if (!cancelled) setWeather(result)
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [spot, fresco])
+
   if (status === 'loading') {
     return <p className="draw-status">Loading...</p>
   }
@@ -106,6 +121,7 @@ export function FrescoViewer() {
           {fresco.profiles?.display_name ?? 'An artist'}
           {fresco.place_name !== null && ` · ${fresco.place_name}`}
           {date !== null && ` · ${new Date(date).toLocaleDateString()}`}
+          {weather !== null && ` · ${formatWeather(weather)}`}
         </p>
         {fresco.caption !== null && <p>{fresco.caption}</p>}
         {fresco.memory !== null && <p className="viewer-memory">{fresco.memory}</p>}
@@ -118,6 +134,11 @@ export function FrescoViewer() {
         )}
 
         {spot !== null && <SpotMap lng={spot.lng} lat={spot.lat} />}
+
+        {/* FR-015: never for neighborhood precision -- would reveal the exact spot. */}
+        {spot !== null && fresco.pin_precision === 'exact' && (
+          <StreetLevelPanel lat={spot.lat} lng={spot.lng} />
+        )}
 
         {canReport && (
           <button type="button" onClick={() => setReporting(true)}>
