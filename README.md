@@ -27,11 +27,11 @@ A finished piece is a **fresco**. Keep it private in your **Sketchbook**, or pub
 
 | Feature | Status |
 |---|---|
-| Capture a photo with its GPS spot (from the photo or your phone), draggable pin | Planned |
-| Draw over the photo: brush, eraser, colors, layers, undo/redo | Planned |
-| Reference panel: search anything you're drawing, with license and source on every image | Planned |
-| Sketchbook: your private album of frescoes | Planned |
-| Publish to the globe, pinned at the exact spot or just the neighborhood | Planned |
+| Capture a photo with its GPS spot (from the photo or your phone), draggable pin | Done |
+| Draw over the photo: brush, eraser, colors, layers, undo/redo | Done |
+| Reference panel: search anything you're drawing, with license and source on every image | Done |
+| Sketchbook: your private album of frescoes | Done |
+| Publish to the globe, pinned at the exact spot or just the neighborhood | Done |
 | Globe with clustered pins, from world view to street level | Planned |
 | Fresco viewer with a Reality ↔ Drawing slider | Planned |
 | Same Wall: other frescoes made within 50 m | Planned |

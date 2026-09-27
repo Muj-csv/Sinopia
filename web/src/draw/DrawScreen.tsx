@@ -1,16 +1,16 @@
 /**
  * PHASE-1 task 3-6: '/new/draw'. Loads the draft, wires the canvas +
- * tool rail + autosave + keyboard shortcuts + export. Saving to Supabase
- * is explicitly out of scope for this phase (PHASE-1.md "Don't touch") --
- * Finish exports the fresco files and stops there.
+ * tool rail + autosave + keyboard shortcuts + export. Finish rasterizes
+ * the canvas, stashes the result on the draft, and hands off to
+ * PHASE-3's '/new/finish' form (FrescoFinishForm.tsx) for title/save.
  */
 import type Konva from 'konva'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { useSearchParams } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { getDraft, updateDraft, type Draft } from '../lib/draftStore'
 import { DrawCanvas, type Tool } from './DrawCanvas'
 import './draw.css'
-import { exportFresco, type FrescoExport } from './exportFresco'
+import { exportFresco } from './exportFresco'
 import {
   LAYER_COUNT,
   canRedo,
@@ -39,8 +39,8 @@ export function DrawScreen() {
   const [layerVisible, setLayerVisible] = useState<boolean[]>(Array(LAYER_COUNT).fill(true))
   const [recentColors, setRecentColors] = useState<string[]>([])
   const [tool, setTool] = useState<Tool>({ name: 'brush', color: '#1e1b18', size: 8, opacity: 1 })
-  const [exportResult, setExportResult] = useState<FrescoExport | null>(null)
   const [exporting, setExporting] = useState(false)
+  const navigate = useNavigate()
   const [resuming, setResuming] = useState(false)
 
   useEffect(() => {
@@ -129,7 +129,8 @@ export function DrawScreen() {
     setExporting(true)
     try {
       const result = await exportFresco(stageRef.current)
-      setExportResult(result)
+      await updateDraft(draftId, { exported: result })
+      navigate(`/new/finish?draft=${draftId}`)
     } finally {
       setExporting(false)
     }
@@ -184,13 +185,6 @@ export function DrawScreen() {
       >
         {exporting ? 'Exporting...' : 'Finish'}
       </button>
-
-      {exportResult !== null && (
-        <p className="draw-status">
-          Fresco exported: drawing {(exportResult.drawing.size / 1024).toFixed(0)}KB, composite{' '}
-          {(exportResult.composite.size / 1024).toFixed(0)}KB. Saving/publishing is a later phase.
-        </p>
-      )}
     </div>
   )
 }
