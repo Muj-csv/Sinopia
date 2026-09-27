@@ -1,11 +1,20 @@
 {
   "name": "sinopia",
   "private": true,
+  "type": "module",
   "scripts": {
-    "test:schema": "node docs/schema.test.mjs"
+    "test:schema": "node docs/schema.test.mjs",
+    "seed": "node scripts/seed.ts",
+    "seed:dry": "node scripts/seed.ts --dry-run",
+    "typecheck:scripts": "tsc -p scripts/tsconfig.json"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.117.2"
   },
   "devDependencies": {
     "@electric-sql/pglite": "^0.5.8",
-    "@electric-sql/pglite-postgis": "^0.2.8"
+    "@electric-sql/pglite-postgis": "^0.2.8",
+    "@types/node": "^24.19.0",
+    "typescript": "~6.0.2"
   }
 }

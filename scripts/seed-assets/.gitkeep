@@ -1,0 +1,3 @@
+One folder per manifest slug goes here, each containing
+photo.webp, drawing.webp, composite.webp and thumb.webp.
+See ../README.md for how to produce them.
