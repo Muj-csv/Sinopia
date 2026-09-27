@@ -1,112 +1,136 @@
 # Sinopia: Product Requirements
 
-*Sinopia* (the underdrawing painters sketched beneath a fresco) · **S**ketch **I**nterpreted **N**ext to **O**bserved **P**hotographic **I**nstances of **A**natomy
+*Sinopia* is the reddish underdrawing a fresco painter sketched on the wall before painting. In this app, the real world is the wall.
 
 | | |
 |---|---|
-| Version | 0.3 |
+| Version | 1.0 |
 | Status | Ready to build (open decisions in `DECISIONS.md`) |
-| Owner | Jum Flores and team |
-| Updated | 2026-09-24 |
-| Event | Global Innovation Build Challenge V2, Track 03 (Open). Deadline **Oct 1, 2026, 11:45 pm "CST"** (timezone to confirm, see D-003) |
+| Owner | Ian Patrick Flores (Jum) and team |
+| Updated | 2026-09-27 |
+| Event | Global Innovation Build Challenge V2, Track 03 (Open). Deadline **Oct 1, 2026, 23:45 UTC+8 (PHT)**. Judged on **Creativity, Execution, Impact, Presentation** |
+| Budget | **$0**: free tiers and open-source only, no credit card anywhere (NFR-003) |
 
-> **Turn your gesture sketch into evidence.**
+> **Draw on the real world. Leave it where you found it.**
 
 ## 1. Summary
 
-Sinopia is a reality check for gesture drawing. A learner uploads or draws a rough gesture sketch. Sinopia reads the body structure from it as a **pose signature** (torso lean, shoulder and pelvis tilt, limb angles, balance, line of action). It then finds real photographs whose body mechanics match, and shows **where the sketch's construction agrees or differs from real bodies**, region by region.
-
-Searching photos is the mechanism, not the product. The product is the comparison between a drawing and photographic reality. Every reference comes from openly licensed sources and carries its license and attribution. That's a trust layer, not the headline.
+Sinopia is a place-based drawing app. You photograph a real place, draw your own interpretation over the photo, and keep the result, a **fresco**, either privately in your **Sketchbook** or publicly on a shared **globe**, pinned where you took the photo. While drawing, a **reference panel** finds openly licensed photos of anything you're drawing, so you can draw a fire hydrant, a shiba inu or a jeepney without leaving the canvas. Anyone can explore the globe, open a fresco, slide between the real photo and the drawing, see the street-level view of that spot, and browse other frescoes made at the same place (**Same Wall**).
 
 ## 2. Problem
 
-Gesture-drawing learners make fast, rough figure sketches. When a sketch "looks wrong", they usually can't tell *why*: is the pelvis tilted the wrong way, is the weight leg not under the body, is the arm bent past what a body does? Finding a reference is hard because poses can't be described in words. Even with a reference, comparing drawing and photo is done by eye, which is exactly the skill they're still learning.
+- Artists who draw over photos or sketch on location have nowhere that keeps **the place, the photo and the drawing together**. Their work ends up in camera rolls and social feeds organised by date and likes, detached from where it happened.
+- Drawing an unfamiliar object into a scene means leaving the canvas to search for references, losing flow, and often landing on images with unclear licenses.
+- Places have no visual memory of how people imagined them. Maps show where things are and photo apps show what they looked like, but nothing shows how different people reinterpreted the same corner.
+
+*Evidence status:* the team's own experience as student artists. Five artist reactions to the working demo are planned before the video (IMPLEMENTATION_PLAN, Phase 5).
 
 ## 3. Users
 
-- **Primary:** gesture-drawing learners (students and self-taught artists) who make 30 s – 2 min gesture sketches and want real-world checks.
-- **Secondary:** illustrators who need a real reference for one specific body relationship ("the body is right, but I can't figure out this arm").
+- **Primary:** art students and hobby artists who draw over photos or sketch on location (mobile-first).
+- **Secondary:** people exploring a place through how others drew it: travellers, locals, classmates, judges.
 
 ## 4. Goals and non-goals
 
 **Goals**
-- G-1: Turn a rough sketch into a pose signature the user can see and correct.
-- G-2: Return real references that match the *structure* of the gesture, not just overall joint positions.
-- G-3: Show per-region agreement and differences between the sketch and a chosen reference, in angles the learner can act on.
-- G-4: Every reference shown carries its source license information and attribution.
+- G-1: Go from a real photo to a finished drawing on it, on a phone, in one sitting.
+- G-2: Get a reference for anything you're drawing without leaving the canvas.
+- G-3: Keep every fresco tied to its place and time, privately or publicly, under the artist's control.
+- G-4: Let anyone explore the world through frescoes: globe → place → fresco → the real spot → other frescoes of the same spot.
 
-**Non-goals:** generating images; grading drawings or claiming a drawing is "correct"; text-to-pose search; a general reference library; accounts; mobile apps; hosting or redistributing images.
+**Non-goals (MVP):** likes, follower counts, feeds or rankings; comments or chat; AI image generation; AR; a full Photoshop-style editor; native mobile apps (it's a mobile-first web app / PWA); paid services of any kind.
 
-**Language rule:** results are described as **pose geometry similarity** and **differences from this reference**, never as a correctness score or "error".
+## 5. Vocabulary
 
-## 5. Scope
+| Term | Meaning |
+|---|---|
+| **Sinopia** | A drawing in progress (a draft) |
+| **Fresco** | A finished piece: original photo + drawing layer + place + time + text |
+| **Sketchbook** | The artist's private album of frescoes |
+| **Globe** | The public world map of published frescoes |
+| **Same Wall** | All public frescoes made within ~50 m of a spot |
 
-| MVP | Supporting (if time allows) | Later |
+## 6. Scope
+
+| MVP | If time allows | Later |
 |---|---|---|
-| Sketch capture (upload, photo, or in-browser canvas) · skeleton extraction with manual correction · pose signature · structural match · evidence view · gesture families · lock-a-relationship search · license + attribution | Counter-check ("uncommon in this reference set") · evaluation page · keyboard joint editing | Step-by-step construction guide (line of action → stick figure → masses → cylinders) · larger corpus · camera-angle-aware matching (3D) |
+| Sign in · capture photo + GPS pin · draw (brush, eraser, colors, size, opacity, 3 layers, undo/redo) · reference panel (search anything, license on each result) · save to Sketchbook · publish/unpublish to globe with pin precision · globe with clustered pins · fresco viewer with Reality ↔ Drawing slider · Same Wall strip · report · seeded demo frescoes | Street-level view of the spot (Mapillary, Panoramax fallback) · angle chips on references · in-browser safety check before publishing · weather at capture · PWA install | Suggest reference words from your strokes · "draw this wall too" responses · place timelines · collections and stories · AR |
 
-## 6. User journeys
+## 7. User journeys
 
-1. **Reality check (primary).** Upload or draw a sketch → a skeleton appears over it → adjust any misplaced joint → see the pose signature → see matching references grouped into gesture families → open one → evidence view shows sketch vs photo with region-by-region similarity and the largest differences → use the reference (license + attribution shown).
-2. **Detection fails.** "Couldn't find a figure. Place the joints on your sketch." Joint placement opens with the sketch underneath; the journey continues from the signature step.
-3. **Fix one part.** In the evidence view, lock *torso + right arm* → search again → references that preserve that relationship while other parts vary.
+1. **Make a fresco.** Tap **New** → take or upload a photo → the pin drops from the photo's GPS (or the phone's location); drag to fix it → draw → open **Reference**, type "fire hydrant", keep the panel open beside the canvas while drawing → **Finish**: title, optional caption and memory, tags → **Keep in Sketchbook** or **Publish to Globe** (choose *exact spot* or *neighborhood*).
+2. **Explore.** Open the globe → spin to Japan → zoom into Tokyo → tap a cluster → tap a pin → the fresco viewer opens: drag the slider from the real photo to the drawing → see the street-level view of the spot → scroll Same Wall to other artists' frescoes of that corner → open one.
+3. **Sketchbook.** Open **Sketchbook** → browse your frescoes as a carousel grouped by place or month → open one → edit text, change pin precision, publish or unpublish, delete.
+4. **Report.** On someone else's fresco → **Report** → pick a reason → it disappears from the globe for everyone until the team reviews it.
 
-## 7. Functional requirements
-
-| ID | Requirement |
-|---|---|
-| FR-001 | **Sketch capture:** upload an image (PNG/JPG ≤ 10 MB), take a camera photo, or draw directly on an in-browser canvas. |
-| FR-002 | **Skeleton extraction:** detect 13 core joints automatically; show them over the sketch; every joint can be dragged. If detection fails or confidence is low, open manual joint placement with the sketch as background. |
-| FR-003 | **Pose signature:** compute and display the signature (ARCHITECTURE §4): torso lean, shoulder tilt, pelvis tilt, tilt contrast, head offset, 8 limb-segment angles, 4 joint bends, apparent limb ratios, balance offset and weight side, line-of-action angle and curvature. |
-| FR-004 | **Structural match:** rank the corpus by region-weighted signature similarity (mirror-aware) and return the top 24. |
-| FR-005 | **Gesture families:** group the top 60 candidates into *Same gesture*, *Same upper body (different legs)* and *Same lower body (different upper body)*, with counts. |
-| FR-006 | **Evidence view:** sketch and reference side by side, with toggles Sketch / Skeleton / Photo / Overlay (reference skeleton aligned to the sketch at the hips and scaled by torso length). Shows per-region similarity (Torso, Shoulders, Pelvis, Left arm, Right arm, Left leg, Right leg, Gesture) and the 3 largest angle differences in plain words ("Right elbow: yours 150°, reference 95°"). |
-| FR-007 | **Lock a relationship:** select one or more regions; the search then scores only those regions. |
-| FR-008 | **License + attribution:** each reference shows license, creator, source and a link to the source page; "Copy attribution" copies a title-author-source-license line. Entries with missing license or source metadata are excluded at ingest. |
-| FR-009 *(supporting)* | **Counter-check:** if a sketch relationship falls outside the corpus's 2nd–98th percentile and no reference matches that region at ≥ 70%, flag it: "Uncommon in this reference set (0 of N references). It may be stylized or worth checking." |
-| FR-010 *(supporting)* | **Evaluation page:** automatic detection rate on the team's sketch set, and correctness checks of the signature (ARCHITECTURE §8). |
-
-## 8. Non-functional requirements
+## 8. Functional requirements
 
 | ID | Requirement |
 |---|---|
-| NFR-001 | **Privacy:** sketches never leave the user's device; all processing runs in the browser. |
-| NFR-002 | **Performance:** search + families ≤ 1 s for ~3,000 references on a mid-range laptop; first load (model + index) ≤ 6 s on ~10 Mbps. |
-| NFR-003 | **Cost:** $0 to run (static hosting). |
-| NFR-004 | **Licensing statement:** "Every displayed result carries the license information reported by its source, plus attribution metadata. Entries with missing licensing metadata are excluded. License information is as reported upstream and should be checked at the source before reuse." Never claim results are "safe" or "guaranteed". |
-| NFR-005 | **Consistency:** the pose signature is identical in Python (ingest) and TypeScript (app) within 0.01°, checked by shared test vectors. |
-| NFR-006 | **Accessibility:** joints can be moved with the keyboard; results have alt text; contrast meets WCAG AA. |
+| FR-001 | **Sign in** with Google or GitHub (Supabase Auth). Browsing the globe and viewing public frescoes needs no account. |
+| FR-002 | **Capture:** take a photo (camera) or upload JPG/PNG/HEIC-converted-by-browser ≤ 15 MB. Read GPS and capture time from EXIF; if missing, offer the device's current location or a pin placed on a map. The pin is always draggable before saving. |
+| FR-003 | **Image preparation:** in the browser, resize to ≤ 1600 px on the long side and re-encode as WebP (this also strips EXIF metadata, including GPS); make a 400 px thumbnail. |
+| FR-004 | **Draw:** freehand brush with pressure-like smoothing, eraser, color picker with recent colors, size, opacity, 3 drawing layers above the photo, undo/redo (≥ 50 steps), pinch-zoom and pan, clear layer. The photo is never modified. Autosave the draft (sinopia) locally every 10 s. |
+| FR-005 | **Reference panel:** a search box for any subject; results from Openverse in a side panel (bottom sheet on phones) that stays open while drawing; tap a result to enlarge; each result shows license, creator and source link. Optional angle chips run extra searches ("… side view", "… from above", "… close-up"). |
+| FR-006 | **Finish:** title (required, ≤ 80 chars), caption (≤ 500), "what I remember" (≤ 1,000), up to 5 tags, place name (auto from reverse geocoding, editable). |
+| FR-007 | **Save privately:** upload photo, drawing layer (transparent WebP), composite and thumbnail to the private Sketchbook bucket; create the fresco record with visibility `private`; store the exact point in the owner-only location table. |
+| FR-008 | **Publish / unpublish:** publishing copies the four images to the public bucket and sets visibility `public` with a pin precision: `exact` or `neighborhood` (snapped to a ~550 m grid). Default is `neighborhood`; choosing `exact` shows a one-line warning. Unpublishing removes the public copies and the public point. |
+| FR-009 | **Globe:** a 3D globe with clustered pins of public frescoes; zoom from world to street level; tapping a cluster zooms in; tapping a pin opens a preview card (thumbnail, title, artist, place). Place search box. |
+| FR-010 | **Fresco viewer:** the composite with a **Reality ↔ Drawing slider** (photo only ↔ photo + drawing), title, artist, place, date, caption, memory, tags, and a small map of the spot. |
+| FR-011 | **Same Wall:** in the viewer, a strip of other public frescoes within 50 m of this fresco's public point, nearest first, up to 24. Empty state explains that nobody else has drawn here yet. |
+| FR-012 | **Sketchbook:** the owner's frescoes as a carousel/grid, grouped by place or month; open, edit text, change precision, publish/unpublish, delete (with confirmation). |
+| FR-013 | **Report:** signed-in users can report a public fresco (reason ≤ 300 chars). One report hides it from others until reviewed (hackathon policy, D-010). |
+| FR-014 | **Seeded demo:** ≥ 20 public frescoes by the team across ≥ 5 cities, so the globe is populated during judging. |
+| FR-015 *(if time)* | **Street-level view:** in the viewer, the nearest Mapillary image within 60 m of the public point, in an embedded viewer beside the fresco; fallback to Panoramax; if neither exists, show the map only with "No street-level imagery here yet". Never shown for `neighborhood` precision (it would reveal nothing useful and could hint at the exact spot). |
+| FR-016 *(if time)* | **Safety check:** before publishing, run an in-browser image classifier on the composite; if it flags explicit content, block publishing with an explanation. |
+| FR-017 *(if time)* | **Weather at capture:** add "light rain, 24°C" from Open-Meteo's historical data for the capture time and place. |
 
-## 9. Data
+## 9. Non-functional requirements
 
-- **Reference (index entry):** id, provider, thumbnail URL, source page URL, license, license version, creator, title, attribution line, normalized joints, joint visibility, pose signature.
-- The index is built by the ingest script, read-only in the app, and rebuilt (not edited). No image files are stored.
-- **Corpus stats:** per-feature percentile tables used by the counter-check, built with the index.
-- **Sketch and query:** in memory only; never stored or transmitted.
+| ID | Requirement |
+|---|---|
+| NFR-001 | **Privacy:** exact GPS is readable only by the owner (separate table + RLS). Public frescoes expose only the chosen precision. Uploaded images carry no EXIF metadata. Private frescoes are unreadable to anyone but the owner, enforced by the database and storage policies, not the UI. |
+| NFR-002 | **Performance (mid-range Android on 4G):** first paint ≤ 2.5 s; globe interactive ≤ 4 s; drawing latency ≤ 16 ms per stroke segment; reference results ≤ 2 s. |
+| NFR-003 | **Cost:** $0. Only free tiers and open-source libraries; no service that needs a credit card. Stay under Supabase Free limits (500 MB DB, 1 GB storage, 5 GB egress/month) by compressing images (~300 KB composite, ~40 KB thumbnail). |
+| NFR-004 | **Licensing:** every reference shows its license, creator and source link as reported by Openverse, with the statement "License information is as reported by the source; check it before reuse." Map attribution for OpenStreetMap/OpenFreeMap (and Mapillary when used) is always visible. |
+| NFR-005 | **Security:** only the Supabase anon key ships to the browser; the service-role key and Openverse client secret live in server-side environment variables. Inputs validated in the database (length checks) and in the UI. |
+| NFR-006 | **Accessibility:** WCAG 2.2 AA contrast; every control reachable by keyboard; 44 px touch targets; slider operable by keyboard; alt text = fresco title + place; honors reduced motion. |
+| NFR-007 | **Availability:** Supabase Free pauses after 7 days without activity. Keep it active through judging (open the app every few days or use a scheduled ping, `DECISIONS.md` D-012). |
 
-## 10. AI and model use
+## 10. Data
 
-- **Model:** MediaPipe Pose Landmarker for joint detection (the same model file in ingest and in the browser).
-- **The model only estimates joint positions.** Signatures, matching, grouping, comparisons and licensing are deterministic code.
-- **Failure handling:** if detection fails, manual joint placement takes over; the product works without automatic detection.
-- **Known limitation:** the model is trained on photos, so detection on drawings is less reliable. Research such as Sketch2Pose (ACM TOG 2022) addresses this and is a possible later improvement.
+- **Fresco:** id, owner, title, caption, memory, tags, visibility, pin precision, public point (derived), place name, captured time, image paths (photo, drawing, composite, thumbnail), moderation state, report count, timestamps.
+- **Fresco location:** fresco id, owner, exact point. Owner-only.
+- **Profile:** id, display name.
+- **Report:** fresco, reporter, reason, time. Readable only by the team.
+- **Images:** private `sketchbook` bucket and public `globe` bucket, paths `<owner>/<fresco>/<file>.webp`.
+- **Drafts (sinopias):** stored in the browser (IndexedDB) until finished; never uploaded.
+- **Deletion:** deleting a fresco removes its rows and both buckets' files; deleting an account cascades to everything.
 
-## 11. Risks
+Full schema: `docs/schema.sql`.
+
+## 11. AI and model use
+
+No generative AI. Optional in-browser models only: an image-safety classifier before publishing (FR-016). Reference search, geocoding and maps are ordinary APIs. Sinopia never generates or alters artwork.
+
+## 12. Risks
 
 | Risk | Likelihood | Impact | Mitigation |
 |---|---|---|---|
-| Detection fails on loose sketches | Medium–High | Medium | Manual placement is always available; the Phase 0 test decides the default path |
-| 2D limb ratios distorted by foreshortening | High | Medium | Ratios labelled "apparent"; low weight in matching; explained in the evidence view |
-| Nudity in figure-reference results | Medium | High | Mature-content filter at ingest + manual review of the whole corpus before the demo |
-| Upstream license metadata wrong | Low–Medium | Medium | NFR-004 wording; source link on every result |
-| Small corpus skews the counter-check | High | Medium | "In this reference set" wording, with the reference count shown; supporting scope only |
-| Judges compare with Aphrite / PoseSearch / Posematic | High | Medium | Those tools find poses; Sinopia compares your drawing's structure to real bodies (evidence view, families, lock) |
-| Same team building Pasabi this week | ? | High | D-004 |
+| Pivot with ~4.5 days left | High | High | Tight MVP; cut the "if time" column first; feature freeze Sep 30 18:00 PHT |
+| Exact pins reveal homes | Medium | High | Default `neighborhood`; warning on `exact`; EXIF stripped; exact point owner-only |
+| Offensive public uploads | Medium | High | Sign-in required to publish; report hides instantly; optional in-browser safety check; team review in the Supabase dashboard |
+| Globe looks empty on stage | High | High | FR-014 seeded frescoes |
+| Free-tier limits (storage, egress, inactivity pause) | Medium | High | Compression, thumbnails on the globe, keep-alive during judging |
+| Third-party API down or rate-limited (Openverse, Nominatim, Mapillary) | Medium | Medium | Each has a graceful fallback (UX_MAP); cache reference results for 24 h; never block saving on them |
+| Drawing feels laggy on phones | Medium | High | Konva + Perfect Freehand on one active layer; test on a real mid-range phone in Phase 1 |
+| Overlap with the team's FirstCommit entry | ? | High | GIBC disqualifies work "substantially the same as a previous hackathon entry"; keep the entries distinct (D-004) |
 
-## 12. Definition of Done (GIBC V2)
+## 13. Definition of Done (GIBC V2)
 
-- MVP scope works end to end at a public URL.
-- Public repo with README.
-- 2–5 minute demo video with English audio or subtitles.
+- MVP scope works end to end at a public URL on a phone and a laptop, with ≥ 20 seeded frescoes.
+- Public repo with a README containing setup instructions; repo state at the deadline is what's judged.
+- 2–5 minute demo video (YouTube, Vimeo or Youku) with English audio or subtitles.
 - At least 3 screenshots.
-- Devpost description with "Built With" list and all team members' real names.
+- Devpost description with a complete "Built With" list (every library, API and dataset in ARCHITECTURE §6) and all team members by real full name, each with a Devpost account added to the submission.
+- Submitted by **Oct 1, 15:00 PHT** (8 h before the deadline).

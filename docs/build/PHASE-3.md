@@ -1,22 +1,23 @@
-# Phase 3: Capture + structural match
+# Phase 3: Save, publish, Sketchbook
 
-**Goal:** sketch in, matching references out, grouped into families.
-**Implements:** FR-001, FR-002, FR-004, FR-005, NFR-001, NFR-002.
+**When:** Sep 28–29. **Owners:** Ian (flows), P5 (Sketchbook UI).
+**Goal:** frescoes that are private by default, publishable with a chosen precision, and reversible.
+**Implements:** FR-001, FR-006, FR-007, FR-008, FR-012; NFR-001, NFR-005.
 
 ## Tasks
-1. `src/capture/`: upload (PNG/JPG ≤ 10 MB), camera capture, in-browser canvas drawing; Phase 0's best preprocessing; detection in the browser; the default path per D-002.
-2. Joint editor: 13 draggable joints over the sketch (also used for fully manual placement); keyboard movement (select joint, arrow keys).
-3. `src/pose/match.ts`: region scores, overall weighted score, mirror, top 60 / top 24, reading `shared/rules.json`.
-4. `src/pose/families.ts` per ARCHITECTURE §6.
-5. Results screen: signature panel (plain-language values), family tabs with counts, results grid with license badges. Loading, empty and error states.
-6. Deploy to a static host.
+1. `src/auth/`: Google + GitHub sign-in (Supabase OAuth); sign-in gate on New, Publish and Report; profile display name editable.
+2. Finish form (FR-006) with validation matching the database limits.
+3. Save (FR-007): upload photo, drawing, composite, thumb to `sketchbook/<uid>/<fid>/` (`cacheControl: '31536000'`); insert `frescoes` (private) then `fresco_locations`. On failure keep the draft and show retry.
+4. Publish (FR-008): precision choice (default neighborhood; warning text for exact); upload the four files to `globe/<uid>/<fid>/`; update `visibility='public'`, `pin_precision`. Unpublish: update to private, then delete the globe files. Delete: remove both buckets' files, then the row.
+5. `src/sketchbook/`: the owner's frescoes (select own rows), grouped by place or month; carousel on phones; detail with edit, publish/unpublish, delete; signed URLs for private images.
+6. Playwright smoke: sign in (test user) → save private → not visible to a second test user → publish → visible → unpublish → gone.
 
 ## Acceptance
-- PRD journeys 1 (up to the results) and 2 work on the deployed URL in Chrome and Firefox.
-- Search + families ≤ 1 s for the full index.
-- Family unit tests pass.
+- The smoke test passes against the deployed preview.
+- A published neighborhood fresco's public point differs from the exact point (check in the dashboard).
+- No private image URL works without the owner's session.
 
 ## Don't touch
-Evidence view, counter-check.
+Globe rendering, viewer.
 
 Stop and report.
