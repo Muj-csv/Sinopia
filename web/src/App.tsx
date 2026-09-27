@@ -1,0 +1,56 @@
+import { Suspense, lazy } from 'react'
+import { NavLink, Route, Routes } from 'react-router-dom'
+
+// Lazy-loaded per route (ARCHITECTURE.md §7: keep the initial bundle small;
+// Konva and MapLibre are the two heaviest dependencies).
+const GlobePage = lazy(() => import('./globe/GlobePage').then((m) => ({ default: m.GlobePage })))
+const DrawSpike = lazy(() => import('./draw/DrawSpike').then((m) => ({ default: m.DrawSpike })))
+const SketchbookPage = lazy(() =>
+  import('./sketchbook/SketchbookPage').then((m) => ({ default: m.SketchbookPage })),
+)
+const ProfilePage = lazy(() =>
+  import('./auth/ProfilePage').then((m) => ({ default: m.ProfilePage })),
+)
+
+const NAV_ITEMS = [
+  { to: '/', label: 'Globe', end: true },
+  { to: '/new', label: 'New' },
+  { to: '/sketchbook', label: 'Sketchbook' },
+  { to: '/me', label: 'Profile' },
+]
+
+function App() {
+  return (
+    <div className="app-shell">
+      <header className="app-header">
+        <h1>Sinopia</h1>
+      </header>
+
+      <main className="app-content">
+        <Suspense fallback={null}>
+          <Routes>
+            <Route path="/" element={<GlobePage />} />
+            <Route path="/new" element={<DrawSpike />} />
+            <Route path="/sketchbook" element={<SketchbookPage />} />
+            <Route path="/me" element={<ProfilePage />} />
+          </Routes>
+        </Suspense>
+      </main>
+
+      <nav className="app-nav" aria-label="Primary">
+        {NAV_ITEMS.map(({ to, label, end }) => (
+          <NavLink
+            key={to}
+            to={to}
+            end={end}
+            className={({ isActive }) => (isActive ? 'active' : undefined)}
+          >
+            {label}
+          </NavLink>
+        ))}
+      </nav>
+    </div>
+  )
+}
+
+export default App
