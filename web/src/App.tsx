@@ -1,5 +1,6 @@
 import { Suspense, lazy } from 'react'
 import { NavLink, Route, Routes } from 'react-router-dom'
+import { AuthGate } from './auth/AuthGate'
 
 // Lazy-loaded per route (ARCHITECTURE.md §7: keep the initial bundle small;
 // Konva and MapLibre are the two heaviest dependencies).
@@ -9,6 +10,9 @@ const CaptureSheet = lazy(() =>
 )
 const PinCheck = lazy(() => import('./capture/PinCheck').then((m) => ({ default: m.PinCheck })))
 const DrawScreen = lazy(() => import('./draw/DrawScreen').then((m) => ({ default: m.DrawScreen })))
+const FinishForm = lazy(() =>
+  import('./frescoes/FinishForm').then((m) => ({ default: m.FinishForm })),
+)
 const SketchbookPage = lazy(() =>
   import('./sketchbook/SketchbookPage').then((m) => ({ default: m.SketchbookPage })),
 )
@@ -34,9 +38,17 @@ function App() {
         <Suspense fallback={null}>
           <Routes>
             <Route path="/" element={<GlobePage />} />
-            <Route path="/new" element={<CaptureSheet />} />
+            <Route
+              path="/new"
+              element={
+                <AuthGate message="Sign in to start a new sinopia.">
+                  <CaptureSheet />
+                </AuthGate>
+              }
+            />
             <Route path="/new/pin" element={<PinCheck />} />
             <Route path="/new/draw" element={<DrawScreen />} />
+            <Route path="/new/finish" element={<FinishForm />} />
             <Route path="/sketchbook" element={<SketchbookPage />} />
             <Route path="/me" element={<ProfilePage />} />
           </Routes>

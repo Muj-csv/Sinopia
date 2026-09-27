@@ -20,6 +20,8 @@ export interface Draft {
   location: { lat: number; lng: number } | null
   placeName: string | null
   history: History
+  /** Set once DrawScreen's Finish button has rasterized the canvas (PHASE-3 task 2-3). */
+  exported?: { drawing: Blob; composite: Blob }
 }
 
 const store = createStore('sinopia-drafts', 'drafts')

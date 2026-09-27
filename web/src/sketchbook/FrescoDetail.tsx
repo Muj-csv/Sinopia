@@ -1,0 +1,183 @@
+/** PHASE-3 task 5: detail view -- edit, publish/unpublish, delete. */
+import { useEffect, useState } from 'react'
+import { deleteFresco } from '../frescoes/deleteFresco'
+import {
+  MAX_CAPTION,
+  MAX_MEMORY,
+  MAX_TAGS,
+  MAX_TITLE,
+  isValid,
+  validateFinishFields,
+} from '../frescoes/fresco'
+import { publishFresco, unpublishFresco } from '../frescoes/publishFresco'
+import { supabase } from '../lib/supabase'
+import { frescoImageUrl } from './frescoImageUrl'
+import type { FrescoRow } from './frescoRow'
+
+export function FrescoDetail({
+  fresco,
+  onClose,
+  onChanged,
+}: {
+  fresco: FrescoRow
+  onClose: () => void
+  onChanged: () => void
+}) {
+  const [imageUrl, setImageUrl] = useState<string | null>(null)
+  const [title, setTitle] = useState(fresco.title)
+  const [caption, setCaption] = useState(fresco.caption ?? '')
+  const [memory, setMemory] = useState(fresco.memory ?? '')
+  const [placeName, setPlaceName] = useState(fresco.place_name ?? '')
+  const [precision, setPrecision] = useState<'exact' | 'neighborhood'>('neighborhood')
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    frescoImageUrl(fresco.visibility, fresco.composite_path).then(setImageUrl)
+  }, [fresco])
+
+  const fields = { title, caption, memory, tags: fresco.tags, placeName }
+  const errors = validateFinishFields(fields)
+
+  const saveEdits = async () => {
+    setBusy(true)
+    setError(null)
+    const { error: updateError } = await supabase
+      .from('frescoes')
+      .update({
+        title: title.trim(),
+        caption: caption || null,
+        memory: memory || null,
+        place_name: placeName || null,
+      })
+      .eq('id', fresco.id)
+    setBusy(false)
+    if (updateError) setError("Couldn't save your changes.")
+    else onChanged()
+  }
+
+  const publish = async () => {
+    setBusy(true)
+    setError(null)
+    const result = await publishFresco(fresco.owner_id, fresco.id, precision)
+    setBusy(false)
+    if (result.ok) onChanged()
+    else setError(result.error ?? "Publishing didn't finish.")
+  }
+
+  const unpublish = async () => {
+    setBusy(true)
+    setError(null)
+    const result = await unpublishFresco(fresco.owner_id, fresco.id)
+    setBusy(false)
+    if (result.ok) onChanged()
+    else setError(result.error ?? "Couldn't unpublish.")
+  }
+
+  const remove = async () => {
+    if (!window.confirm(`Delete "${fresco.title}"? This can't be undone.`)) return
+    setBusy(true)
+    setError(null)
+    const result = await deleteFresco(fresco.owner_id, fresco.id, fresco.visibility === 'public')
+    setBusy(false)
+    if (result.ok) {
+      onChanged()
+      onClose()
+    } else {
+      setError(result.error ?? "Couldn't delete.")
+    }
+  }
+
+  return (
+    <div className="fresco-detail-backdrop" onClick={onClose}>
+      <div className="fresco-detail" onClick={(e) => e.stopPropagation()}>
+        <button type="button" className="fresco-detail-close" onClick={onClose}>
+          Close
+        </button>
+
+        {imageUrl !== null && (
+          <img src={imageUrl} alt={fresco.title} className="fresco-detail-image" />
+        )}
+
+        <label>
+          Title
+          <input maxLength={MAX_TITLE} value={title} onChange={(e) => setTitle(e.target.value)} />
+        </label>
+        <label>
+          Caption
+          <textarea
+            maxLength={MAX_CAPTION}
+            value={caption}
+            onChange={(e) => setCaption(e.target.value)}
+          />
+        </label>
+        <label>
+          What I remember
+          <textarea
+            maxLength={MAX_MEMORY}
+            value={memory}
+            onChange={(e) => setMemory(e.target.value)}
+          />
+        </label>
+        <label>
+          Place name
+          <input value={placeName} onChange={(e) => setPlaceName(e.target.value)} />
+        </label>
+        <p className="finish-form-error">
+          Tags: up to {MAX_TAGS}, edited when the fresco was made.
+        </p>
+
+        <button type="button" disabled={busy || !isValid(errors)} onClick={saveEdits}>
+          Save changes
+        </button>
+
+        <div className="publish-panel">
+          {fresco.visibility === 'private' ? (
+            <>
+              <div className="publish-panel-precision">
+                <label>
+                  <input
+                    type="radio"
+                    checked={precision === 'neighborhood'}
+                    onChange={() => setPrecision('neighborhood')}
+                  />
+                  Neighborhood
+                </label>
+                <label>
+                  <input
+                    type="radio"
+                    checked={precision === 'exact'}
+                    onChange={() => setPrecision('exact')}
+                  />
+                  Exact spot
+                </label>
+              </div>
+              {precision === 'exact' && (
+                <p className="publish-panel-warning">
+                  This shows exactly where you took the photo, publicly.
+                </p>
+              )}
+              <button type="button" disabled={busy} onClick={publish}>
+                Publish
+              </button>
+            </>
+          ) : (
+            <button type="button" disabled={busy} onClick={unpublish}>
+              Unpublish
+            </button>
+          )}
+        </div>
+
+        <button type="button" disabled={busy} onClick={remove}>
+          Delete
+        </button>
+
+        {error !== null && (
+          <p className="finish-form-error" role="alert">
+            {error}
+          </p>
+        )}
+      </div>
+    </div>
+  )
+}
