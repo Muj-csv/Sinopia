@@ -29,14 +29,14 @@ Sinopia turns a gesture sketch into evidence. It reads the body structure of you
 
 | Feature | Status |
 |---|---|
-| Sketch input: upload, camera photo, or draw in the browser | Planned |
-| Skeleton detection with drag-to-fix joints (manual placement always available) | Planned |
-| Pose signature: tilts, bends, balance, line of action | Planned |
-| Structural matching against real photographs (mirror-aware) | Planned |
-| Gesture families: same gesture / same upper body / same lower body | Planned |
+| Sketch input: upload, camera photo, or draw in the browser | Done |
+| Skeleton detection with drag-to-fix joints (manual placement always available) | Done |
+| Pose signature: tilts, bends, balance, line of action | Done |
+| Structural matching against real photographs (mirror-aware) | Done |
+| Gesture families: same gesture / same upper body / same lower body | Done |
 | Evidence view: sketch vs photo, overlay, region-by-region similarity, largest differences | Planned |
 | Lock a relationship (e.g. torso + right arm) and search around it | Planned |
-| License and attribution on every reference | Planned |
+| License and attribution on every reference | Done |
 | Counter-check: "uncommon in this reference set" | Planned, supporting |
 | Step-by-step construction guide | Later |
 
