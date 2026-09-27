@@ -1,4 +1,15 @@
+.draw-screen-layout {
+  display: flex;
+  height: 100%;
+
+  @media (max-width: 640px) {
+    flex-direction: column;
+  }
+}
+
 .draw-screen {
+  flex: 1;
+  min-width: 0;
   padding: var(--space-3);
   display: flex;
   flex-direction: column;

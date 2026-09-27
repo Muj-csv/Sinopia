@@ -29,6 +29,8 @@ export function ToolRail({
   canRedo,
   onUndo,
   onRedo,
+  referenceOpen,
+  onToggleReference,
 }: {
   tool: Tool
   onToolChange: (tool: Tool) => void
@@ -42,6 +44,9 @@ export function ToolRail({
   canRedo: boolean
   onUndo: () => void
   onRedo: () => void
+  /** PHASE-2 task 1: the toolbar slot the reference panel plugs into. */
+  referenceOpen: boolean
+  onToggleReference: () => void
 }) {
   const colors = recentColors.length > 0 ? recentColors : DEFAULT_RECENT_COLORS
 
@@ -141,6 +146,18 @@ export function ToolRail({
         </button>
         <button type="button" aria-label="Redo" disabled={!canRedo} onClick={onRedo}>
           Redo
+        </button>
+      </div>
+
+      <div className="tool-rail-group">
+        <button
+          type="button"
+          aria-label="Reference"
+          aria-pressed={referenceOpen}
+          className={referenceOpen ? 'active' : ''}
+          onClick={onToggleReference}
+        >
+          Reference
         </button>
       </div>
     </div>
