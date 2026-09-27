@@ -11,10 +11,10 @@ export function PlaceSearch({ onSelect }: { onSelect: (place: PlaceResult) => vo
 
   useEffect(() => {
     const trimmed = query.trim()
-    if (trimmed === '') {
-      setResults([])
-      return
-    }
+    // Nothing to search when empty -- render already hides results via the
+    // `query.trim() !== ''` check below, so stale `results` left over from a
+    // prior query is harmless.
+    if (trimmed === '') return
     let cancelled = false
     const timer = setTimeout(() => {
       setLoading(true)
@@ -40,7 +40,7 @@ export function PlaceSearch({ onSelect }: { onSelect: (place: PlaceResult) => vo
         onChange={(e) => setQuery(e.target.value)}
       />
       {loading && <p className="place-search-status">Searching...</p>}
-      {!loading && results.length > 0 && (
+      {!loading && query.trim() !== '' && results.length > 0 && (
         <ul className="place-search-results">
           {results.map((r) => (
             <li key={`${r.lng},${r.lat}`}>

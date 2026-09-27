@@ -40,7 +40,11 @@ export function ReportDialog({
               <button type="button" onClick={onClose}>
                 Cancel
               </button>
-              <button type="button" disabled={error !== null || status === 'submitting'} onClick={submit}>
+              <button
+                type="button"
+                disabled={error !== null || status === 'submitting'}
+                onClick={submit}
+              >
                 {status === 'submitting' ? 'Sending...' : 'Report'}
               </button>
             </div>

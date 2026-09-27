@@ -5,7 +5,8 @@ import { supabase } from '../lib/supabase'
 export const MAX_REASON_LENGTH = 300
 
 export function validateReason(reason: string): string | null {
-  if (reason.length > MAX_REASON_LENGTH) return `Reason must be ${MAX_REASON_LENGTH} characters or fewer.`
+  if (reason.length > MAX_REASON_LENGTH)
+    return `Reason must be ${MAX_REASON_LENGTH} characters or fewer.`
   return null
 }
 

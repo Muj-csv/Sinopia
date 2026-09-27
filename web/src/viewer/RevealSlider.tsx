@@ -2,7 +2,13 @@
 import { useState } from 'react'
 import { SLIDER_MAX, SLIDER_MIN, SLIDER_STEP, clampSlider, compositeClipInset } from './sliderMath'
 
-export function RevealSlider({ photoUrl, compositeUrl }: { photoUrl: string; compositeUrl: string }) {
+export function RevealSlider({
+  photoUrl,
+  compositeUrl,
+}: {
+  photoUrl: string
+  compositeUrl: string
+}) {
   const [value, setValue] = useState(50)
 
   return (

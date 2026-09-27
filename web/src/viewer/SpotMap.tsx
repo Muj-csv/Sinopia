@@ -2,6 +2,7 @@
 import * as maplibregl from 'maplibre-gl'
 import 'maplibre-gl/dist/maplibre-gl.css'
 import { useEffect, useRef } from 'react'
+import '../lib/maplibreWorker'
 
 const OPENFREEMAP_STYLE = 'https://tiles.openfreemap.org/styles/positron'
 

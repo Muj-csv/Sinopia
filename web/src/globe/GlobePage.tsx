@@ -6,6 +6,7 @@
 import * as maplibregl from 'maplibre-gl'
 import 'maplibre-gl/dist/maplibre-gl.css'
 import { useEffect, useRef, useState } from 'react'
+import '../lib/maplibreWorker'
 import './globe.css'
 import { toFeatureCollection, type GlobePoint } from './geoJson'
 import { loadGlobePoints } from './loadGlobePoints'
@@ -29,6 +30,7 @@ export function GlobePage() {
   const pointsRef = useRef<GlobePoint[]>([])
   const [status, setStatus] = useState<Status>('loading')
   const [selected, setSelected] = useState<GlobePoint | null>(null)
+  const [pointCount, setPointCount] = useState(0)
 
   useEffect(() => {
     if (!containerRef.current || mapRef.current) return
@@ -39,7 +41,6 @@ export function GlobePage() {
       center: [121.05, 14.6],
       zoom: 1.5,
     })
-    map.setProjection({ type: 'globe' })
     map.addControl(new maplibregl.NavigationControl(), 'top-right')
     map.addControl(
       new maplibregl.AttributionControl({
@@ -49,6 +50,11 @@ export function GlobePage() {
     mapRef.current = map
 
     map.on('load', () => {
+      // setProjection throws "Style is not done loading" if called before
+      // the style is ready -- confirmed via manual testing, crashes the
+      // whole React root since there's no error boundary.
+      map.setProjection({ type: 'globe' })
+
       map.addSource(SOURCE_ID, {
         type: 'geojson',
         data: { type: 'FeatureCollection', features: [] },
@@ -121,6 +127,7 @@ export function GlobePage() {
           return
         }
         pointsRef.current = points
+        setPointCount(points.length)
         const source = map.getSource(SOURCE_ID) as maplibregl.GeoJSONSource
         source.setData(toFeatureCollection(points))
         setStatus('ready')
@@ -144,8 +151,12 @@ export function GlobePage() {
         <PlaceSearch onSelect={flyTo} />
       </div>
       {status === 'loading' && <p className="globe-status">Loading the gallery...</p>}
-      {status === 'error' && <p className="globe-status" role="alert">The gallery is waking up.</p>}
-      {status === 'ready' && pointsRef.current.length === 0 && (
+      {status === 'error' && (
+        <p className="globe-status" role="alert">
+          The gallery is waking up.
+        </p>
+      )}
+      {status === 'ready' && pointCount === 0 && (
         <p className="globe-status">The world is blank. Be the first to leave a fresco.</p>
       )}
       {selected !== null && <PreviewCard point={selected} onClose={() => setSelected(null)} />}

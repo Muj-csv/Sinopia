@@ -19,9 +19,13 @@ describe('searchPlaces', () => {
   })
 
   it('maps features to label + lng/lat, skipping ones with no name', async () => {
-    const fetchImpl = vi.fn().mockResolvedValue({ ok: true, json: () => Promise.resolve(sampleResponse) })
+    const fetchImpl = vi
+      .fn()
+      .mockResolvedValue({ ok: true, json: () => Promise.resolve(sampleResponse) })
     const results = await searchPlaces('rizal', fetchImpl)
-    expect(results).toEqual([{ label: 'Rizal Park, Manila, Philippines', lng: 120.9794, lat: 14.5832 }])
+    expect(results).toEqual([
+      { label: 'Rizal Park, Manila, Philippines', lng: 120.9794, lat: 14.5832 },
+    ])
   })
 
   it('returns an empty array on a non-ok response', async () => {
