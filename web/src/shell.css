@@ -1,0 +1,85 @@
+/* App shell (Phase 0 task 2): bare, theme-variables only. */
+.app-shell {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.app-header {
+  padding: var(--space-3) var(--space-4);
+  border-bottom: 1px solid var(--color-border);
+}
+.app-header h1 {
+  font-size: var(--text-h2);
+  color: var(--color-accent);
+}
+
+.app-content {
+  flex: 1;
+  overflow: auto;
+  position: relative;
+}
+
+.app-nav {
+  display: flex;
+  border-top: 1px solid var(--color-border);
+  background: var(--color-surface);
+}
+.app-nav a {
+  flex: 1;
+  text-align: center;
+  padding: var(--space-3) var(--space-2);
+  text-decoration: none;
+  color: var(--color-text-secondary);
+  font-size: var(--text-caption);
+}
+.app-nav a.active {
+  color: var(--color-accent);
+  font-weight: 600;
+}
+.app-nav a:focus-visible {
+  outline: 2px solid var(--color-focus-ring);
+  outline-offset: -2px;
+}
+
+.globe-map {
+  position: absolute;
+  inset: 0;
+}
+
+.placeholder-screen {
+  padding: var(--space-5);
+  color: var(--color-text-secondary);
+}
+
+.placeholder-actions {
+  display: flex;
+  gap: var(--space-3);
+  margin-top: var(--space-4);
+}
+.placeholder-actions button {
+  padding: var(--space-2) var(--space-4);
+  border-radius: var(--radius-control);
+  border: 1px solid var(--color-border);
+  background: var(--color-surface-raised);
+  color: var(--color-text-primary);
+}
+.placeholder-actions button:hover {
+  background: var(--color-surface-hover);
+}
+
+.draw-spike {
+  padding: var(--space-3);
+}
+.draw-spike-readout {
+  margin-bottom: var(--space-2);
+  color: var(--color-text-secondary);
+  font-size: var(--text-caption);
+}
+.draw-spike-stage {
+  max-width: 100%;
+  overflow: auto;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-card);
+  touch-action: none;
+}
