@@ -36,8 +36,8 @@ A finished piece is a **fresco**. Keep it private in your **Sketchbook**, or pub
 | Fresco viewer with a Reality ↔ Drawing slider | Done |
 | Same Wall: other frescoes made within 50 m | Done |
 | Report a fresco | Done |
-| Street-level view of the real spot beside the fresco | Planned, if time |
-| In-browser safety check before publishing | Planned, if time |
+| Street-level view of the real spot beside the fresco | Done |
+| In-browser safety check before publishing | Done |
 
 ## How it works
 

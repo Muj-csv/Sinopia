@@ -169,3 +169,28 @@
 .report-dialog button:disabled {
   opacity: 0.5;
 }
+
+.street-level-panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+.street-level-loading,
+.street-level-empty {
+  color: var(--color-text-secondary);
+  font-size: var(--text-caption);
+}
+.street-level-viewer {
+  height: 240px;
+  border-radius: var(--radius-card);
+  overflow: hidden;
+}
+.street-level-image {
+  width: 100%;
+  border-radius: var(--radius-card);
+  display: block;
+}
+.street-level-credit {
+  font-size: 11px;
+  color: var(--color-text-secondary);
+}

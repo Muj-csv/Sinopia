@@ -11,8 +11,19 @@ import {
 } from '../frescoes/fresco'
 import { publishFresco, unpublishFresco } from '../frescoes/publishFresco'
 import { supabase } from '../lib/supabase'
+import { checkImageSafety } from '../safety/nsfwCheck'
 import { frescoImageUrl } from './frescoImageUrl'
 import type { FrescoRow } from './frescoRow'
+
+function loadImage(url: string): Promise<HTMLImageElement> {
+  return new Promise((resolve, reject) => {
+    const img = new Image()
+    img.crossOrigin = 'anonymous'
+    img.onload = () => resolve(img)
+    img.onerror = () => reject(new Error('image failed to load'))
+    img.src = url
+  })
+}
 
 export function FrescoDetail({
   fresco,
@@ -59,6 +70,26 @@ export function FrescoDetail({
   const publish = async () => {
     setBusy(true)
     setError(null)
+
+    // PHASE-5a task 2 (FR-016): in-browser safety check before publishing.
+    // imageUrl is the composite; if it hasn't loaded yet for some reason,
+    // skip the check rather than block indefinitely -- fail open, same as
+    // checkImageSafety's own model-load failure handling.
+    if (imageUrl !== null) {
+      try {
+        const img = await loadImage(imageUrl)
+        const safety = await checkImageSafety(img)
+        if (safety.flagged) {
+          setBusy(false)
+          setError(safety.reason ?? 'This image was flagged. Publishing is blocked.')
+          return
+        }
+      } catch {
+        // Image failed to load for the check -- proceed; publishFresco
+        // will surface any real upload problem on its own.
+      }
+    }
+
     const result = await publishFresco(fresco.owner_id, fresco.id, precision)
     setBusy(false)
     if (result.ok) onChanged()
