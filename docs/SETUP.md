@@ -15,6 +15,31 @@ Everything here needs a human with account access -- an agent can't create accou
 2. In the dashboard, go to **Settings -> API** and copy the **Project URL** and **anon public key**.
 3. Leave PostGIS/schema/OAuth for Phase 0 Task 3 (that's the agent's job once these values are in) -- for now this step is just "create the project and get the URL + anon key."
 
+## 2b. Applying migrations (do this after every merge that adds one)
+
+**Migrations are not applied by merging or deploying.** CI runs the tests; Vercel builds the app; neither touches the database. A new file under `supabase/migrations/` changes nothing until someone runs it.
+
+After merging a PR that adds a migration:
+
+1. Open the Supabase dashboard -> **SQL Editor** -> **New query**.
+2. Paste the contents of each new `supabase/migrations/NNNN_*.sql` file, oldest first.
+3. Run it. It takes effect immediately -- no redeploy needed.
+
+Applied so far (tick when run against the production project):
+
+- [ ] `0001_init.sql` -- the initial schema
+- [ ] `0002_globe_storage_upsert_policies.sql` -- **required for Publish to Globe.** Without it every publish fails with "new row violates row-level security policy", and unpublishing silently leaves the images public.
+
+To check whether a storage policy is live, run this in the SQL Editor:
+
+```sql
+select policyname, cmd from pg_policies
+where schemaname = 'storage' and tablename = 'objects'
+order by policyname;
+```
+
+The `globe` bucket needs four: insert, select, update and delete. If you only see insert and delete, `0002` has not been applied.
+
 ## 3. Google OAuth
 
 1. Create a Google Cloud project (or reuse one).
