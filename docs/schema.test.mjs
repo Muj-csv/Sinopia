@@ -18,7 +18,7 @@ create function auth.uid() returns uuid language sql stable as $$ select nullif(
 grant usage on schema auth to anon, authenticated; grant execute on function auth.uid() to anon, authenticated;
 create schema storage;
 create table storage.buckets (id text primary key, name text, public boolean);
-create table storage.objects (id uuid primary key default gen_random_uuid(), bucket_id text, name text);
+create table storage.objects (id uuid primary key default gen_random_uuid(), bucket_id text, name text, unique (bucket_id, name));
 create function storage.foldername(name text) returns text[] language sql immutable as $$ select (string_to_array(name, '/'))[1:array_length(string_to_array(name,'/'),1)-1] $$;
 alter table storage.objects enable row level security;
 grant usage on schema storage to anon, authenticated;
@@ -89,3 +89,29 @@ await as(A, async () => {
   let e = null; try { await q(`insert into storage.objects (bucket_id, name) values ('sketchbook', '${B}/x/photo.webp')`) } catch (x) { e = x } ; ok(!!e, 'A cannot write into B sketchbook folder')
 })
 await as(B, async () => { ok((await q(`select count(*)::int n from storage.objects where bucket_id='sketchbook'`)).rows[0].n === 0, 'B cannot list A sketchbook files') })
+
+// Publishing copies into 'globe' with upsert, which Postgres runs as INSERT ... ON CONFLICT DO
+// UPDATE. That is checked against an UPDATE policy even when nothing conflicts, so a bucket with
+// only INSERT and DELETE policies rejects every publish. This is the shape the client issues.
+const upsertGlobe = (owner, file) =>
+  q(`insert into storage.objects (bucket_id, name) values ('globe', '${owner}/${F}/${file}.webp')
+     on conflict (bucket_id, name) do update set name = excluded.name`)
+
+await as(A, async () => {
+  let e = null; try { await upsertGlobe(A, 'photo') } catch (x) { e = x }
+  ok(!e, 'owner can publish (upsert) into their own globe folder' + (e ? ': ' + e.message : ''))
+  e = null; try { await upsertGlobe(A, 'photo') } catch (x) { e = x }
+  ok(!e, 'owner can re-publish over their own globe files' + (e ? ': ' + e.message : ''))
+})
+await as(B, async () => {
+  let e = null; try { await upsertGlobe(A, 'photo') } catch (x) { e = x }
+  ok(!!e, 'B cannot overwrite A globe files')
+  // The owner-scoped SELECT policy publishing needs must not become a way to enumerate other
+  // people's files. Public READ of a published image comes from the bucket being public, and is
+  // served from the public URL without consulting these policies.
+  ok((await q(`select count(*)::int n from storage.objects where bucket_id='globe'`)).rows[0].n === 0, 'B cannot list A globe files')
+})
+await as(A, async () => {
+  await q(`delete from storage.objects where bucket_id='globe' and name like '${A}/%'`)
+  ok((await q(`select count(*)::int n from storage.objects where bucket_id='globe'`)).rows[0].n === 0, 'owner can unpublish (delete) their globe files')
+})
