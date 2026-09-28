@@ -1,103 +1,139 @@
-.capture-sheet,
-.pin-check {
-  padding: var(--space-5);
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-4);
+/* Capture (/new) and Pin check (/new/pin). Both are flow screens: no nav bar, own exit. */
+
+/* ===== Capture ===== */
+.capture-heading {
+  font: var(--text-display) / var(--leading-display) var(--marker);
+  font-weight: 400;
+}
+.capture-subtitle {
+  margin: var(--space-1) 0 0;
+  color: var(--ink-2);
 }
 
-.capture-sheet-subtitle {
-  color: var(--color-text-secondary);
+/* The file input is the whole row; the label carries the look. */
+.capture-sheet .option input[type='file'] {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
 }
-
-.capture-sheet-options {
-  display: flex;
-  gap: var(--space-3);
-}
-
-.capture-option {
-  flex: 1;
-  min-height: 44px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: var(--space-3) var(--space-4);
-  border-radius: var(--radius-control);
-  border: 1px solid var(--color-border);
-  background: var(--color-surface-raised);
-  color: var(--color-text-primary);
-  cursor: pointer;
-}
-.capture-option:hover {
-  background: var(--color-surface-hover);
-}
-.capture-option input {
-  display: none;
+/* A label can't take :focus-visible from its input, so mirror the ring onto the row. */
+.capture-sheet .option:has(input:focus-visible) {
+  outline: 3px solid var(--color-focus-ring);
+  outline-offset: 2px;
 }
 
 .capture-status {
-  color: var(--color-text-secondary);
-  font-size: var(--text-caption);
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0;
+  color: var(--ink-2);
 }
-.capture-status-error {
-  color: var(--color-danger);
+.spinner {
+  width: 18px;
+  height: 18px;
+  border: 2px solid var(--rule);
+  border-top-color: var(--ink);
+  border-radius: 50%;
+  display: inline-block;
+  animation: spin 700ms linear infinite;
+}
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
 }
 
-.capture-drafts h3 {
-  font-size: var(--text-caption);
-  color: var(--color-text-secondary);
-  margin-bottom: var(--space-2);
-}
-.capture-drafts ul {
-  list-style: none;
-  padding: 0;
-  margin: 0;
+/* ===== Pin check ===== */
+.pin-check {
+  flex: 1;
+  min-height: 0;
+  position: relative;
   display: flex;
   flex-direction: column;
+}
+
+.pin-picker {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+}
+.pin-picker-map {
+  position: absolute;
+  inset: 0;
+}
+
+/* The pin is painted over the map centre and never intercepts a drag. */
+.centerpin {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  /* The pin's point is at its bottom edge, so the whole glyph sits above the centre. */
+  transform: translate(-50%, -100%);
+  pointer-events: none;
+  z-index: 5;
+}
+.centerpin-icon {
+  width: 40px;
+  height: 52px;
+  stroke: none;
+}
+
+/* Where the location came from, over the top of the map. */
+.pin-check-origin {
+  position: absolute;
+  top: var(--space-3);
+  left: var(--space-4);
+  right: var(--space-4);
+  z-index: 6;
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  background: var(--paper);
+  border: var(--edge);
+  border-radius: var(--r-card);
+  box-shadow: var(--offset);
+  width: max-content;
+  max-width: calc(100% - var(--space-6));
+}
+.pin-check-thumb {
+  width: 40px;
+  height: 52px;
+  object-fit: cover;
+  display: block;
+  border: var(--edge);
+  border-radius: var(--radius-photo);
+  background: var(--desk);
+  flex: none;
+}
+
+/* The dock is a page surface, so lined paper belongs here -- it is beside the map, not over it. */
+.pin-check-dock {
+  flex: none;
+  border-top: var(--edge);
+  padding: var(--space-4) var(--space-4) calc(env(safe-area-inset-bottom, 0px) + var(--space-4));
+  display: grid;
+  gap: var(--space-3);
+}
+.pin-check-actions {
+  display: grid;
   gap: var(--space-2);
 }
-.capture-drafts button {
-  width: 100%;
-  min-height: 44px;
-  text-align: left;
-  padding: var(--space-2) var(--space-3);
-  border-radius: var(--radius-control);
-  border: 1px solid var(--color-border);
-  background: var(--color-surface);
-  color: var(--color-text-primary);
-}
 
-.pin-picker-map {
-  height: 320px;
-  border-radius: var(--radius-card);
-  overflow: hidden;
-  border: 1px solid var(--color-border);
-}
-
-.pin-check-place {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-1);
-  font-size: var(--text-caption);
-  color: var(--color-text-secondary);
-}
-.pin-check-place input {
-  min-height: 44px;
-  padding: var(--space-2) var(--space-3);
-  border-radius: var(--radius-control);
-  border: 1px solid var(--color-border);
-  background: var(--color-surface);
-  color: var(--color-text-primary);
-}
-
-.pin-check-confirm {
-  min-height: 44px;
-  padding: var(--space-3) var(--space-4);
-  border-radius: var(--radius-control);
-  border: none;
-  background: var(--color-accent);
-  color: var(--color-text-on-accent);
-}
-.pin-check-confirm:disabled {
-  opacity: 0.5;
+@media (min-width: 900px) {
+  .pin-check-dock {
+    padding-inline: var(--space-5);
+  }
+  .pin-check-actions {
+    grid-auto-flow: column;
+    justify-content: start;
+    gap: var(--space-3);
+  }
+  .pin-check-actions .btn-wide {
+    width: auto;
+    min-width: 200px;
+  }
 }

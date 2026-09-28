@@ -4,6 +4,7 @@
  * states per docs/design/UX_MAP.md's Reference panel row.
  */
 import { useEffect, useMemo, useState } from 'react'
+import { Icon } from '../ui/Icon'
 import './references.css'
 import { searchReferences, type Reference } from './referencesClient'
 import { useDebouncedValue } from './useDebouncedValue'
@@ -79,9 +80,9 @@ export function ReferencePanel({
   return (
     <div className="reference-panel">
       <div className="reference-panel-header">
-        <h3>Reference</h3>
-        <button type="button" aria-label="Close reference panel" onClick={onClose}>
-          Close
+        <h2>Reference</h2>
+        <button type="button" className="ibtn" onClick={onClose}>
+          <Icon name="x" label="Close reference panel" />
         </button>
       </div>
 
@@ -104,7 +105,7 @@ export function ReferencePanel({
               key={chip}
               type="button"
               aria-pressed={angleSuffix === chip}
-              className={angleSuffix === chip ? 'active' : ''}
+              className="chip"
               onClick={() => setAngleSuffix((s) => (s === chip ? null : chip))}
             >
               {chip}
@@ -126,7 +127,7 @@ export function ReferencePanel({
       {!idle && status === 'error' && (
         <p className="reference-status" role="alert">
           References are unavailable right now.{' '}
-          <button type="button" onClick={retry}>
+          <button type="button" className="link" onClick={retry}>
             Retry
           </button>
         </p>
@@ -151,12 +152,12 @@ export function ReferencePanel({
               </button>
               <button
                 type="button"
-                className={pinned?.id === r.id ? 'reference-pin active' : 'reference-pin'}
+                className="chip reference-pin"
                 aria-pressed={pinned?.id === r.id}
-                aria-label={pinned?.id === r.id ? 'Unpin this reference' : 'Pin this reference'}
                 onClick={() => onPin(pinned?.id === r.id ? null : r)}
               >
-                Pin
+                <Icon name="pin" />
+                {pinned?.id === r.id ? 'Pinned' : 'Pin'}
               </button>
               <a
                 className="reference-license"

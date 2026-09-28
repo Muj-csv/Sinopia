@@ -1,6 +1,12 @@
+/* Globe (SCREENS.md "Globe · /"): a full-bleed map drawn in ink, a floating search bar, the
+ * attribution always visible, and a bottom-docked preview card.
+ * Do not: auto-spin, a glow or atmosphere halo, arcs between pins, teardrop pins, or a second
+ * yellow button -- Open in the preview card is the only one. */
+
 .globe-container {
   position: absolute;
   inset: 0;
+  background: var(--desk);
 }
 
 .globe-map {
@@ -8,40 +14,56 @@
   inset: 0;
 }
 
+/* ===== Search ===== */
 .globe-search {
   position: absolute;
   top: var(--space-4);
   left: 50%;
   transform: translateX(-50%);
   z-index: 10;
-  width: min(360px, 90vw);
+  width: min(360px, calc(100vw - var(--space-6)));
 }
 
 .place-search input {
   width: 100%;
-  min-height: 44px;
-  padding: var(--space-2) var(--space-4);
-  border-radius: 999px;
-  border: 1px solid var(--color-border);
-  background: var(--color-surface-raised);
-  color: var(--color-text-primary);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  min-height: 48px;
+  padding: 10px var(--space-4);
+  font: var(--text-body) / var(--leading-body) var(--print);
+  color: var(--ink);
+  /* A drawn box with a hard offset, not a pill with a blurred shadow. */
+  border: var(--edge);
+  border-radius: var(--r-ctl);
+  background: var(--paper);
+  box-shadow: var(--offset);
+}
+.place-search input::placeholder {
+  font-family: var(--pencil);
+  font-weight: 700;
+  font-size: var(--text-label);
+  color: var(--ink-2);
 }
 
 .place-search-status {
-  margin-top: var(--space-1);
-  font-size: var(--text-caption);
-  color: var(--color-text-secondary);
+  margin: 6px 0 0;
+  font: var(--text-caption) / var(--leading-caption) var(--print);
+  color: var(--ink-2);
+  background: var(--paper);
+  border: var(--edge);
+  border-radius: var(--r-ctl);
+  padding: var(--space-1) var(--space-3);
 }
 
 .place-search-results {
   list-style: none;
-  margin: var(--space-1) 0 0;
+  margin: 6px 0 0;
   padding: 0;
-  background: var(--color-surface-raised);
-  border-radius: var(--radius-card);
+  border: var(--edge);
+  border-radius: var(--r-card);
+  box-shadow: var(--offset);
   overflow: hidden;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  background-color: var(--paper);
+  background-image: var(--lines);
+  background-size: 100% var(--leading-lined);
 }
 .place-search-results button {
   width: 100%;
@@ -49,78 +71,156 @@
   min-height: 44px;
   padding: var(--space-2) var(--space-3);
   background: none;
-  border: none;
-  color: var(--color-text-primary);
+  border: 0;
+  color: var(--ink);
+  font: var(--text-body) / var(--leading-body) var(--print);
+}
+.place-search-results li + li button {
+  border-top: 2px solid var(--rule);
 }
 .place-search-results button:hover {
-  background: var(--color-surface-hover);
+  background: var(--yellow-tint);
 }
 
+/* ===== Status line ===== */
 .globe-status {
   position: absolute;
   bottom: var(--space-5);
   left: 50%;
   transform: translateX(-50%);
   z-index: 10;
-  background: var(--color-surface-raised);
+  margin: 0;
+  max-width: calc(100vw - var(--space-6));
+  background: var(--paper);
+  border: var(--edge);
+  border-radius: var(--r-ctl);
   padding: var(--space-2) var(--space-4);
-  border-radius: 999px;
-  color: var(--color-text-secondary);
-  font-size: var(--text-caption);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  color: var(--ink-2);
+  font: var(--text-body) / var(--leading-body) var(--print);
+}
+/* When the status is also a notice it takes the notice fill and ink text. */
+.globe-status.notice {
+  color: var(--ink);
+  background: var(--yellow-tint);
+  align-items: center;
 }
 
+/* ===== Preview card ===== */
 .preview-card {
   position: absolute;
   bottom: var(--space-4);
   left: var(--space-4);
+  right: var(--space-4);
   z-index: 10;
   display: flex;
   gap: var(--space-3);
-  background: var(--color-surface-raised);
-  border-radius: var(--radius-card);
+  background: var(--paper);
+  border: var(--edge);
+  border-radius: var(--r-card);
+  box-shadow: var(--offset);
   padding: var(--space-3);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
-  max-width: 320px;
+  max-width: 360px;
 }
 .preview-card-close {
   position: absolute;
-  top: 4px;
-  right: 4px;
-  background: none;
-  border: none;
-  font-size: 18px;
-  line-height: 1;
-  color: var(--color-text-secondary);
-  cursor: pointer;
+  top: var(--space-1);
+  right: var(--space-1);
 }
-.preview-card-thumb,
-.preview-card-thumb-placeholder {
+.preview-card-thumb {
   width: 72px;
-  height: 72px;
+  height: 96px;
   object-fit: cover;
-  border-radius: var(--radius-control);
-  background: var(--color-surface);
+  /* A printed photo (3px), not a rounded blob, and never a yellow or lined frame. */
+  border: var(--edge);
+  border-radius: var(--radius-photo);
+  background: var(--desk);
   flex-shrink: 0;
+  display: block;
 }
 .preview-card-body {
   display: flex;
   flex-direction: column;
   gap: 2px;
-  font-size: var(--text-caption);
-  color: var(--color-text-secondary);
+  min-width: 0;
+  padding-right: var(--space-5);
 }
-.preview-card-body strong {
-  color: var(--color-text-primary);
-  font-size: var(--text-body);
+.preview-card-title {
+  font: var(--text-h3) / var(--leading-h3) var(--marker);
+  font-weight: 400;
 }
-.preview-card-body button {
+.preview-card-meta {
+  font: 700 17px/20px var(--pencil);
+  color: var(--ink-2);
+}
+.preview-card-body .btn-y {
   align-self: flex-start;
-  margin-top: var(--space-1);
-  min-height: 32px;
-  padding: 4px var(--space-3);
-  border-radius: var(--radius-control);
-  border: 1px solid var(--color-border);
-  background: var(--color-surface);
-  color: var(--color-accent);
+  margin-top: var(--space-2);
+}
+
+/* Attribution stays visible at all times (NFR-004), in the print face so it reads as a credit. */
+.maplibregl-ctrl-attrib {
+  font-family: var(--print);
+  font-size: var(--text-caption);
+  background: var(--paper);
+  border: var(--edge);
+  border-radius: var(--r-ctl);
+}
+.maplibregl-ctrl-attrib a {
+  color: var(--ink-2);
+}
+
+/* MapLibre's own controls, redrawn in the same ink so the map has one edge language. */
+.maplibregl-ctrl-group {
+  background: var(--paper);
+  border: var(--edge);
+  border-radius: var(--r-ctl);
+  box-shadow: var(--offset);
+}
+.maplibregl-ctrl-group button + button {
+  border-top: var(--edge);
+}
+
+/* Laptop: the card docks bottom-right instead of spanning the width. */
+@media (min-width: 900px) {
+  .preview-card {
+    left: auto;
+    right: var(--space-5);
+    bottom: var(--space-5);
+    width: 340px;
+  }
+}
+
+/* ===== Map-failure fallback (SCREENS.md: "map fails = a notice plus a plain list") ===== */
+/* Lined paper here is correct: this is a page, not a surface behind artwork. */
+.fallback-list {
+  position: absolute;
+  inset: 0;
+  overflow-y: auto;
+  z-index: 3;
+  padding: var(--space-5) var(--space-4) var(--space-7);
+  display: grid;
+  gap: var(--space-3);
+  align-content: start;
+  background-color: var(--paper);
+  background-image: var(--lines);
+  background-size: 100% var(--leading-lined);
+}
+.fallback-list > .options {
+  max-width: 640px;
+  width: 100%;
+}
+.fallback-list > .notice,
+.fallback-list > p {
+  max-width: 640px;
+}
+@media (min-width: 900px) {
+  .fallback-list {
+    padding-inline: var(--space-5);
+    justify-items: center;
+  }
+  .fallback-list > .notice,
+  .fallback-list > p {
+    width: 100%;
+    max-width: 640px;
+  }
 }

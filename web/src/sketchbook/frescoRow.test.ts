@@ -48,4 +48,17 @@ describe('groupFrescoes', () => {
   it('returns an empty array for no rows', () => {
     expect(groupFrescoes([])).toEqual([])
   })
+
+  it('groups by month when asked, ignoring place names', () => {
+    const groups = groupFrescoes(
+      [
+        row({ id: 'a', place_name: 'Rizal Park', created_at: '2026-03-15T00:00:00.000Z' }),
+        row({ id: 'b', place_name: 'Intramuros', created_at: '2026-03-20T00:00:00.000Z' }),
+        row({ id: 'c', place_name: 'Rizal Park', created_at: '2026-04-02T00:00:00.000Z' }),
+      ],
+      'month',
+    )
+    expect(groups.map((g) => g.label)).toEqual(['March 2026', 'April 2026'])
+    expect(groups[0].rows.map((r) => r.id)).toEqual(['a', 'b'])
+  })
 })

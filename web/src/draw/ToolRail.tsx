@@ -1,20 +1,34 @@
 /**
- * PHASE-1 task 3/6: brush, eraser, colors (8 recents), size, opacity,
- * layer visibility, undo/redo. 44px touch targets (DESIGN_BRIEF.md).
+ * PHASE-1 task 3/6: the six-tool tray -- Brush · Eraser · Colour · Size · Layers · Refs
+ * (SCREENS.md "Canvas"). Colour, Size and Layers open popovers rather than living in the tray,
+ * so the chrome stays under the height budget and the canvas keeps the screen.
+ *
+ * A tray tool is 56x56 with a Gaegu label; active is a yellow fill with an ink edge, and a tool
+ * whose popover is open takes the yellow tint.
  */
+import { useState } from 'react'
+import { Icon } from '../ui/Icon'
+import { Popover } from '../ui/Popover'
 import type { Tool } from './DrawCanvas'
 import { LAYER_COUNT } from './strokeHistory'
 
+/**
+ * A starter palette for the artist's first stroke, before there are any recents. These are
+ * pigments on the photo, not app chrome, so they are deliberately not theme tokens -- but the
+ * first two are the app's own ink and paper, which is what most people reach for first.
+ */
 const DEFAULT_RECENT_COLORS = [
-  '#1e1b18',
-  '#ffffff',
-  '#8c3f2d',
-  '#c0392b',
-  '#2d6a4f',
-  '#1d3557',
-  '#e9c46a',
-  '#6d597a',
+  '#1A1A1A',
+  '#FFFFFF',
+  '#B3261E',
+  '#E2B537',
+  '#237636',
+  '#1D3557',
+  '#8C3F2D',
+  '#6D597A',
 ]
+
+type OpenPopover = 'color' | 'size' | 'layers' | null
 
 export function ToolRail({
   tool,
@@ -25,10 +39,6 @@ export function ToolRail({
   layerVisible,
   onLayerVisibleChange,
   onClearLayer,
-  canUndo,
-  canRedo,
-  onUndo,
-  onRedo,
   referenceOpen,
   onToggleReference,
 }: {
@@ -40,126 +50,206 @@ export function ToolRail({
   layerVisible: boolean[]
   onLayerVisibleChange: (layer: number, visible: boolean) => void
   onClearLayer: (layer: number) => void
-  canUndo: boolean
-  canRedo: boolean
-  onUndo: () => void
-  onRedo: () => void
   /** PHASE-2 task 1: the toolbar slot the reference panel plugs into. */
   referenceOpen: boolean
   onToggleReference: () => void
 }) {
+  const [open, setOpen] = useState<OpenPopover>(null)
+  /** Which layer is awaiting an inline "really clear?" -- never a blocking window.confirm. */
+  const [confirmingClear, setConfirmingClear] = useState<number | null>(null)
+
   const colors = recentColors.length > 0 ? recentColors : DEFAULT_RECENT_COLORS
+  const toggle = (which: OpenPopover) => setOpen((current) => (current === which ? null : which))
+  const close = () => setOpen(null)
 
   return (
-    <div className="tool-rail" role="toolbar" aria-label="Drawing tools">
-      <div className="tool-rail-group">
+    <div className="tray" role="toolbar" aria-label="Drawing tools">
+      <button
+        type="button"
+        className={`tool${tool.name === 'brush' ? ' active' : ''}`}
+        aria-pressed={tool.name === 'brush'}
+        onClick={() => onToolChange({ ...tool, name: 'brush' })}
+      >
+        <Icon name="brush" />
+        <span>Brush</span>
+      </button>
+
+      <button
+        type="button"
+        className={`tool${tool.name === 'eraser' ? ' active' : ''}`}
+        aria-pressed={tool.name === 'eraser'}
+        onClick={() => onToolChange({ ...tool, name: 'eraser' })}
+      >
+        <Icon name="eraser" />
+        <span>Eraser</span>
+      </button>
+
+      <div className="tool-slot">
         <button
           type="button"
-          aria-label="Brush"
-          aria-pressed={tool.name === 'brush'}
-          className={tool.name === 'brush' ? 'active' : ''}
-          onClick={() => onToolChange({ ...tool, name: 'brush' })}
+          className={`tool${open === 'color' ? ' open' : ''}`}
+          aria-expanded={open === 'color'}
+          onClick={() => toggle('color')}
         >
-          Brush
+          {/* The swatch IS the icon: it shows the current colour without a legend. */}
+          <span className="tool-swatch" style={{ background: tool.color }} aria-hidden="true" />
+          <span>Colour</span>
         </button>
+
+        {open === 'color' && (
+          <Popover label="Colour" onClose={close}>
+            <div className="swatches">
+              {colors.slice(0, 8).map((c) => (
+                <button
+                  key={c}
+                  type="button"
+                  className="swatch"
+                  aria-label={`Colour ${c}`}
+                  aria-pressed={tool.color === c}
+                  style={{ background: c }}
+                  onClick={() => onToolChange({ ...tool, color: c })}
+                />
+              ))}
+            </div>
+            <label className="field">
+              <span>Opacity</span>
+              <input
+                type="range"
+                min={0.1}
+                max={1}
+                step={0.1}
+                value={tool.opacity}
+                onChange={(e) => onToolChange({ ...tool, opacity: Number(e.target.value) })}
+              />
+            </label>
+          </Popover>
+        )}
+      </div>
+
+      <div className="tool-slot">
         <button
           type="button"
-          aria-label="Eraser"
-          aria-pressed={tool.name === 'eraser'}
-          className={tool.name === 'eraser' ? 'active' : ''}
-          onClick={() => onToolChange({ ...tool, name: 'eraser' })}
+          className={`tool${open === 'size' ? ' open' : ''}`}
+          aria-expanded={open === 'size'}
+          onClick={() => toggle('size')}
         >
-          Eraser
+          <Icon name="size" />
+          <span>Size</span>
         </button>
+
+        {open === 'size' && (
+          <Popover label="Size" onClose={close}>
+            {/* Design Council #8: show the actual stroke, not just a number. */}
+            <div className="size-preview">
+              <span
+                className="size-dot"
+                style={{
+                  width: tool.size,
+                  height: tool.size,
+                  opacity: tool.opacity,
+                  background: tool.color,
+                }}
+              />
+            </div>
+            <label className="field">
+              <span>Size</span>
+              <input
+                type="range"
+                min={1}
+                max={64}
+                value={tool.size}
+                onChange={(e) => onToolChange({ ...tool, size: Number(e.target.value) })}
+              />
+            </label>
+          </Popover>
+        )}
       </div>
 
-      <div className="tool-rail-group tool-rail-colors">
-        {colors.slice(0, 8).map((c) => (
-          <button
-            key={c}
-            type="button"
-            aria-label={`Color ${c}`}
-            aria-pressed={tool.color === c}
-            className={tool.color === c ? 'active' : ''}
-            style={{ background: c }}
-            onClick={() => onToolChange({ ...tool, color: c })}
-          />
-        ))}
-      </div>
-
-      <label className="tool-rail-slider">
-        Size
-        <input
-          type="range"
-          min={1}
-          max={64}
-          value={tool.size}
-          onChange={(e) => onToolChange({ ...tool, size: Number(e.target.value) })}
-        />
-      </label>
-
-      <label className="tool-rail-slider">
-        Opacity
-        <input
-          type="range"
-          min={0.1}
-          max={1}
-          step={0.1}
-          value={tool.opacity}
-          onChange={(e) => onToolChange({ ...tool, opacity: Number(e.target.value) })}
-        />
-      </label>
-
-      <div className="tool-rail-group tool-rail-layers">
-        {Array.from({ length: LAYER_COUNT }, (_, i) => (
-          <div key={i} className="tool-rail-layer">
-            <button
-              type="button"
-              aria-label={`Layer ${i + 1}`}
-              aria-pressed={activeLayer === i}
-              className={activeLayer === i ? 'active' : ''}
-              onClick={() => onActiveLayerChange(i)}
-            >
-              L{i + 1}
-            </button>
-            <button
-              type="button"
-              aria-label={`Toggle layer ${i + 1} visibility`}
-              onClick={() => onLayerVisibleChange(i, !(layerVisible[i] ?? true))}
-            >
-              {(layerVisible[i] ?? true) ? 'Hide' : 'Show'}
-            </button>
-            <button
-              type="button"
-              aria-label={`Clear layer ${i + 1}`}
-              onClick={() => onClearLayer(i)}
-            >
-              Clear
-            </button>
-          </div>
-        ))}
-      </div>
-
-      <div className="tool-rail-group">
-        <button type="button" aria-label="Undo" disabled={!canUndo} onClick={onUndo}>
-          Undo
-        </button>
-        <button type="button" aria-label="Redo" disabled={!canRedo} onClick={onRedo}>
-          Redo
-        </button>
-      </div>
-
-      <div className="tool-rail-group">
+      <div className="tool-slot">
         <button
           type="button"
-          aria-label="Reference"
-          aria-pressed={referenceOpen}
-          className={referenceOpen ? 'active' : ''}
-          onClick={onToggleReference}
+          className={`tool${open === 'layers' ? ' open' : ''}`}
+          aria-expanded={open === 'layers'}
+          onClick={() => toggle('layers')}
         >
-          Reference
+          {/* Design Council #3: the layer number is a badge, so the label never wraps to two lines. */}
+          <span className="tool-badge-wrap">
+            <Icon name="layers" />
+            <span className="tool-badge">{activeLayer + 1}</span>
+          </span>
+          <span>Layers</span>
         </button>
+
+        {open === 'layers' && (
+          <Popover label="Layers" onClose={close}>
+            {Array.from({ length: LAYER_COUNT }, (_, i) => {
+              const visible = layerVisible[i] ?? true
+              return (
+                <div key={i} className="layer-row">
+                  <button
+                    type="button"
+                    className={`layer-pick${activeLayer === i ? ' active' : ''}`}
+                    aria-pressed={activeLayer === i}
+                    onClick={() => onActiveLayerChange(i)}
+                  >
+                    Layer {i + 1}
+                  </button>
+
+                  <button
+                    type="button"
+                    className="ibtn"
+                    onClick={() => onLayerVisibleChange(i, !visible)}
+                  >
+                    <Icon
+                      name={visible ? 'eye' : 'eyeoff'}
+                      label={visible ? `Hide layer ${i + 1}` : `Show layer ${i + 1}`}
+                    />
+                  </button>
+
+                  {confirmingClear === i ? (
+                    <span className="layer-confirm">
+                      <button
+                        type="button"
+                        className="link"
+                        onClick={() => {
+                          onClearLayer(i)
+                          setConfirmingClear(null)
+                        }}
+                      >
+                        Clear it
+                      </button>
+                      <button
+                        type="button"
+                        className="link"
+                        onClick={() => setConfirmingClear(null)}
+                      >
+                        Keep
+                      </button>
+                    </span>
+                  ) : (
+                    <button type="button" className="ibtn" onClick={() => setConfirmingClear(i)}>
+                      <Icon name="trash" label={`Clear layer ${i + 1}`} />
+                    </button>
+                  )}
+                </div>
+              )
+            })}
+            {confirmingClear !== null && (
+              <p className="t-small">Clearing can be undone with the undo button.</p>
+            )}
+          </Popover>
+        )}
       </div>
+
+      <button
+        type="button"
+        className={`tool${referenceOpen ? ' active' : ''}`}
+        aria-pressed={referenceOpen}
+        onClick={onToggleReference}
+      >
+        <Icon name="ref" />
+        <span>Refs</span>
+      </button>
     </div>
   )
 }

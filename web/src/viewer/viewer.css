@@ -1,75 +1,117 @@
+/* Fresco viewer (/f/:id): the artwork leads, then the slider, then the words, then Same Wall.
+ * No lined paper and no yellow anywhere near the art -- reality stays clean. */
+
 .fresco-viewer {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-4);
-  padding: var(--space-4);
+  display: grid;
+  gap: var(--space-5);
+  padding: var(--space-4) var(--space-4) var(--space-7);
   max-width: 720px;
   margin: 0 auto;
-}
-
-.viewer-not-found {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: var(--space-3);
-  padding: var(--space-6);
-  color: var(--color-text-secondary);
+  width: 100%;
 }
 
 .viewer-image-placeholder {
   aspect-ratio: 4 / 3;
-  background: var(--color-surface-raised);
-  border-radius: var(--radius-card);
+  background: var(--desk);
+  border: var(--edge);
+  border-radius: var(--radius-photo);
 }
 
+/* ===== Reality <-> Drawing ===== */
 .reveal-slider {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-2);
+  display: grid;
+  gap: var(--space-3);
 }
 .reveal-slider-stage {
   position: relative;
-  border-radius: var(--radius-card);
+  /* A printed photo, on the desk. The art gets the largest share of the screen. */
+  border: var(--edge);
+  border-radius: var(--radius-photo);
   overflow: hidden;
+  background: var(--desk);
+  max-height: 62vh;
+  display: grid;
 }
 .reveal-slider-photo,
 .reveal-slider-composite {
   width: 100%;
+  max-height: 62vh;
+  object-fit: contain;
   display: block;
+  grid-area: 1 / 1;
 }
+/* The drawing fades in over the photo; the value drives opacity with no transition, so the blend
+ * tracks the artist's finger exactly. */
 .reveal-slider-composite {
-  position: absolute;
-  inset: 0;
+  transition: none;
 }
+
 .reveal-slider input[type='range'] {
   width: 100%;
-  accent-color: var(--color-accent-2);
+  appearance: none;
+  background: none;
+  height: 44px;
+  cursor: pointer;
+}
+.reveal-slider input[type='range']::-webkit-slider-runnable-track {
+  height: 6px;
+  background: var(--ink);
+  border-radius: 3px;
+}
+.reveal-slider input[type='range']::-moz-range-track {
+  height: 6px;
+  background: var(--ink);
+  border-radius: 3px;
+}
+.reveal-slider input[type='range']::-webkit-slider-thumb {
+  appearance: none;
+  width: 30px;
+  height: 30px;
+  margin-top: -12px;
+  background: var(--yellow);
+  border: var(--edge);
+  border-radius: 50%;
+}
+.reveal-slider input[type='range']::-moz-range-thumb {
+  width: 30px;
+  height: 30px;
+  background: var(--yellow);
+  border: var(--edge);
+  border-radius: 50%;
 }
 .reveal-slider-labels {
   display: flex;
   justify-content: space-between;
-  font-size: var(--text-caption);
-  color: var(--color-text-secondary);
-}
-.reveal-slider-labels span:first-child {
-  color: var(--color-accent-3);
-}
-.reveal-slider-labels span:last-child {
-  color: var(--color-accent-2);
+  font: 700 17px/20px var(--pencil);
+  color: var(--ink-2);
 }
 
+/* ===== Details ===== */
 .viewer-details {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-2);
+  display: grid;
+  gap: var(--space-3);
+}
+.viewer-title {
+  font: var(--text-h2) / var(--leading-h2) var(--marker);
+  font-weight: 400;
+}
+.viewer-details p {
+  margin: 0;
 }
 .viewer-meta {
-  color: var(--color-text-secondary);
-  font-size: var(--text-caption);
+  font: var(--text-caption) / var(--leading-caption) var(--print);
+  color: var(--ink-2);
 }
+/* "What I remember" is written on the lines, the same as where it was typed. No italics. */
 .viewer-memory {
-  font-style: italic;
-  color: var(--color-text-secondary);
+  font-style: normal;
+  line-height: var(--leading-lined);
+  padding: 0 var(--space-3);
+  background-color: var(--paper);
+  background-image: var(--lines);
+  background-size: 100% var(--leading-lined);
+  border: var(--edge);
+  border-radius: var(--r-card);
 }
 .viewer-tags {
   list-style: none;
@@ -77,120 +119,105 @@
   flex-wrap: wrap;
   gap: var(--space-2);
   padding: 0;
+  margin: 0;
 }
 .viewer-tags li {
-  font-size: var(--text-caption);
-  padding: 2px var(--space-2);
-  border-radius: 999px;
-  border: 1px solid var(--color-border);
-  color: var(--color-text-secondary);
+  font: 700 17px/20px var(--pencil);
+  padding: 2px 10px 0;
+  border: var(--edge);
+  border-radius: var(--r-ctl);
 }
 
 .spot-map {
   height: 160px;
-  border-radius: var(--radius-card);
+  border: var(--edge);
+  border-radius: var(--r-card);
   overflow: hidden;
-  border: 1px solid var(--color-border);
 }
 
-.viewer-same-wall h3 {
-  font-size: var(--text-caption);
-  color: var(--color-text-secondary);
-  margin-bottom: var(--space-2);
+/* ===== Same Wall ===== */
+.viewer-same-wall {
+  display: grid;
+  gap: var(--space-3);
 }
-
 .same-wall-strip {
   display: flex;
-  gap: var(--space-2);
+  gap: var(--space-3);
   overflow-x: auto;
+  padding-bottom: var(--space-2);
 }
 .same-wall-skeleton,
 .same-wall-thumb-placeholder {
-  width: 72px;
-  height: 72px;
+  width: 96px;
+  height: 128px;
   flex-shrink: 0;
-  border-radius: var(--radius-control);
-  background: var(--color-surface-raised);
+  border: var(--edge);
+  border-radius: var(--radius-photo);
+  background: var(--desk);
 }
 .same-wall-item img {
-  width: 72px;
-  height: 72px;
+  width: 96px;
+  height: 128px;
   object-fit: cover;
-  border-radius: var(--radius-control);
+  border: var(--edge);
+  border-radius: var(--radius-photo);
   display: block;
 }
 .same-wall-empty {
-  color: var(--color-text-secondary);
-  font-size: var(--text-caption);
+  margin: 0;
+  font: var(--text-caption) / var(--leading-caption) var(--print);
+  color: var(--ink-2);
 }
 
-.report-dialog-backdrop {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.6);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 30;
-  padding: var(--space-3);
-}
-.report-dialog {
-  background: var(--color-surface);
-  border-radius: var(--radius-sheet);
-  padding: var(--space-4);
-  max-width: 360px;
-  width: 100%;
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-3);
-}
-.report-dialog textarea {
-  min-height: 80px;
-  padding: var(--space-2) var(--space-3);
-  border-radius: var(--radius-control);
-  border: 1px solid var(--color-border);
-  background: var(--color-surface-raised);
-  color: var(--color-text-primary);
-  font: inherit;
-}
-.report-dialog-actions {
-  display: flex;
+/* ===== Report sheet ===== */
+.report-reasons {
+  display: grid;
   gap: var(--space-2);
-  justify-content: flex-end;
 }
-.report-dialog button {
-  min-height: 44px;
-  padding: var(--space-2) var(--space-4);
-  border-radius: var(--radius-control);
-  border: 1px solid var(--color-border);
-  background: var(--color-surface-raised);
-  color: var(--color-text-primary);
-}
-.report-dialog button:disabled {
-  opacity: 0.5;
+.report-reasons .choice .title {
+  font: 700 var(--text-label) / var(--leading-label) var(--pencil);
 }
 
+/* ===== Street level ===== */
 .street-level-panel {
-  display: flex;
-  flex-direction: column;
+  display: grid;
   gap: var(--space-1);
 }
 .street-level-loading,
 .street-level-empty {
-  color: var(--color-text-secondary);
+  color: var(--ink-2);
   font-size: var(--text-caption);
 }
 .street-level-viewer {
   height: 240px;
-  border-radius: var(--radius-card);
+  border: var(--edge);
+  border-radius: var(--radius-photo);
   overflow: hidden;
 }
 .street-level-image {
   width: 100%;
-  border-radius: var(--radius-card);
+  border: var(--edge);
+  border-radius: var(--radius-photo);
   display: block;
 }
 .street-level-credit {
-  font-size: 11px;
-  color: var(--color-text-secondary);
+  font: var(--text-caption) / var(--leading-caption) var(--print);
+  color: var(--ink-2);
+}
+
+/* Laptop: the art and slider stay on the left while the words scroll on the right. */
+@media (min-width: 900px) {
+  .fresco-viewer {
+    max-width: 1100px;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    align-items: start;
+    gap: var(--space-6);
+  }
+  .reveal-slider {
+    position: sticky;
+    top: var(--space-4);
+  }
+  .viewer-same-wall {
+    grid-column: 1 / -1;
+  }
 }

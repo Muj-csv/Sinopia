@@ -1,126 +1,86 @@
+/* Sign-in, profile and About. */
+
+/* ===== Sign-in ===== */
+/* Rendered inline by AuthGate rather than over a scrim, so it reads as the page the route landed
+ * on; it keeps the sheet's lined paper and ink edge. */
 .sign-in-prompt {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: var(--space-3);
-  padding: var(--space-5);
-  text-align: center;
-  color: var(--color-text-secondary);
+  display: grid;
+  place-items: center;
+  padding: var(--space-5) var(--space-4);
+  min-height: 100%;
+  align-content: center;
 }
-
+.sign-in-card {
+  display: grid;
+  gap: var(--space-4);
+  width: min(420px, 100%);
+  padding: var(--space-5) var(--space-4);
+  border: var(--edge);
+  border-radius: var(--r-card);
+  box-shadow: var(--offset);
+}
+.sign-in-card p {
+  margin: 0;
+}
 .sign-in-buttons {
-  display: flex;
+  display: grid;
   gap: var(--space-3);
 }
-.sign-in-buttons button {
-  min-height: 44px;
-  padding: var(--space-2) var(--space-4);
-  border-radius: var(--radius-control);
-  border: 1px solid var(--color-border);
-  background: var(--color-surface-raised);
-  color: var(--color-text-primary);
-}
 
+/* ===== Profile ===== */
 .profile-editor {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-3);
-  max-width: 320px;
-  margin: 0 auto;
+  display: grid;
+  gap: var(--space-4);
+  justify-items: start;
+  max-width: 420px;
 }
-.profile-editor label {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-1);
-  text-align: left;
-  color: var(--color-text-secondary);
-  font-size: var(--text-caption);
-}
-.profile-editor input {
-  min-height: 44px;
-  padding: var(--space-2) var(--space-3);
-  border-radius: var(--radius-control);
-  border: 1px solid var(--color-border);
-  background: var(--color-surface-raised);
-  color: var(--color-text-primary);
-}
-.profile-editor button {
-  min-height: 44px;
-  padding: var(--space-2) var(--space-4);
-  border-radius: var(--radius-control);
-  border: 1px solid var(--color-border);
-  background: var(--color-surface-raised);
-  color: var(--color-text-primary);
-}
-.profile-editor button:disabled {
-  opacity: 0.5;
-}
-.profile-status {
-  color: var(--color-danger);
-  font-size: var(--text-caption);
+.profile-editor .field {
+  width: 100%;
 }
 
-/* '/about' (D-017): licences and credits. Theme variables only. */
-.about-page {
-  padding: var(--space-5);
-  max-width: 44rem;
-  color: var(--color-text-primary);
-}
+/* ===== About ===== */
 .about-page h2 {
-  font-family: var(--font-display);
-  font-size: var(--text-h1);
-  color: var(--color-accent);
-}
-.about-page h3 {
-  font-family: var(--font-display);
-  font-size: var(--text-h3);
-  margin-top: var(--space-6);
-  margin-bottom: var(--space-2);
+  margin-top: var(--space-5);
 }
 .about-page p {
-  line-height: 1.6;
-  margin-bottom: var(--space-3);
+  margin: 0;
+}
+/* No italics anywhere (DESIGN_BRIEF.md §2). An emphasised term is written in the marker hand
+ * instead, which is the same gesture as circling a word in a notebook. */
+.about-page em {
+  font-style: normal;
+  font-family: var(--marker);
+  font-size: 1.15em;
 }
 .about-lede {
-  font-family: var(--font-display);
-  font-size: var(--text-h3);
-  color: var(--color-text-secondary);
+  font: var(--text-h3) / var(--leading-h3) var(--marker);
+  color: var(--ink);
 }
 .about-credits {
   list-style: none;
   padding: 0;
-  display: flex;
-  flex-direction: column;
+  margin: 0;
+  display: grid;
   gap: var(--space-3);
 }
 .about-credits li {
   padding-bottom: var(--space-3);
-  border-bottom: 1px solid var(--color-border);
+  border-bottom: 2px solid var(--rule);
 }
 .about-credits a {
-  color: var(--color-accent);
+  font-family: var(--pencil);
+  font-weight: 700;
+  font-size: var(--text-label);
+  text-decoration: underline;
+  text-decoration-thickness: 2px;
+  text-underline-offset: 3px;
 }
 .about-credit-what {
-  color: var(--color-text-primary);
+  color: var(--ink);
 }
 .about-credit-terms {
   display: block;
   margin-top: var(--space-1);
-  font-size: var(--text-caption);
-  color: var(--color-text-secondary);
-}
-.about-back {
-  margin-top: var(--space-6);
-}
-.about-back a {
-  color: var(--color-accent);
-}
-
-/* Unknown route (UX_MAP has no such screen; keep it quiet and recoverable). */
-.not-found-screen {
-  padding: var(--space-5);
-  color: var(--color-text-secondary);
-}
-.not-found-screen a {
-  color: var(--color-accent);
+  font: var(--text-caption) / var(--leading-caption) var(--print);
+  color: var(--ink-2);
 }

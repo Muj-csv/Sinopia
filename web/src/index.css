@@ -1,5 +1,8 @@
-/* Theme tokens (docs/design/tokens.json -> theme.css). Never hand-edit theme.css itself. */
+/* Theme tokens (docs/design/tokens.json -> theme.css). Never hand-edit theme.css itself;
+ * change tokens.json and run `node scripts/tokens-export.mjs`. */
 @import '../../docs/design/theme.css';
+/* The component language: buttons, sheets, cards, notices, lined paper. */
+@import './ui/ui.css';
 
 * {
   box-sizing: border-box;
@@ -13,25 +16,63 @@ body,
 
 body {
   margin: 0;
-  background: var(--color-bg);
-  color: var(--color-text-primary);
-  font-family: var(--font-body);
-  font-size: var(--text-body);
+  background: var(--desk);
+  color: var(--ink);
+  font: var(--text-body) / var(--leading-body) var(--print);
+  -webkit-tap-highlight-color: transparent;
 }
 
+/* Titles are the marker hand. Long text stays print, so no heading rule reaches a paragraph. */
 h1,
 h2,
 h3 {
-  font-family: var(--font-display);
+  font-family: var(--marker);
+  font-weight: 400;
   margin: 0;
+  text-wrap: balance;
+}
+h1 {
+  font-size: var(--text-h2);
+  line-height: var(--leading-h2);
+}
+h2 {
+  font-size: var(--text-h3);
+  line-height: var(--leading-h3);
+}
+h3 {
+  font-size: var(--text-button);
+  line-height: var(--leading-button);
 }
 
+button,
+input,
+textarea,
+select {
+  font: inherit;
+  color: inherit;
+}
 button {
-  font-family: inherit;
-  font-size: inherit;
   cursor: pointer;
 }
 
 a {
   color: inherit;
+}
+
+/* The ink outline is the edge everywhere, so focus is a thicker ring offset clear of it. */
+:focus-visible {
+  outline: 3px solid var(--color-focus-ring);
+  outline-offset: 2px;
+}
+
+/* The one icon set (src/ui/Icon.tsx). Ink stroke at 24px inside 44px targets. */
+svg.i {
+  width: 24px;
+  height: 24px;
+  fill: none;
+  stroke: var(--ink);
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  flex: none;
 }

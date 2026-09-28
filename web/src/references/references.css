@@ -1,113 +1,79 @@
-.reference-panel {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-3);
-  padding: var(--space-3);
-  width: 320px;
-  max-width: 100%;
-  border-left: 1px solid var(--color-border);
-  background: var(--color-surface);
-  overflow-y: auto;
-}
+/* Reference panel (inside the canvas).
+ *
+ * Design Council #1 and #2: on a phone it sits in the page flow above the tray and is capped at
+ * 40% of the height, so it pushes the canvas up instead of covering the street being drawn. On a
+ * laptop it docks to the right at 340px. Every result carries its licence and creator, results
+ * with no licence are never shown, and nothing here is stored. */
 
-@media (max-width: 640px) {
-  .reference-panel {
-    width: 100%;
-    border-left: none;
-    border-top: 1px solid var(--color-border);
-    border-radius: var(--radius-sheet) var(--radius-sheet) 0 0;
-    max-height: 60vh;
-  }
+.reference-panel {
+  flex: none;
+  display: grid;
+  gap: var(--space-3);
+  align-content: start;
+  max-height: 40vh;
+  overflow-y: auto;
+  padding: var(--space-3) var(--space-4);
+  background: var(--paper);
+  border-top: var(--edge);
 }
 
 .reference-panel-header {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  gap: var(--space-2);
 }
-.reference-panel-header button {
-  min-height: 44px;
-  padding: var(--space-2) var(--space-3);
-  border-radius: var(--radius-control);
-  border: 1px solid var(--color-border);
-  background: var(--color-surface-raised);
-  color: var(--color-text-primary);
+.reference-panel-header h2 {
+  margin-right: auto;
 }
 
 .reference-search {
+  width: 100%;
   min-height: 44px;
-  padding: var(--space-2) var(--space-3);
-  border-radius: var(--radius-control);
-  border: 1px solid var(--color-border);
-  background: var(--color-surface-raised);
-  color: var(--color-text-primary);
+  padding: 10px var(--space-3);
+  font: var(--text-body) / var(--leading-body) var(--print);
+  color: var(--ink);
+  background: var(--paper);
+  border: var(--edge);
+  border-radius: var(--r-ctl);
 }
 
+/* Chips use the hand-cut control radius, never a 999px pill. */
 .reference-angle-chips {
   display: flex;
   flex-wrap: wrap;
   gap: var(--space-2);
 }
-.reference-angle-chips button {
-  min-height: 32px;
-  padding: var(--space-1) var(--space-3);
-  border-radius: 999px;
-  border: 1px solid var(--color-border);
-  background: var(--color-surface-raised);
-  color: var(--color-text-secondary);
-  font-size: var(--text-caption);
-}
-.reference-angle-chips button.active {
-  border-color: var(--color-accent);
-  color: var(--color-accent);
-}
 
 .reference-status {
-  color: var(--color-text-secondary);
-  font-size: var(--text-caption);
-}
-.reference-status button {
-  color: var(--color-accent);
-  text-decoration: underline;
-  background: none;
-  border: none;
-  padding: 0;
+  margin: 0;
+  font: var(--text-caption) / var(--leading-caption) var(--print);
+  color: var(--ink-2);
 }
 
 .reference-grid {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: var(--space-2);
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: var(--space-3);
 }
 
 .reference-skeleton {
   aspect-ratio: 1;
-  border-radius: var(--radius-control);
-  background: var(--color-surface-raised);
-  animation: reference-pulse 1.2s ease-in-out infinite;
-}
-@keyframes reference-pulse {
-  0%,
-  100% {
-    opacity: 0.6;
-  }
-  50% {
-    opacity: 1;
-  }
+  border: var(--edge);
+  border-radius: var(--radius-photo);
+  background: var(--desk);
 }
 
 .reference-card {
-  display: flex;
-  flex-direction: column;
+  display: grid;
   gap: var(--space-1);
+  align-content: start;
 }
-
 .reference-thumb {
   padding: 0;
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-control);
+  border: var(--edge);
+  border-radius: var(--radius-photo);
   overflow: hidden;
-  background: none;
+  background: var(--desk);
   cursor: pointer;
 }
 .reference-thumb img {
@@ -116,77 +82,90 @@
   object-fit: cover;
   display: block;
 }
-
 .reference-pin {
-  min-height: 32px;
-  font-size: var(--text-caption);
-  border-radius: var(--radius-control);
-  border: 1px solid var(--color-border);
-  background: var(--color-surface-raised);
-  color: var(--color-text-secondary);
+  justify-self: start;
 }
-.reference-pin.active {
-  border-color: var(--color-accent);
-  color: var(--color-accent);
+.reference-pin .i {
+  width: 16px;
+  height: 16px;
 }
 
+/* The licence line is print, never handwriting: it has to be read exactly. */
 .reference-license {
-  font-size: var(--text-caption);
-  color: var(--color-text-secondary);
-  text-decoration: none;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-.reference-license:hover {
+  font: var(--text-caption) / var(--leading-caption) var(--print);
+  color: var(--ink-2);
   text-decoration: underline;
+  text-underline-offset: 2px;
+  word-break: break-word;
 }
 
 .reference-footer {
-  font-size: var(--text-caption);
-  color: var(--color-text-secondary);
-  border-top: 1px solid var(--color-border);
-  padding-top: var(--space-2);
+  margin: 0;
+  font: var(--text-caption) / var(--leading-caption) var(--print);
+  color: var(--ink-2);
 }
 
 .reference-lightbox {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.8);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 20;
+  z-index: 50;
+  background: rgb(26 26 26 / 72%);
+  display: grid;
+  place-items: center;
+  padding: var(--space-4);
   cursor: zoom-out;
 }
 .reference-lightbox img {
-  max-width: 90vw;
-  max-height: 90vh;
-  object-fit: contain;
+  max-width: 100%;
+  max-height: 100%;
+  border: var(--edge);
+  border-radius: var(--radius-photo);
+  background: var(--paper);
 }
 
+/* ===== Pinned reference ===== */
+/* Stays visible over the canvas corner even when the panel is closed, so the artist can keep
+ * looking at it while drawing. */
 .pinned-reference {
-  position: fixed;
-  bottom: var(--space-4);
-  right: var(--space-4);
-  width: 96px;
-  border: 2px solid var(--color-accent);
-  border-radius: var(--radius-control);
-  overflow: hidden;
-  z-index: 15;
-  background: var(--color-surface);
+  position: absolute;
+  right: var(--space-3);
+  top: var(--space-3);
+  z-index: 8;
+  width: 120px;
+  border: var(--edge);
+  border-radius: var(--r-card);
+  background: var(--paper);
+  box-shadow: var(--offset);
+  padding: var(--space-1);
 }
 .pinned-reference img {
   width: 100%;
-  aspect-ratio: 1;
-  object-fit: cover;
   display: block;
+  border-radius: var(--radius-photo);
 }
-.pinned-reference button {
-  width: 100%;
-  font-size: var(--text-caption);
-  padding: var(--space-1);
-  border: none;
-  background: var(--color-surface-raised);
-  color: var(--color-text-secondary);
+.refpin-unpin {
+  position: absolute;
+  top: -10px;
+  right: -10px;
+  width: 32px;
+  height: 32px;
+  background: var(--paper);
+  border: var(--edge);
+  border-radius: 50%;
+}
+.refpin-unpin .i {
+  width: 16px;
+  height: 16px;
+}
+
+/* Laptop: the panel docks to the right of the canvas at 340px, full height. */
+@media (min-width: 900px) {
+  .reference-panel {
+    order: 2;
+    width: 340px;
+    max-height: none;
+    height: 100%;
+    border-top: 0;
+    border-left: var(--edge);
+  }
 }

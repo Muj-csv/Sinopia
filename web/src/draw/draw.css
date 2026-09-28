@@ -1,107 +1,232 @@
+/* Canvas / Studio (/new/draw): the anchor screen.
+ *
+ * Priority: 1) the canvas 2) the current tool and colour 3) undo/redo 4) Refs 5) Finish.
+ * Chrome takes <= 20% of the height with the reference panel closed. Nothing covers the canvas --
+ * opening the reference panel shrinks the stage instead. No backdrop-filter, no stacked FABs, and
+ * no lined paper or yellow anywhere near the photo. */
+
 .draw-screen-layout {
   display: flex;
+  flex-direction: column;
   height: 100%;
-
-  @media (max-width: 640px) {
-    flex-direction: column;
-  }
+  min-height: 0;
 }
 
 .draw-screen {
   flex: 1;
-  min-width: 0;
-  padding: var(--space-3);
+  min-height: 0;
   display: flex;
   flex-direction: column;
-  gap: var(--space-3);
+  background: var(--desk);
 }
 
-.draw-status {
-  color: var(--color-text-secondary);
-  font-size: var(--text-caption);
+/* The stage letterboxes the photo against the desk: no frame, no tint, no lines. */
+.draw-stage {
+  flex: 1;
+  min-height: 0;
+  position: relative;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
 }
-
 .draw-canvas-container {
   max-width: 100%;
+  max-height: 100%;
   overflow: auto;
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-card);
   touch-action: none;
 }
 
-.draw-finish {
-  min-height: 44px;
-  padding: var(--space-3) var(--space-4);
-  border-radius: var(--radius-control);
-  border: none;
-  background: var(--color-accent);
-  color: var(--color-text-on-accent);
-  align-self: flex-start;
-}
-.draw-finish:disabled {
-  opacity: 0.5;
+.draw-resume {
+  flex: none;
+  margin: 0;
+  padding: var(--space-2) var(--space-4);
+  font: var(--text-caption) / var(--leading-caption) var(--print);
+  color: var(--ink-2);
+  background: var(--paper);
+  border-bottom: 2px solid var(--rule);
 }
 
-.tool-rail {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--space-3);
-  padding: var(--space-3);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-card);
-  background: var(--color-surface);
+/* Save status in the top bar. */
+.savestate {
+  font: var(--text-caption) / var(--leading-caption) var(--print);
+  color: var(--ink-2);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+  flex: 0 1 auto;
+}
+.savestate.failed {
+  color: var(--error);
+  font-weight: 700;
+}
+/* The bar is tight at 390px, so the status gives way to the controls first. */
+@media (max-width: 560px) {
+  .savestate {
+    display: none;
+  }
 }
 
-.tool-rail-group {
+/* ===== Tool tray ===== */
+.tray {
+  flex: none;
   display: flex;
+  justify-content: space-around;
+  align-items: flex-end;
+  gap: var(--space-1);
+  padding: var(--space-2) var(--space-2) calc(env(safe-area-inset-bottom, 0px) + var(--space-2));
+  background: var(--paper);
+  border-top: var(--edge);
+}
+
+.tool-slot {
+  position: relative;
+}
+
+.tool {
+  width: 56px;
+  min-height: 56px;
+  display: grid;
+  justify-items: center;
+  align-content: center;
+  gap: 2px;
+  padding: var(--space-1);
+  background: none;
+  border: 2px solid transparent;
+  border-radius: var(--r-ctl);
+  color: var(--ink);
+  font: 700 15px/16px var(--pencil);
+  cursor: pointer;
+}
+.tool.active {
+  background: var(--yellow);
+  border-color: var(--ink);
+}
+/* A tool whose popover is open is tinted, not filled: the fill means "this is the active tool". */
+.tool.open {
+  background: var(--yellow-tint);
+  border-color: var(--ink);
+}
+.tool:disabled {
+  opacity: 0.35;
+}
+
+.tool-swatch {
+  width: 24px;
+  height: 24px;
+  display: block;
+  border: var(--edge);
+  border-radius: var(--radius-photo);
+}
+
+.tool-badge-wrap {
+  position: relative;
+  display: inline-grid;
+  place-items: center;
+}
+.tool-badge {
+  position: absolute;
+  right: -8px;
+  bottom: -4px;
+  min-width: 18px;
+  height: 18px;
+  display: grid;
+  place-items: center;
+  padding: 0 3px;
+  background: var(--paper);
+  border: 2px solid var(--ink);
+  border-radius: var(--r-ctl);
+  font: 700 13px/13px var(--pencil);
+}
+
+/* ===== Popovers ===== */
+.tool-slot .pop {
+  bottom: calc(100% + var(--space-2));
+  left: 50%;
+  transform: translateX(-50%);
+  max-width: min(320px, calc(100vw - var(--space-4)));
+}
+
+.swatches {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
   gap: var(--space-2);
 }
-
-.tool-rail button {
-  min-width: 44px;
-  min-height: 44px;
-  padding: var(--space-2);
-  border-radius: var(--radius-control);
-  border: 1px solid var(--color-border);
-  background: var(--color-surface-raised);
-  color: var(--color-text-primary);
+.swatch {
+  width: 44px;
+  height: 44px;
+  border: var(--edge);
+  border-radius: var(--radius-photo);
+  cursor: pointer;
 }
-.tool-rail button:hover {
-  background: var(--color-surface-hover);
-}
-.tool-rail button.active {
-  border-color: var(--color-accent);
-  color: var(--color-accent);
-}
-.tool-rail button:disabled {
-  opacity: 0.4;
+.swatch[aria-pressed='true'] {
+  outline: 3px solid var(--ink);
+  outline-offset: 3px;
 }
 
-.tool-rail-colors button {
-  min-width: 32px;
-  min-height: 32px;
+/* A live stroke, so a number never stands in for what the artist needs to see. */
+.size-preview {
+  display: grid;
+  place-items: center;
+  min-height: 72px;
+  background: var(--paper);
+  border: var(--edge);
+  border-radius: var(--radius-photo);
+}
+.size-dot {
+  display: block;
   border-radius: 50%;
-  padding: 0;
-}
-.tool-rail-colors button.active {
-  outline: 2px solid var(--color-focus-ring);
-  outline-offset: 2px;
 }
 
-.tool-rail-slider {
+.layer-row {
   display: flex;
-  flex-direction: column;
-  gap: var(--space-1);
-  font-size: var(--text-caption);
-  color: var(--color-text-secondary);
+  align-items: center;
+  gap: var(--space-2);
+}
+.layer-pick {
+  flex: 1;
+  text-align: left;
+  min-height: 44px;
+  padding: var(--space-1) var(--space-2);
+  background: none;
+  border: 2px solid transparent;
+  border-radius: var(--r-ctl);
+  color: var(--ink);
+  font: 700 var(--text-label) / var(--leading-label) var(--pencil);
+  cursor: pointer;
+}
+.layer-pick.active {
+  background: var(--yellow-tint);
+  border-color: var(--ink);
+}
+.layer-confirm {
+  display: flex;
+  gap: var(--space-3);
+  align-items: center;
 }
 
-.tool-rail-layers {
-  flex-direction: column;
-  gap: var(--space-1);
-}
-.tool-rail-layer {
-  display: flex;
-  gap: var(--space-1);
+/* ===== Laptop ===== */
+/* The tray becomes a left rail and the reference panel docks right, so the canvas keeps the height. */
+@media (min-width: 900px) {
+  .draw-screen {
+    flex-direction: row;
+  }
+  .tray {
+    order: -1;
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: center;
+    border-top: 0;
+    border-right: var(--edge);
+    padding: var(--space-3) var(--space-2);
+  }
+  .tool-slot .pop {
+    bottom: auto;
+    top: 0;
+    left: calc(100% + var(--space-2));
+    transform: none;
+  }
+  .draw-resume {
+    display: none;
+  }
 }

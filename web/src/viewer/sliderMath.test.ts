@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { clampSlider, compositeClipInset } from './sliderMath'
+import { clampSlider, compositeOpacity } from './sliderMath'
 
 describe('clampSlider', () => {
   it('passes through in-range values', () => {
@@ -13,14 +13,18 @@ describe('clampSlider', () => {
   })
 })
 
-describe('compositeClipInset', () => {
-  it('fully hides the composite at 0 (all photo)', () => {
-    expect(compositeClipInset(0)).toBe('inset(0 100% 0 0)')
+describe('compositeOpacity', () => {
+  it('fully hides the drawing at 0 (all photo)', () => {
+    expect(compositeOpacity(0)).toBe(0)
   })
-  it('fully reveals the composite at 100 (all drawing)', () => {
-    expect(compositeClipInset(100)).toBe('inset(0 0% 0 0)')
+  it('fully shows the drawing at 100', () => {
+    expect(compositeOpacity(100)).toBe(1)
   })
-  it('reveals half at 50', () => {
-    expect(compositeClipInset(50)).toBe('inset(0 50% 0 0)')
+  it('blends evenly at 50', () => {
+    expect(compositeOpacity(50)).toBe(0.5)
+  })
+  it('clamps out-of-range values', () => {
+    expect(compositeOpacity(-10)).toBe(0)
+    expect(compositeOpacity(150)).toBe(1)
   })
 })

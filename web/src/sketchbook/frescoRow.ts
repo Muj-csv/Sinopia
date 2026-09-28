@@ -23,17 +23,26 @@ export interface FrescoRow {
   published_at: string | null
 }
 
+/** Which heading the Sketchbook shelves are cut by (SCREENS.md: a Place / Month segmented control). */
+export type GroupMode = 'place' | 'month'
+
+function monthLabel(createdAt: string): string {
+  return new Date(createdAt).toLocaleString('en-US', { month: 'long', year: 'numeric' })
+}
+
 /**
- * Groups by place_name (falling back to the created month) -- UX_MAP:
+ * Groups by place_name (falling back to the created month) or by month outright -- UX_MAP:
  * "grouped by place or month". Preserves each group's incoming order
  * (callers sort before grouping).
  */
-export function groupFrescoes(rows: readonly FrescoRow[]): { label: string; rows: FrescoRow[] }[] {
+export function groupFrescoes(
+  rows: readonly FrescoRow[],
+  mode: GroupMode = 'place',
+): { label: string; rows: FrescoRow[] }[] {
   const groups = new Map<string, FrescoRow[]>()
   for (const row of rows) {
     const label =
-      row.place_name ??
-      new Date(row.created_at).toLocaleString('en-US', { month: 'long', year: 'numeric' })
+      mode === 'month' ? monthLabel(row.created_at) : (row.place_name ?? monthLabel(row.created_at))
     const existing = groups.get(label)
     if (existing !== undefined) existing.push(row)
     else groups.set(label, [row])
