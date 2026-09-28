@@ -133,3 +133,10 @@
     padding-bottom: var(--space-5);
   }
 }
+
+/* Tablet: wider cards, since a shelf of 140px thumbs wastes an iPad's width. */
+@media (min-width: 768px) {
+  .shelf-strip > * {
+    width: 180px;
+  }
+}
