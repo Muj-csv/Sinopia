@@ -28,8 +28,7 @@ import {
   type PinPrecision,
   type Visibility,
 } from './fresco'
-import { publishFresco } from './publishFresco'
-import { saveFresco } from './saveFresco'
+import { finishFresco } from './finishFresco'
 
 function FinishFormInner({ draft, userId }: { draft: Draft; userId: string }) {
   const navigate = useNavigate()
@@ -73,7 +72,8 @@ function FinishFormInner({ draft, userId }: { draft: Draft; userId: string }) {
     if (draft.exported === undefined || !isValid(errors)) return
     setStatus('submitting')
     setError(null)
-    const result = await saveFresco({
+
+    const outcome = await finishFresco({
       ownerId: userId,
       ...fields,
       photo: draft.photo,
@@ -84,31 +84,26 @@ function FinishFormInner({ draft, userId }: { draft: Draft; userId: string }) {
       height: draft.height,
       capturedAt: draft.capturedAt,
       location: draft.location,
+      visibility,
+      precision,
     })
 
-    if (!result.ok) {
-      // Upload failure keeps the local draft (never deleted here) so the user can retry.
+    if (outcome.status === 'save-failed') {
+      // Nothing was written, so the local draft stays for a retry.
       setStatus('error')
-      setError(result.error ?? 'Saved as a draft on this device')
+      setError(outcome.error)
       return
     }
 
-    // saveFresco always writes it private; publishing is the second, separate step, so a failure
-    // to publish still leaves a saved fresco rather than losing the work.
-    if (visibility === 'public') {
-      const published = await publishFresco(
-        { ownerId: userId, frescoId: result.frescoId },
-        precision,
-      )
-      if (!published.ok) {
-        setStatus('error')
-        setError("Saved to your Sketchbook, but publishing didn't go through. Try from there.")
-        await deleteDraft(draft.id)
-        return
-      }
+    // The fresco exists either way from here, so the draft has done its job.
+    await deleteDraft(draft.id)
+
+    if (outcome.status === 'publish-failed') {
+      setStatus('error')
+      setError(`Saved to your Sketchbook, but publishing didn't go through: ${outcome.error}`)
+      return
     }
 
-    await deleteDraft(draft.id)
     navigate('/sketchbook')
   }
 
