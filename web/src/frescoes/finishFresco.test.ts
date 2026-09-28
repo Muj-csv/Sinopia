@@ -30,14 +30,18 @@ function deps(over: { saveOk?: boolean; publishOk?: boolean } = {}): FinishDeps 
   save: ReturnType<typeof vi.fn>
   publish: ReturnType<typeof vi.fn>
 } {
-  const save = vi.fn().mockResolvedValue(
-    over.saveOk === false
-      ? { ok: false, frescoId: FRESCO, error: 'upload failed' }
-      : { ok: true, frescoId: FRESCO },
-  )
-  const publish = vi.fn().mockResolvedValue(
-    over.publishOk === false ? { ok: false, error: 'storage denied' } : { ok: true },
-  )
+  const save = vi
+    .fn()
+    .mockResolvedValue(
+      over.saveOk === false
+        ? { ok: false, frescoId: FRESCO, error: 'upload failed' }
+        : { ok: true, frescoId: FRESCO },
+    )
+  const publish = vi
+    .fn()
+    .mockResolvedValue(
+      over.publishOk === false ? { ok: false, error: 'storage denied' } : { ok: true },
+    )
   return { save, publish } as never
 }
 
