@@ -7,7 +7,9 @@
  */
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
+import { formatCoords } from '../lib/coords'
 import { getDraft, updateDraft, type Draft } from '../lib/draftStore'
+import { PlaceSearch } from '../globe/PlaceSearch'
 import { reverseGeocode } from '../lib/nominatim'
 import { FlowBar } from '../ui/FlowBar'
 import { Icon } from '../ui/Icon'
@@ -130,12 +132,36 @@ export function PinCheck() {
           }}
         />
 
+        {/* Searching moves the map, and the centre pin follows it, so search and drag are the
+            same act of choosing rather than two competing sources of truth. */}
+        <div className="pin-check-search">
+          <PlaceSearch
+            onSelect={(place) => {
+              setLat(place.lat)
+              setLng(place.lng)
+              setSource('map')
+              setPlaceName(place.label)
+            }}
+          />
+        </div>
+
         <div className="pin-check-origin">
           {thumbUrl !== null && <img src={thumbUrl} alt="" className="pin-check-thumb" />}
           <span className="t-label">{SOURCE_TEXT[source]}</span>
         </div>
 
         <div className="pin-check-dock lined">
+          <div className="pin-check-readout">
+            <span className="t-label">Selected location</span>
+            <span className="pin-check-coords t-num">
+              {lat === null || lng === null
+                ? 'Drag the map to place the pin'
+                : formatCoords(lat, lng)}
+            </span>
+          </div>
+
+          {/* The name is editable because a reverse geocode often names the road, not the place
+              the artist means. The coordinates above are what actually gets saved. */}
           <label className="field">
             <span>Place name</span>
             <input
