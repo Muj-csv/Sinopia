@@ -69,8 +69,18 @@ export async function unpublishFresco(
     if (error) throw error
 
     const paths = FILES.map((f) => frescoPath(ownerId, frescoId, f))
-    const { error: removeError } = await client.storage.from('globe').remove(paths)
+    const { data: removed, error: removeError } = await client.storage.from('globe').remove(paths)
     if (removeError) throw removeError
+
+    // Storage reports no error when a delete matches nothing, and RLS can make a row invisible
+    // rather than refuse the delete. Unpublishing that quietly removed nothing would leave the
+    // images readable at their public URL while the app showed the fresco as private, so this
+    // is checked rather than assumed.
+    if (removed === null || removed.length < paths.length) {
+      throw new Error(
+        `Unpublished, but ${paths.length - (removed?.length ?? 0)} of ${paths.length} images are still public. Check the globe bucket's storage policies.`,
+      )
+    }
 
     return { ok: true }
   } catch (err) {

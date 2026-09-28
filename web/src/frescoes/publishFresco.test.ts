@@ -10,6 +10,7 @@ function makeClient(
     uploadError?: unknown
     updateError?: unknown
     removeError?: unknown
+    removed?: unknown[]
   } = {},
 ) {
   const download = vi.fn().mockResolvedValue({
@@ -17,7 +18,11 @@ function makeClient(
     error: opts.downloadError ?? null,
   })
   const upload = vi.fn().mockResolvedValue({ error: opts.uploadError ?? null })
-  const remove = vi.fn().mockResolvedValue({ error: opts.removeError ?? null })
+  const remove = vi.fn().mockResolvedValue({
+    // Storage returns the objects it actually removed; four paths are requested each time.
+    data: opts.removed ?? [{}, {}, {}, {}],
+    error: opts.removeError ?? null,
+  })
   const storageFrom = vi.fn().mockReturnValue({ download, upload, remove })
 
   const eq = vi.fn().mockResolvedValue({ error: opts.updateError ?? null })
@@ -85,5 +90,31 @@ describe('unpublishFresco', () => {
     const result = await unpublishFresco(REF, client)
     expect(result.ok).toBe(false)
     expect(remove).not.toHaveBeenCalled()
+  })
+})
+
+describe('unpublishFresco when storage removes nothing', () => {
+  // RLS can make a row invisible rather than refuse the delete, so storage reports success having
+  // removed nothing. Left unchecked, the app would call the fresco private while its images stayed
+  // readable at their public URL.
+  it('fails loudly when no images were removed', async () => {
+    const { client } = makeClient({ removed: [] })
+    const result = await unpublishFresco(REF, client)
+
+    expect(result.ok).toBe(false)
+    expect(result.error).toContain('still public')
+  })
+
+  it('fails when only some images were removed', async () => {
+    const { client } = makeClient({ removed: [{}, {}] })
+    const result = await unpublishFresco(REF, client)
+
+    expect(result.ok).toBe(false)
+    expect(result.error).toContain('2 of 4')
+  })
+
+  it('succeeds when all four are removed', async () => {
+    const { client } = makeClient()
+    expect((await unpublishFresco(REF, client)).ok).toBe(true)
   })
 })
