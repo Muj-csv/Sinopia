@@ -10,25 +10,11 @@ import { useState } from 'react'
 import { Icon } from '../ui/Icon'
 import { Popover } from '../ui/Popover'
 import type { Tool } from './DrawCanvas'
+import { BRUSHES, BRUSH_ORDER, DEFAULT_BRUSH, SIZES, isBrush, type BrushName } from './brushes'
+import { swatchesFor } from './palette'
 import { LAYER_COUNT } from './strokeHistory'
 
-/**
- * A starter palette for the artist's first stroke, before there are any recents. These are
- * pigments on the photo, not app chrome, so they are deliberately not theme tokens -- but the
- * first two are the app's own ink and paper, which is what most people reach for first.
- */
-const DEFAULT_RECENT_COLORS = [
-  '#1A1A1A',
-  '#FFFFFF',
-  '#B3261E',
-  '#E2B537',
-  '#237636',
-  '#1D3557',
-  '#8C3F2D',
-  '#6D597A',
-]
-
-type OpenPopover = 'color' | 'size' | 'layers' | null
+type OpenPopover = 'brush' | 'color' | 'size' | 'layers' | null
 
 export function ToolRail({
   tool,
@@ -55,24 +41,62 @@ export function ToolRail({
   onToggleReference: () => void
 }) {
   const [open, setOpen] = useState<OpenPopover>(null)
+  /** Remembered when a brush is picked, so switching to the eraser and back returns to it. */
+  const [lastBrush, setLastBrush] = useState<BrushName>(DEFAULT_BRUSH)
+
+  const pickBrush = (name: BrushName) => {
+    setLastBrush(name)
+    onToolChange({ ...tool, name, opacity: BRUSHES[name].opacity })
+  }
   /** Which layer is awaiting an inline "really clear?" -- never a blocking window.confirm. */
   const [confirmingClear, setConfirmingClear] = useState<number | null>(null)
 
-  const colors = recentColors.length > 0 ? recentColors : DEFAULT_RECENT_COLORS
+  const swatches = swatchesFor(recentColors)
+  const drawingWithBrush = isBrush(tool.name)
+  // The eraser is a mode, not a brush, so the tray keeps showing the brush you'll return to.
+  // The guard is inlined rather than reusing `drawingWithBrush`, which doesn't narrow tool.name.
+  const currentBrush: BrushName = isBrush(tool.name) ? tool.name : lastBrush
+
   const toggle = (which: OpenPopover) => setOpen((current) => (current === which ? null : which))
   const close = () => setOpen(null)
 
   return (
     <div className="tray" role="toolbar" aria-label="Drawing tools">
-      <button
-        type="button"
-        className={`tool${tool.name === 'brush' ? ' active' : ''}`}
-        aria-pressed={tool.name === 'brush'}
-        onClick={() => onToolChange({ ...tool, name: 'brush' })}
-      >
-        <Icon name="brush" />
-        <span>Brush</span>
-      </button>
+      {/* One slot, two jobs: tap to draw with the current brush, tap again to change which brush.
+          The label names the brush, so the tray always says what the next mark will be. */}
+      <div className="tool-slot">
+        <button
+          type="button"
+          className={`tool${drawingWithBrush ? ' active' : ''}${open === 'brush' ? ' open' : ''}`}
+          aria-pressed={drawingWithBrush}
+          aria-expanded={open === 'brush'}
+          onClick={() => {
+            if (drawingWithBrush) toggle('brush')
+            else pickBrush(currentBrush)
+          }}
+        >
+          <Icon name="brush" />
+          <span>{BRUSHES[currentBrush].label}</span>
+        </button>
+
+        {open === 'brush' && (
+          <Popover label="Brush" onClose={close}>
+            {BRUSH_ORDER.map((name) => (
+              <button
+                key={name}
+                type="button"
+                className={`layer-pick${tool.name === name ? ' active' : ''}`}
+                aria-pressed={tool.name === name}
+                onClick={() => pickBrush(name)}
+              >
+                <span className={`brush-sample brush-sample-${name}`} aria-hidden="true" />
+                {BRUSHES[name].label}
+                {tool.name === name && <Icon name="check" />}
+              </button>
+            ))}
+          </Popover>
+        )}
+      </div>
 
       <button
         type="button"
@@ -99,17 +123,33 @@ export function ToolRail({
         {open === 'color' && (
           <Popover label="Colour" onClose={close}>
             <div className="swatches">
-              {colors.slice(0, 8).map((c) => (
+              {swatches.map((swatch) => (
                 <button
-                  key={c}
+                  key={swatch.value}
                   type="button"
                   className="swatch"
-                  aria-label={`Colour ${c}`}
-                  aria-pressed={tool.color === c}
-                  style={{ background: c }}
-                  onClick={() => onToolChange({ ...tool, color: c })}
-                />
+                  title={swatch.name}
+                  aria-label={swatch.name}
+                  aria-pressed={tool.color.toLowerCase() === swatch.value.toLowerCase()}
+                  style={{ background: swatch.value }}
+                  onClick={() => onToolChange({ ...tool, color: swatch.value })}
+                >
+                  {/* A tick, so the selection is not carried by colour alone. */}
+                  <Icon name="check" className="swatch-check" />
+                </button>
               ))}
+
+              {/* Anything the nine named colours don't cover. The native picker is the $0,
+                  dependency-free option and is already keyboard and touch accessible. */}
+              <label className="swatch swatch-custom" title="Custom colour">
+                <span className="sr-only">Custom colour</span>
+                <input
+                  type="color"
+                  value={tool.color}
+                  onChange={(e) => onToolChange({ ...tool, color: e.target.value })}
+                />
+                <Icon name="plus" />
+              </label>
             </div>
             <label className="field">
               <span>Opacity</span>
@@ -151,8 +191,22 @@ export function ToolRail({
                 }}
               />
             </div>
+            <div className="size-choices">
+              {SIZES.map((size) => (
+                <button
+                  key={size.label}
+                  type="button"
+                  className={`layer-pick${tool.size === size.value ? ' active' : ''}`}
+                  aria-pressed={tool.size === size.value}
+                  onClick={() => onToolChange({ ...tool, size: size.value })}
+                >
+                  {size.label}
+                  {tool.size === size.value && <Icon name="check" />}
+                </button>
+              ))}
+            </div>
             <label className="field">
-              <span>Size</span>
+              <span>Fine tune</span>
               <input
                 type="range"
                 min={1}

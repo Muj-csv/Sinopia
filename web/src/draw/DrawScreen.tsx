@@ -16,12 +16,15 @@ import { Icon } from '../ui/Icon'
 import { DrawCanvas, type Tool } from './DrawCanvas'
 import './draw.css'
 import { exportFresco } from './exportFresco'
+import { BRUSHES, DEFAULT_BRUSH, DEFAULT_SIZE } from './brushes'
+import { PALETTE, rememberColor } from './palette'
 import {
   LAYER_COUNT,
   canRedo,
   canUndo,
   emptyHistory,
   hasAnyStroke,
+  migrateHistory,
   pushEntry,
   redo,
   undo,
@@ -43,7 +46,12 @@ export function DrawScreen() {
   const [activeLayer, setActiveLayer] = useState(0)
   const [layerVisible, setLayerVisible] = useState<boolean[]>(Array(LAYER_COUNT).fill(true))
   const [recentColors, setRecentColors] = useState<string[]>([])
-  const [tool, setTool] = useState<Tool>({ name: 'brush', color: '#1A1A1A', size: 8, opacity: 1 })
+  const [tool, setTool] = useState<Tool>({
+    name: DEFAULT_BRUSH,
+    color: PALETTE[0].value,
+    size: DEFAULT_SIZE,
+    opacity: BRUSHES[DEFAULT_BRUSH].opacity,
+  })
   const [exporting, setExporting] = useState(false)
   const navigate = useNavigate()
   const [resuming, setResuming] = useState(false)
@@ -56,7 +64,7 @@ export function DrawScreen() {
     getDraft(draftId).then((d) => {
       if (d === undefined) return
       setDraft(d)
-      setHistory(d.history)
+      setHistory(migrateHistory(d.history))
       setResuming(Date.now() - d.updatedAt < RESUME_THRESHOLD_MS && hasAnyStroke(d.history))
     })
   }, [draftId])
@@ -88,7 +96,7 @@ export function DrawScreen() {
 
   const addStroke = useCallback(
     (points: Point[]) => {
-      setRecentColors((prev) => [tool.color, ...prev.filter((c) => c !== tool.color)].slice(0, 8))
+      setRecentColors((prev) => rememberColor(prev, tool.color))
       setHistory((h) =>
         pushEntry(h, {
           type: 'stroke',
