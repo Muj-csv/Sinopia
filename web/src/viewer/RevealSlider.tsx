@@ -1,6 +1,17 @@
-/** DESIGN_BRIEF.md RevealSlider: native range input, accent-2/accent-3 ends, arrows +-5, Home/End. */
+/**
+ * Reality <-> Drawing (SCREENS.md "Fresco viewer"): a native range input, 6px ink track, 30px
+ * yellow thumb, arrows +-5, Home/End. The drawing FADES in over the photo -- no wipe handle, no
+ * chevrons, no "Before/After" pills.
+ */
 import { useState } from 'react'
-import { SLIDER_MAX, SLIDER_MIN, SLIDER_STEP, clampSlider, compositeClipInset } from './sliderMath'
+import { SLIDER_MAX, SLIDER_MIN, SLIDER_STEP, clampSlider, compositeOpacity } from './sliderMath'
+
+/** Screen readers get the blend in words; the number alone says nothing about what is shown. */
+function valueText(value: number): string {
+  if (value === 0) return 'The real place'
+  if (value === 100) return 'The drawing'
+  return `${value}% drawing over the real place`
+}
 
 export function RevealSlider({
   photoUrl,
@@ -19,7 +30,7 @@ export function RevealSlider({
           src={compositeUrl}
           alt="The drawing over the real place"
           className="reveal-slider-composite"
-          style={{ clipPath: compositeClipInset(value) }}
+          style={{ opacity: compositeOpacity(value) }}
         />
       </div>
       <input
@@ -29,6 +40,7 @@ export function RevealSlider({
         step={SLIDER_STEP}
         value={value}
         aria-label="Reality to drawing"
+        aria-valuetext={valueText(value)}
         onChange={(e) => setValue(clampSlider(Number(e.target.value)))}
       />
       <div className="reveal-slider-labels">

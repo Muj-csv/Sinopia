@@ -6,6 +6,7 @@
  * phase, not built here.
  */
 import { createStore, del, get, keys, set } from 'idb-keyval'
+import type { LocationSource } from '../capture/LocationFallback'
 import { emptyHistory, type History } from '../draw/strokeHistory'
 
 export interface Draft {
@@ -18,6 +19,9 @@ export interface Draft {
   height: number
   capturedAt: string | null
   location: { lat: number; lng: number } | null
+  /** Where `location` came from, so Pin check can say so rather than confirming silently
+   *  (SCREENS.md "Pin check"). Optional: drafts written before this existed won't have it. */
+  locationSource?: LocationSource
   placeName: string | null
   history: History
   /** Set once DrawScreen's Finish button has rasterized the canvas (PHASE-3 task 2-3). */
@@ -37,6 +41,7 @@ export async function createDraft(input: {
   height: number
   capturedAt: string | null
   location: { lat: number; lng: number } | null
+  locationSource?: LocationSource
   placeName: string | null
 }): Promise<Draft> {
   const now = Date.now()

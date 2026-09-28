@@ -128,7 +128,7 @@ docs/               Concept, PRD, architecture, plan, decisions, design, build p
 - [Architecture](docs/ARCHITECTURE.md) · [Database schema](docs/schema.sql)
 - [Implementation plan](docs/IMPLEMENTATION_PLAN.md)
 - [Decision log](docs/DECISIONS.md) · [Validation](docs/VALIDATION.md)
-- [Design brief](docs/design/DESIGN_BRIEF.md) · [UX map](docs/design/UX_MAP.md)
+- [Design brief](docs/design/DESIGN_BRIEF.md) · [Screens](docs/design/SCREENS.md) · [UX map](docs/design/UX_MAP.md) · [Trend sweep](docs/design/TREND_SWEEP.md)
 - [Setup checklist (accounts, keys)](docs/SETUP.md)
 
 ## Known limitations

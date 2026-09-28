@@ -1,8 +1,10 @@
-/** PHASE-3 task 1: profile display name (editable), sign out. */
+/** PHASE-3 task 1: profile display name (editable), sign out. Reached from the Sketchbook header;
+ *  it isn't a nav destination of its own (SCREENS.md folds it into Sketchbook). */
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useSession } from '../lib/useSession'
+import { Icon } from '../ui/Icon'
 import './auth.css'
 import { SignInPrompt } from './SignInPrompt'
 
@@ -36,8 +38,8 @@ function ProfileEditor({ userId }: { userId: string }) {
 
   return (
     <div className="profile-editor">
-      <label>
-        Display name
+      <label className="field">
+        <span>Display name</span>
         <input
           type="text"
           maxLength={MAX_NAME_LENGTH}
@@ -47,16 +49,21 @@ function ProfileEditor({ userId }: { userId: string }) {
             setSaved(false)
           }}
         />
+        <span className="help">This is the name on every fresco you publish.</span>
       </label>
-      <button type="button" onClick={save} disabled={saved || name.trim() === ''}>
-        {status === 'saving' ? 'Saving...' : 'Save'}
+
+      <button type="button" className="btn-y" onClick={save} disabled={saved || name.trim() === ''}>
+        {status === 'saving' ? 'Saving…' : 'Save'}
       </button>
+
       {status === 'error' && (
-        <p className="profile-status" role="alert">
-          Couldn't save. Try again.
+        <p className="notice danger" role="alert">
+          <Icon name="warn" />
+          <span>Couldn&apos;t save. Try again.</span>
         </p>
       )}
-      <button type="button" onClick={() => supabase.auth.signOut()}>
+
+      <button type="button" className="btn-o" onClick={() => supabase.auth.signOut()}>
         Sign out
       </button>
     </div>
@@ -66,26 +73,23 @@ function ProfileEditor({ userId }: { userId: string }) {
 export function ProfilePage() {
   const { session, loading } = useSession()
 
-  if (loading) return <p className="draw-status">Loading...</p>
-  if (session === null) {
-    return (
-      <section className="placeholder-screen">
-        <h2>Profile</h2>
-        <SignInPrompt />
-        <p className="about-back">
-          <Link to="/about">About Sinopia, licences and credits</Link>
+  return (
+    <div className="scroll lined">
+      <section className="page">
+        <h1>Profile</h1>
+        {loading ? (
+          <p className="t-small">Loading&hellip;</p>
+        ) : session === null ? (
+          <SignInPrompt />
+        ) : (
+          <ProfileEditor userId={session.user.id} />
+        )}
+        <p>
+          <Link className="link" to="/about">
+            About Sinopia, licences and credits
+          </Link>
         </p>
       </section>
-    )
-  }
-
-  return (
-    <section className="placeholder-screen">
-      <h2>Profile</h2>
-      <ProfileEditor userId={session.user.id} />
-      <p className="about-back">
-        <Link to="/about">About Sinopia, licences and credits</Link>
-      </p>
-    </section>
+    </div>
   )
 }

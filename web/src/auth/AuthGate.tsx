@@ -6,7 +6,7 @@ import { SignInPrompt } from './SignInPrompt'
 export function AuthGate({ message, children }: { message?: string; children: ReactNode }) {
   const { session, loading } = useSession()
 
-  if (loading) return <p className="draw-status">Loading...</p>
+  if (loading) return <p className="page t-small">Loading&hellip;</p>
   if (session === null) return <SignInPrompt message={message} />
   return <>{children}</>
 }

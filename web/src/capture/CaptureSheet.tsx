@@ -3,12 +3,17 @@
  * per docs/design/UX_MAP.md. On a successful capture: read EXIF, resolve
  * a location (EXIF -> device -> map picker later), prepare the image
  * (resize/WebP/strip EXIF), create the draft, and move on to '/new/pin'.
+ *
+ * Layout per SCREENS.md "Capture · /new": a lined page with stacked option cards, status below.
+ * Not a dashed drop zone -- on a phone that is a desktop idiom with nothing to drop.
  */
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { readExif } from '../lib/exif'
 import { createDraft, listDrafts, type Draft } from '../lib/draftStore'
 import { prepareImage } from '../lib/images'
+import { FlowBar } from '../ui/FlowBar'
+import { Icon } from '../ui/Icon'
 import './capture.css'
 import { getDevicePosition, resolveLocationSource } from './LocationFallback'
 import { validateCaptureFile } from './validateCapture'
@@ -59,6 +64,7 @@ export function CaptureSheet() {
           resolved.lat !== null && resolved.lng !== null
             ? { lat: resolved.lat, lng: resolved.lng }
             : null,
+        locationSource: resolved.source,
         placeName: null,
       })
 
@@ -70,47 +76,78 @@ export function CaptureSheet() {
   }
 
   return (
-    <div className="capture-sheet">
-      <h2>New sinopia</h2>
-      <p className="capture-sheet-subtitle">Get a photo and its spot</p>
+    <>
+      <FlowBar title="New sinopia" />
+      <div className="scroll lined">
+        <div className="page capture-sheet">
+          <div>
+            <h2 className="capture-heading">Start with a real place</h2>
+            <p className="capture-subtitle">A photo of where you are, and where it was taken.</p>
+          </div>
 
-      <div className="capture-sheet-options">
-        <label className="capture-option">
-          <input
-            type="file"
-            accept="image/*"
-            capture="environment"
-            onChange={(e) => handleFile(e.target.files?.[0])}
-          />
-          Camera
-        </label>
-        <label className="capture-option">
-          <input type="file" accept="image/*" onChange={(e) => handleFile(e.target.files?.[0])} />
-          Upload
-        </label>
-      </div>
+          <div className="options">
+            {/* Take a photo is the primary action, so it leads. Both are paper: a file input can't
+                be a .btn-y, and this screen's yellow belongs to Confirm spot on the next step. */}
+            <label className="option">
+              <Icon name="camera" />
+              <span className="option-text">
+                <span className="option-title">Take a photo</span>
+                <span className="option-meta">Opens your camera.</span>
+              </span>
+              <input
+                type="file"
+                accept="image/*"
+                capture="environment"
+                onChange={(e) => handleFile(e.target.files?.[0])}
+              />
+            </label>
 
-      {status === 'reading' && <p className="capture-status">Reading photo...</p>}
-      {status === 'error' && error !== null && (
-        <p className="capture-status capture-status-error" role="alert">
-          {error}
-        </p>
-      )}
+            <label className="option">
+              <Icon name="upload" />
+              <span className="option-text">
+                <span className="option-title">Upload a photo</span>
+                <span className="option-meta">One you already took.</span>
+              </span>
+              <input
+                type="file"
+                accept="image/*"
+                onChange={(e) => handleFile(e.target.files?.[0])}
+              />
+            </label>
 
-      {drafts.length > 0 && (
-        <div className="capture-drafts">
-          <h3>Resume draft</h3>
-          <ul>
-            {drafts.map((d) => (
-              <li key={d.id}>
-                <button type="button" onClick={() => navigate(`/new/draw?draft=${d.id}`)}>
-                  {d.placeName ?? 'Untitled spot'} · {new Date(d.updatedAt).toLocaleString()}
-                </button>
-              </li>
+            {drafts.map((draft) => (
+              <button
+                key={draft.id}
+                type="button"
+                className="option"
+                onClick={() => navigate(`/new/draw?draft=${draft.id}`)}
+              >
+                <Icon name="edit" />
+                <span className="option-text">
+                  <span className="option-title">Resume your sinopia</span>
+                  <span className="option-meta">
+                    {draft.placeName ?? 'Untitled spot'} ·{' '}
+                    {new Date(draft.updatedAt).toLocaleString()}
+                  </span>
+                </span>
+              </button>
             ))}
-          </ul>
+          </div>
+
+          {status === 'reading' && (
+            <p className="capture-status">
+              <span className="spinner" aria-hidden="true" />
+              Reading photo&hellip;
+            </p>
+          )}
+          {status === 'error' && error !== null && (
+            <p className="notice danger" role="alert">
+              <Icon name="warn" />
+              <span>{error}</span>
+            </p>
+          )}
         </div>
-      )}
-    </div>
+      </div>
+    </>
   )
 }

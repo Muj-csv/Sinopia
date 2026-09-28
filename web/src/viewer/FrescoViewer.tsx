@@ -10,6 +10,8 @@ import { useSession } from '../lib/useSession'
 import { loadGlobePoints } from '../globe/loadGlobePoints'
 import { frescoImageUrl } from '../sketchbook/frescoImageUrl'
 import type { FrescoRow } from '../sketchbook/frescoRow'
+import { FlowBar } from '../ui/FlowBar'
+import { Icon } from '../ui/Icon'
 import { ReportDialog } from './ReportDialog'
 import { RevealSlider } from './RevealSlider'
 import { SameWallStrip } from './SameWallStrip'
@@ -89,17 +91,28 @@ export function FrescoViewer() {
   }, [spot, fresco])
 
   if (status === 'loading') {
-    return <p className="draw-status">Loading...</p>
+    return (
+      <>
+        <FlowBar title="Fresco" exit="back" />
+        <p className="page t-small">Loading&hellip;</p>
+      </>
+    )
   }
 
   if (status === 'not-found' || fresco === null) {
     return (
-      <div className="viewer-not-found">
-        <p role="alert">This fresco isn't available.</p>
-        <button type="button" onClick={() => navigate('/')}>
-          Back to globe
-        </button>
-      </div>
+      <>
+        <FlowBar title="Fresco" exit="back" />
+        <div className="scroll lined">
+          <section className="page empty">
+            <h2>This fresco isn&apos;t available.</h2>
+            <p>It may have been unpublished, or the link may be wrong.</p>
+            <button type="button" className="btn-o" onClick={() => navigate('/')}>
+              Back to the globe
+            </button>
+          </section>
+        </div>
+      </>
     )
   }
 
@@ -108,60 +121,78 @@ export function FrescoViewer() {
   const date = fresco.captured_at ?? fresco.created_at
 
   return (
-    <div className="fresco-viewer">
-      {photoUrl !== null && compositeUrl !== null ? (
-        <RevealSlider photoUrl={photoUrl} compositeUrl={compositeUrl} />
-      ) : (
-        <div className="viewer-image-placeholder" />
-      )}
-
-      <div className="viewer-details">
-        <h2>{fresco.title}</h2>
-        <p className="viewer-meta">
-          {fresco.profiles?.display_name ?? 'An artist'}
-          {fresco.place_name !== null && ` · ${fresco.place_name}`}
-          {date !== null && ` · ${new Date(date).toLocaleDateString()}`}
-          {weather !== null && ` · ${formatWeather(weather)}`}
-        </p>
-        {fresco.caption !== null && <p>{fresco.caption}</p>}
-        {fresco.memory !== null && <p className="viewer-memory">{fresco.memory}</p>}
-        {fresco.tags.length > 0 && (
-          <ul className="viewer-tags">
-            {fresco.tags.map((t) => (
-              <li key={t}>{t}</li>
-            ))}
-          </ul>
-        )}
-
-        {spot !== null && <SpotMap lng={spot.lng} lat={spot.lat} />}
-
-        {/* FR-015: never for neighborhood precision -- would reveal the exact spot. */}
-        {spot !== null && fresco.pin_precision === 'exact' && (
-          <StreetLevelPanel lat={spot.lat} lng={spot.lng} />
-        )}
-
+    <>
+      <FlowBar title={fresco.place_name ?? 'Fresco'} exit="back">
         {canReport && (
-          <button type="button" onClick={() => setReporting(true)}>
-            Report
+          <button type="button" className="ibtn" onClick={() => setReporting(true)}>
+            <Icon name="flag" label="Report this fresco" />
           </button>
         )}
-        <Link to="/">Back to globe</Link>
-      </div>
+      </FlowBar>
 
-      {fresco.visibility === 'public' && (
-        <div className="viewer-same-wall">
-          <h3>Same Wall</h3>
-          <SameWallStrip frescoId={fresco.id} />
+      <div className="scroll">
+        <div className="fresco-viewer">
+          {photoUrl !== null && compositeUrl !== null ? (
+            <RevealSlider photoUrl={photoUrl} compositeUrl={compositeUrl} />
+          ) : (
+            <div className="viewer-image-placeholder" />
+          )}
+
+          <div className="viewer-details">
+            <h1 className="viewer-title">{fresco.title}</h1>
+            <p className="viewer-meta">
+              {fresco.profiles?.display_name ?? 'An artist'}
+              {fresco.place_name !== null && ` · ${fresco.place_name}`}
+              {date !== null && ` · ${new Date(date).toLocaleDateString()}`}
+              {weather !== null && ` · ${formatWeather(weather)}`}
+            </p>
+            {fresco.caption !== null && <p>{fresco.caption}</p>}
+            {fresco.memory !== null && <p className="viewer-memory">{fresco.memory}</p>}
+            {fresco.tags.length > 0 && (
+              <ul className="viewer-tags">
+                {fresco.tags.map((t) => (
+                  <li key={t}>{t}</li>
+                ))}
+              </ul>
+            )}
+
+            {spot !== null && <SpotMap lng={spot.lng} lat={spot.lat} />}
+
+            {/* FR-015: never for neighborhood precision -- would reveal the exact spot. */}
+            {spot !== null && fresco.pin_precision === 'exact' && (
+              <StreetLevelPanel lat={spot.lat} lng={spot.lng} />
+            )}
+
+            <p>
+              <Link className="link" to="/">
+                Back to the globe
+              </Link>
+            </p>
+          </div>
+
+          {fresco.visibility === 'public' ? (
+            <div className="viewer-same-wall">
+              <h2>Same Wall</h2>
+              <SameWallStrip frescoId={fresco.id} />
+            </div>
+          ) : (
+            <div className="viewer-same-wall">
+              <h2>Same Wall</h2>
+              <p className="t-small">
+                Other frescoes from this spot appear here once you publish this one.
+              </p>
+            </div>
+          )}
+
+          {reporting && session !== null && (
+            <ReportDialog
+              frescoId={fresco.id}
+              reporterId={session.user.id}
+              onClose={() => setReporting(false)}
+            />
+          )}
         </div>
-      )}
-
-      {reporting && session !== null && (
-        <ReportDialog
-          frescoId={fresco.id}
-          reporterId={session.user.id}
-          onClose={() => setReporting(false)}
-        />
-      )}
-    </div>
+      </div>
+    </>
   )
 }

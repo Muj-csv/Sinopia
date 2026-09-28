@@ -1,45 +1,156 @@
-/* App shell (Phase 0 task 2): bare, theme-variables only. */
-.app-shell {
+/* App shell: the frame every screen sits in (docs/design/SCREENS.md).
+ * The nav is a bottom bar on phones and a left rail on laptops; there is no persistent title bar,
+ * because every screen names itself and the globe should be full-bleed. */
+
+.app {
+  height: 100%;
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) auto;
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.screen {
+  grid-row: 1;
+  grid-column: 1;
+  min-height: 0;
+  min-width: 0;
+  position: relative;
+  overflow: hidden;
   display: flex;
   flex-direction: column;
-  height: 100%;
 }
 
-.app-header {
-  padding: var(--space-3) var(--space-4);
-  border-bottom: 1px solid var(--color-border);
-}
-.app-header h1 {
-  font-size: var(--text-h2);
-  color: var(--color-accent);
-}
-
-.app-content {
+/* A scrolling page inside a screen: the screen itself never scrolls, so top bars stay put. */
+.scroll {
+  overflow-y: auto;
+  overflow-x: hidden;
   flex: 1;
-  overflow: auto;
-  position: relative;
+  min-height: 0;
 }
 
-.app-nav {
+.page {
+  max-width: 640px;
+  margin: 0 auto;
+  width: 100%;
+  padding: var(--space-5) var(--space-4) var(--space-7);
+  display: grid;
+  gap: var(--space-5);
+  align-content: start;
+}
+
+/* Screen top bar: back or close, a title, then actions. */
+.bar {
   display: flex;
-  border-top: 1px solid var(--color-border);
-  background: var(--color-surface);
+  align-items: center;
+  gap: var(--space-2);
+  padding: calc(env(safe-area-inset-top, 0px) + var(--space-2)) var(--space-4) var(--space-2);
+  background: var(--paper);
+  border-bottom: var(--edge);
+  min-width: 0;
+  flex: none;
 }
-.app-nav a {
-  flex: 1;
-  text-align: center;
-  padding: var(--space-3) var(--space-2);
+.bar .title {
+  font: var(--text-h3) / var(--leading-h3) var(--marker);
+  margin-right: auto;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+}
+
+/* ===== Nav ===== */
+.nav {
+  grid-row: 2;
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  background: var(--paper);
+  border-top: var(--edge);
+  padding: 6px var(--space-2) calc(env(safe-area-inset-bottom, 0px) + 6px);
+  position: relative;
+  z-index: 20;
+}
+.nav a {
+  display: grid;
+  justify-items: center;
+  gap: 2px;
+  min-width: 76px;
+  min-height: 52px;
+  align-content: center;
+  color: var(--ink);
   text-decoration: none;
-  color: var(--color-text-secondary);
-  font-size: var(--text-caption);
+  font: 700 17px/18px var(--pencil);
+  border-radius: var(--r-ctl);
 }
-.app-nav a.active {
-  color: var(--color-accent);
-  font-weight: 600;
+.nav a span {
+  padding: 0 6px;
 }
-.app-nav a:focus-visible {
-  outline: 2px solid var(--color-focus-ring);
-  outline-offset: -2px;
+/* The current item gets a yellow highlighter stroke through the label — one of the few places
+ * yellow is allowed outside the primary button. */
+.nav a.active span {
+  background: linear-gradient(
+    transparent 38%,
+    var(--yellow) 38%,
+    var(--yellow) 88%,
+    transparent 88%
+  );
+}
+.nav a.new {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font: var(--text-button) / var(--leading-button) var(--marker);
+  padding: 6px var(--space-4) var(--space-1);
+  border: var(--edge);
+  border-radius: var(--r-ctl);
+  background: var(--paper);
+  box-shadow: var(--offset);
+  margin-bottom: var(--space-1);
+  min-height: 44px;
+}
+.nav a.new:active {
+  transform: var(--edge-press);
+  box-shadow: 0 1px 0 var(--ink);
+}
+.nav a.new.active span {
+  background: none;
+}
+
+/* Laptop: the bar becomes a left rail so the artwork keeps the full height. */
+@media (min-width: 900px) {
+  .app {
+    grid-template-rows: minmax(0, 1fr);
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+  .screen {
+    grid-row: 1;
+    grid-column: 2;
+  }
+  .nav {
+    grid-row: 1;
+    grid-column: 1;
+    flex-direction: column;
+    justify-content: flex-start;
+    gap: var(--space-3);
+    border-top: 0;
+    border-right: var(--edge);
+    padding: var(--space-5) var(--space-3);
+  }
+  .page {
+    padding-inline: var(--space-5);
+  }
+}
+
+/* Screens not yet restyled keep a plain lined page so nothing renders unstyled. */
+.placeholder-screen {
+  padding: var(--space-5);
+  color: var(--ink-2);
+}
+.placeholder-actions {
+  display: flex;
+  gap: var(--space-3);
+  margin-top: var(--space-4);
+  flex-wrap: wrap;
 }
 
 .globe-map {
@@ -47,39 +158,18 @@
   inset: 0;
 }
 
-.placeholder-screen {
-  padding: var(--space-5);
-  color: var(--color-text-secondary);
-}
-
-.placeholder-actions {
-  display: flex;
-  gap: var(--space-3);
-  margin-top: var(--space-4);
-}
-.placeholder-actions button {
-  padding: var(--space-2) var(--space-4);
-  border-radius: var(--radius-control);
-  border: 1px solid var(--color-border);
-  background: var(--color-surface-raised);
-  color: var(--color-text-primary);
-}
-.placeholder-actions button:hover {
-  background: var(--color-surface-hover);
-}
-
 .draw-spike {
   padding: var(--space-3);
 }
 .draw-spike-readout {
   margin-bottom: var(--space-2);
-  color: var(--color-text-secondary);
+  color: var(--ink-2);
   font-size: var(--text-caption);
 }
 .draw-spike-stage {
   max-width: 100%;
   overflow: auto;
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-card);
+  border: var(--edge);
+  border-radius: var(--r-card);
   touch-action: none;
 }

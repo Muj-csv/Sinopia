@@ -1,8 +1,16 @@
-/** MapLibre mini-map with a draggable marker, same no-key OpenFreeMap setup as GlobePage.tsx. */
+/**
+ * Full-bleed MapLibre map with a FIXED centre pin: you drag the map, not the pin
+ * (SCREENS.md "Pin check"). On a phone that matters -- dragging a marker puts your finger on top
+ * of the thing you're trying to place, and the centre of the screen is always visible.
+ *
+ * Same no-key OpenFreeMap setup as GlobePage.tsx, restyled with the same ink pass.
+ */
 import * as maplibregl from 'maplibre-gl'
 import 'maplibre-gl/dist/maplibre-gl.css'
 import { useEffect, useRef } from 'react'
 import '../lib/maplibreWorker'
+import { applyInkStyle } from '../globe/inkStyle'
+import { Icon } from '../ui/Icon'
 
 const OPENFREEMAP_STYLE = 'https://tiles.openfreemap.org/styles/positron'
 const DEFAULT_CENTER: [number, number] = [121.05, 14.6] // Metro Manila fallback
@@ -18,8 +26,9 @@ export function PinPicker({
 }) {
   const containerRef = useRef<HTMLDivElement>(null)
   const mapRef = useRef<maplibregl.Map | null>(null)
-  const markerRef = useRef<maplibregl.Marker | null>(null)
   const onChangeRef = useRef(onChange)
+  /** Set while we're recentring the map ourselves, so the moveend it causes isn't read as a drag. */
+  const programmaticRef = useRef(false)
 
   useEffect(() => {
     onChangeRef.current = onChange
@@ -34,6 +43,7 @@ export function PinPicker({
       style: OPENFREEMAP_STYLE,
       center,
       zoom: 15,
+      attributionControl: false,
     })
     map.addControl(new maplibregl.NavigationControl(), 'top-right')
     map.addControl(
@@ -41,33 +51,50 @@ export function PinPicker({
         customAttribution: '© OpenStreetMap contributors, tiles by OpenFreeMap',
       }),
     )
+    map.on('style.load', () => applyInkStyle(map))
 
-    const marker = new maplibregl.Marker({ draggable: true }).setLngLat(center).addTo(map)
-    marker.on('dragend', () => {
-      const { lat: newLat, lng: newLng } = marker.getLngLat()
+    // The pin is painted at the centre of the viewport, so wherever the map settles IS the pin.
+    map.on('moveend', () => {
+      if (programmaticRef.current) {
+        programmaticRef.current = false
+        return
+      }
+      const { lat: newLat, lng: newLng } = map.getCenter()
       onChangeRef.current(newLat, newLng)
-    })
-    map.on('click', (e) => {
-      marker.setLngLat(e.lngLat)
-      onChangeRef.current(e.lngLat.lat, e.lngLat.lng)
     })
 
     mapRef.current = map
-    markerRef.current = marker
 
     return () => {
       map.remove()
       mapRef.current = null
-      markerRef.current = null
     }
-    // Only re-init on mount; lat/lng updates from outside move the marker via the effect below.
+    // Only re-init on mount; coordinates set from outside recentre via the effect below.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
+  // "Use my location" and the initial EXIF fix arrive as prop changes, not as drags.
   useEffect(() => {
-    if (lat === null || lng === null || markerRef.current === null) return
-    markerRef.current.setLngLat([lng, lat])
+    const map = mapRef.current
+    if (lat === null || lng === null || map === null) return
+    const current = map.getCenter()
+    // Recentring on a value the map already holds would loop through moveend.
+    if (Math.abs(current.lat - lat) < 1e-7 && Math.abs(current.lng - lng) < 1e-7) return
+    programmaticRef.current = true
+    map.easeTo({ center: [lng, lat] })
   }, [lat, lng])
 
-  return <div ref={containerRef} className="pin-picker-map" aria-label="Pick location on map" />
+  return (
+    <div className="pin-picker">
+      <div
+        ref={containerRef}
+        className="pin-picker-map"
+        aria-label="Drag the map to place the pin"
+      />
+      {/* Sits above the map centre and ignores pointers, so dragging goes through to the map. */}
+      <div className="centerpin" aria-hidden="true">
+        <Icon name="bigpin" className="centerpin-icon" />
+      </div>
+    </div>
+  )
 }

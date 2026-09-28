@@ -1,0 +1,473 @@
+/* Sinopia component language, from the design kit (docs/design/DESIGN_BRIEF.md §6, §10).
+ *
+ * One kind of edge: a 2px ink outline. Pressable things also get a hard offset (a box-shadow with
+ * no blur) and drop 3px when pressed. There are no blurred shadows and no backdrop-filter anywhere
+ * (both cost FPS on the mid-range Android NFR-002 targets). Values come from theme.css only. */
+
+/* Components set their own `display`, so without this `hidden` silently stops working. */
+[hidden] {
+  display: none !important;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* ===== Type helpers ===== */
+/* Handwriting (marker, pencil) is for titles, labels and buttons; every caption, memory, license
+ * line, error and date is print. Handwriting never goes below 17px and never carries long text. */
+.t-h1 {
+  font: var(--text-h2) / var(--leading-h2) var(--marker);
+  font-weight: 400;
+}
+.t-h2 {
+  font: var(--text-h3) / var(--leading-h3) var(--marker);
+  font-weight: 400;
+}
+.t-display {
+  font: var(--text-display) / var(--leading-display) var(--marker);
+  font-weight: 400;
+}
+.t-label {
+  font: 700 var(--text-label) / var(--leading-label) var(--pencil);
+}
+.t-small {
+  font: var(--text-caption) / var(--leading-caption) var(--print);
+  color: var(--ink-2);
+}
+/* Coordinates and counters line up column by column without going monospace, which is a named tell. */
+.t-num {
+  font-variant-numeric: tabular-nums;
+}
+
+/* ===== Paper ===== */
+/* Lined notebook paper: 1px rule every 28px. Allowed on pages, sheets and popovers; never behind a
+ * photo, the canvas, the globe or the viewer art — reality stays clean. */
+.lined {
+  background-color: var(--paper);
+  background-image: var(--lines);
+  background-size: 100% var(--leading-lined);
+}
+
+/* ===== Buttons ===== */
+/* .btn-y is the one yellow button a screen is allowed. Everything else secondary is .btn-o. */
+.btn-y,
+.btn-o {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  min-height: 44px;
+  padding: var(--space-2) 18px 6px;
+  font: var(--text-button) / var(--leading-button) var(--marker);
+  color: var(--ink);
+  border: var(--edge);
+  border-radius: var(--r-ctl);
+  margin-bottom: var(--space-1);
+  text-align: center;
+  text-decoration: none;
+  cursor: pointer;
+  transition: transform var(--duration-fast) var(--ease);
+}
+.btn-y {
+  background: var(--yellow);
+  box-shadow: var(--offset-yellow);
+}
+.btn-o {
+  background: var(--paper);
+  box-shadow: var(--offset);
+}
+.btn-y:active:not(:disabled),
+.btn-o:active:not(:disabled) {
+  transform: var(--edge-press);
+}
+.btn-y:active:not(:disabled) {
+  box-shadow:
+    0 1px 0 var(--yellow-edge),
+    0 1px 0 2px var(--ink);
+}
+.btn-o:active:not(:disabled) {
+  box-shadow: 0 1px 0 var(--ink);
+}
+.btn-y:disabled,
+.btn-o:disabled {
+  background: var(--paper);
+  border-color: var(--rule);
+  box-shadow: 0 4px 0 var(--rule);
+  color: var(--ink-2);
+  cursor: default;
+}
+/* Only ever inside a confirm sheet, alongside a cancel. */
+.btn-o.danger {
+  color: var(--error);
+  border-color: var(--error);
+  box-shadow: 0 4px 0 var(--error);
+}
+.btn-o.danger:active:not(:disabled) {
+  box-shadow: 0 1px 0 var(--error);
+}
+.btn-wide {
+  width: 100%;
+}
+
+.ibtn {
+  width: 44px;
+  height: 44px;
+  display: inline-grid;
+  place-items: center;
+  border: 0;
+  background: none;
+  border-radius: var(--r-ctl);
+  flex: none;
+  cursor: pointer;
+}
+.ibtn:hover:not(:disabled) {
+  background: var(--desk);
+}
+.ibtn:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+/* A text link in the pencil hand, with a thick underline so it reads as drawn rather than default. */
+.link {
+  font: 700 var(--text-label) / var(--leading-label) var(--pencil);
+  color: var(--ink);
+  background: none;
+  border: 0;
+  padding: 0;
+  text-decoration: underline;
+  text-decoration-thickness: 2px;
+  text-underline-offset: 3px;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  cursor: pointer;
+}
+
+/* ===== Chips and tags ===== */
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font: 700 17px/20px var(--pencil);
+  padding: 6px var(--space-3) var(--space-1);
+  border: var(--edge);
+  border-radius: var(--r-ctl);
+  background: var(--paper);
+  color: var(--ink);
+  white-space: nowrap;
+  min-height: 36px;
+  cursor: pointer;
+}
+.chip[aria-pressed='true'] {
+  background: var(--yellow-tint);
+}
+.tag {
+  display: inline-block;
+  font: 700 17px/20px var(--pencil);
+  padding: 2px 10px 0;
+  border: var(--edge);
+  border-radius: var(--r-ctl);
+}
+
+/* ===== Notices ===== */
+/* A warning is ink text with an icon on yellow tint. No coloured side stripe, ever. */
+.notice {
+  display: flex;
+  gap: var(--space-3);
+  align-items: flex-start;
+  padding: var(--space-3) 14px;
+  border: var(--edge);
+  border-radius: var(--r-card);
+  background: var(--yellow-tint);
+  font: var(--text-body) / var(--leading-body) var(--print);
+}
+.notice.danger {
+  background: var(--paper);
+  color: var(--error);
+  border-color: var(--error);
+}
+.notice.danger .i {
+  stroke: var(--error);
+}
+
+/* ===== Cards ===== */
+/* A fresco card: a printed photo (3px), never a rounded blob. */
+.card {
+  display: grid;
+  gap: var(--space-2);
+  background: var(--paper);
+  border: var(--edge);
+  border-radius: var(--r-card);
+  padding: var(--space-2);
+  text-align: left;
+  color: var(--ink);
+  text-decoration: none;
+}
+.card img,
+.card .thumb {
+  width: 100%;
+  aspect-ratio: 3 / 4;
+  object-fit: cover;
+  display: block;
+  border: var(--edge);
+  border-radius: var(--radius-photo);
+  background: var(--desk);
+}
+.card .title {
+  font: var(--text-h3) / var(--leading-h3) var(--marker);
+}
+.card .meta {
+  font: 700 17px/20px var(--pencil);
+  color: var(--ink-2);
+}
+
+/* ===== Option row ===== */
+/* A full-width pressable row: the Capture choices, and the map-failure fallback list. */
+.options {
+  display: grid;
+  gap: var(--space-3);
+}
+.option {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  text-align: left;
+  width: 100%;
+  padding: 14px var(--space-4);
+  min-height: 64px;
+  color: var(--ink);
+  text-decoration: none;
+  background: var(--paper);
+  border: var(--edge);
+  border-radius: var(--r-card);
+  box-shadow: var(--offset);
+  margin-bottom: var(--space-1);
+  cursor: pointer;
+}
+.option:active {
+  transform: var(--edge-press);
+  box-shadow: 0 1px 0 var(--ink);
+}
+.option .option-text {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+.option .option-title {
+  font: var(--text-h3) / var(--leading-h3) var(--marker);
+}
+.option .option-meta {
+  font: var(--text-caption) / var(--leading-caption) var(--print);
+  color: var(--ink-2);
+}
+.option .option-thumb {
+  width: 48px;
+  height: 64px;
+  object-fit: cover;
+  flex: none;
+  display: block;
+  border: var(--edge);
+  border-radius: var(--radius-photo);
+  background: var(--desk);
+}
+
+/* ===== Sheets ===== */
+.scrim {
+  position: fixed;
+  inset: 0;
+  background: rgb(26 26 26 / 32%);
+  z-index: 40;
+}
+.sheet {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 41;
+  max-height: 88%;
+  overflow-y: auto;
+  border: var(--edge);
+  border-bottom: 0;
+  border-radius: var(--r-sheet);
+  background-color: var(--paper);
+  background-image: var(--lines);
+  background-size: 100% var(--leading-lined);
+  padding: var(--space-3) var(--space-4) calc(env(safe-area-inset-bottom, 0px) + 20px);
+  display: grid;
+  gap: var(--space-4);
+}
+.sheet-head {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+.sheet-head h2 {
+  margin-right: auto;
+}
+/* On laptops a sheet stops being a bottom sheet and becomes a centred card. */
+@media (min-width: 900px) {
+  .sheet {
+    left: 50%;
+    bottom: auto;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    width: min(460px, calc(100vw - var(--space-6)));
+    border-bottom: var(--edge);
+    border-radius: var(--r-card);
+  }
+}
+
+/* ===== Popover (colour, size, layers) ===== */
+.pop {
+  position: absolute;
+  z-index: 30;
+  display: grid;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  min-width: 200px;
+  border: var(--edge);
+  border-radius: var(--r-card);
+  box-shadow: var(--offset);
+  background-color: var(--paper);
+  background-image: var(--lines);
+  background-size: 100% var(--leading-lined);
+}
+
+/* ===== Choice card (who can see it, pin precision) ===== */
+.choice {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: var(--space-2) var(--space-3);
+  align-items: start;
+  padding: var(--space-3);
+  border: var(--edge);
+  border-radius: var(--r-ctl);
+  background: var(--paper);
+  cursor: pointer;
+}
+.choice:has(input:checked) {
+  background: var(--yellow-tint);
+  box-shadow: var(--offset);
+  margin-bottom: var(--space-1);
+}
+.choice input {
+  width: 22px;
+  height: 22px;
+  accent-color: var(--ink);
+  margin: 0;
+}
+.choice .title {
+  font: var(--text-h3) / var(--leading-h3) var(--marker);
+  grid-column: 2;
+}
+.choice .desc {
+  grid-column: 2;
+  font: var(--text-body) / var(--leading-body) var(--print);
+  color: var(--ink-2);
+}
+
+/* ===== Segmented control ===== */
+.seg {
+  display: inline-flex;
+  border: var(--edge);
+  border-radius: var(--r-ctl);
+  overflow: hidden;
+  background: var(--paper);
+}
+.seg button {
+  font: 700 17px/20px var(--pencil);
+  color: var(--ink);
+  background: none;
+  border: 0;
+  padding: var(--space-2) var(--space-4) 6px;
+  min-height: 44px;
+  cursor: pointer;
+}
+.seg button + button {
+  border-left: var(--edge);
+}
+.seg button[aria-pressed='true'] {
+  background: var(--yellow);
+}
+
+/* ===== Toast ===== */
+.toast {
+  position: fixed;
+  left: 50%;
+  bottom: calc(var(--nav-h) + 20px);
+  transform: translateX(-50%);
+  z-index: 60;
+  background: var(--paper);
+  border: var(--edge);
+  border-radius: var(--r-ctl);
+  box-shadow: var(--offset);
+  padding: var(--space-2) var(--space-4);
+  font: var(--text-body) / var(--leading-body) var(--print);
+  max-width: calc(100% - var(--space-6));
+  width: max-content;
+}
+
+/* ===== Forms ===== */
+.field {
+  display: grid;
+  gap: var(--space-1);
+}
+.field > label {
+  font: 700 var(--text-label) / var(--leading-label) var(--pencil);
+}
+.field input,
+.field textarea,
+.field select {
+  font: var(--text-body) / var(--leading-body) var(--print);
+  color: var(--ink);
+  background: var(--paper);
+  border: var(--edge);
+  border-radius: var(--r-ctl);
+  padding: 10px var(--space-3);
+  min-height: 44px;
+  width: 100%;
+}
+.field .help,
+.field .count {
+  font: var(--text-caption) / var(--leading-caption) var(--print);
+  color: var(--ink-2);
+}
+.field .error {
+  font: var(--text-caption) / var(--leading-caption) var(--print);
+  color: var(--error);
+}
+
+/* ===== Empty state ===== */
+.empty {
+  display: grid;
+  gap: var(--space-3);
+  justify-items: start;
+  padding: var(--space-6) 0;
+}
+.empty h2 {
+  font: var(--text-display) / var(--leading-display) var(--marker);
+  font-weight: 400;
+}
+.empty p {
+  margin: 0;
+  color: var(--ink-2);
+}
+
+/* Everything orchestrated is off or instant when the reader asked for that (NFR-006). */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

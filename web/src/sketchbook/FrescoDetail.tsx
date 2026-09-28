@@ -12,6 +12,7 @@ import {
 import { publishFresco, unpublishFresco } from '../frescoes/publishFresco'
 import { supabase } from '../lib/supabase'
 import { checkImageSafety } from '../safety/nsfwCheck'
+import { Icon } from '../ui/Icon'
 import { frescoImageUrl } from './frescoImageUrl'
 import type { FrescoRow } from './frescoRow'
 
@@ -122,9 +123,12 @@ export function FrescoDetail({
   return (
     <div className="fresco-detail-backdrop" onClick={onClose}>
       <div className="fresco-detail" onClick={(e) => e.stopPropagation()}>
-        <button type="button" className="fresco-detail-close" onClick={onClose}>
-          Close
-        </button>
+        <div className="sheet-head">
+          <h2>{fresco.title}</h2>
+          <button type="button" className="ibtn" onClick={onClose}>
+            <Icon name="x" label="Close" />
+          </button>
+        </div>
 
         {imageUrl !== null && (
           <img src={imageUrl} alt={fresco.title} className="fresco-detail-image" />
@@ -154,58 +158,68 @@ export function FrescoDetail({
           Place name
           <input value={placeName} onChange={(e) => setPlaceName(e.target.value)} />
         </label>
-        <p className="finish-form-error">
-          Tags: up to {MAX_TAGS}, edited when the fresco was made.
-        </p>
+        <p className="t-small">Tags (up to {MAX_TAGS}) are set when the fresco is made.</p>
 
-        <button type="button" disabled={busy || !isValid(errors)} onClick={saveEdits}>
+        {/* This sheet's one yellow button. Publish/Unpublish and Delete stay paper. */}
+        <button
+          type="button"
+          className="btn-y btn-wide"
+          disabled={busy || !isValid(errors)}
+          onClick={saveEdits}
+        >
           Save changes
         </button>
 
         <div className="publish-panel">
           {fresco.visibility === 'private' ? (
             <>
+              <h3>How exact is the pin?</h3>
               <div className="publish-panel-precision">
-                <label>
+                <label className="choice">
                   <input
                     type="radio"
+                    name="detail-precision"
                     checked={precision === 'neighborhood'}
                     onChange={() => setPrecision('neighborhood')}
                   />
-                  Neighborhood
+                  <span className="title">Neighbourhood</span>
                 </label>
-                <label>
+                <label className="choice">
                   <input
                     type="radio"
+                    name="detail-precision"
                     checked={precision === 'exact'}
                     onChange={() => setPrecision('exact')}
                   />
-                  Exact spot
+                  <span className="title">Exact spot</span>
                 </label>
               </div>
               {precision === 'exact' && (
-                <p className="publish-panel-warning">
-                  This shows exactly where you took the photo, publicly.
+                <p className="notice">
+                  <Icon name="warn" />
+                  <span>This shows exactly where you took the photo, publicly.</span>
                 </p>
               )}
-              <button type="button" disabled={busy} onClick={publish}>
-                Publish
+              <button type="button" className="btn-o" disabled={busy} onClick={publish}>
+                Publish to Globe
               </button>
             </>
           ) : (
-            <button type="button" disabled={busy} onClick={unpublish}>
+            <button type="button" className="btn-o" disabled={busy} onClick={unpublish}>
               Unpublish
             </button>
           )}
         </div>
 
-        <button type="button" disabled={busy} onClick={remove}>
-          Delete
+        <button type="button" className="btn-o danger" disabled={busy} onClick={remove}>
+          <Icon name="trash" />
+          Delete this fresco
         </button>
 
         {error !== null && (
-          <p className="finish-form-error" role="alert">
-            {error}
+          <p className="notice danger" role="alert">
+            <Icon name="warn" />
+            <span>{error}</span>
           </p>
         )}
       </div>

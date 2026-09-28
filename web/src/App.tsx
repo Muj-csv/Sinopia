@@ -1,6 +1,7 @@
 import { Suspense, lazy } from 'react'
-import { Link, NavLink, Route, Routes } from 'react-router-dom'
+import { Link, NavLink, Route, Routes, useLocation } from 'react-router-dom'
 import { AuthGate } from './auth/AuthGate'
+import { Icon, IconSprite } from './ui/Icon'
 
 // Lazy-loaded per route (ARCHITECTURE.md §7: keep the initial bundle small;
 // Konva and MapLibre are the two heaviest dependencies).
@@ -24,21 +25,42 @@ const FrescoViewer = lazy(() =>
   import('./viewer/FrescoViewer').then((m) => ({ default: m.FrescoViewer })),
 )
 
-const NAV_ITEMS = [
-  { to: '/', label: 'Globe', end: true },
-  { to: '/new', label: 'New' },
-  { to: '/sketchbook', label: 'Sketchbook' },
-  { to: '/me', label: 'Profile' },
-]
+/**
+ * Capture, Pin check, Canvas and Finish are full-screen and carry their own exit, so the nav is
+ * hidden there (UX_MAP: "the bar is hidden in the flow screens"). Everything else keeps it.
+ */
+const FLOW_ROUTES = ['/new', '/new/pin', '/new/draw', '/new/finish']
+
+function AppNav() {
+  const { pathname } = useLocation()
+  if (FLOW_ROUTES.includes(pathname)) return null
+
+  return (
+    <nav className="nav" aria-label="Primary">
+      <NavLink to="/" end className={({ isActive }) => (isActive ? 'active' : undefined)}>
+        <Icon name="globe" />
+        <span>Globe</span>
+      </NavLink>
+      {/* New is the centre item and the only bordered one. There is no floating action button:
+          the bar already puts New in the thumb zone, and yellow is reserved per screen. */}
+      <NavLink to="/new" className={({ isActive }) => (isActive ? 'new active' : 'new')}>
+        <Icon name="plus" />
+        <span>New</span>
+      </NavLink>
+      <NavLink to="/sketchbook" className={({ isActive }) => (isActive ? 'active' : undefined)}>
+        <Icon name="book" />
+        <span>Sketchbook</span>
+      </NavLink>
+    </nav>
+  )
+}
 
 function App() {
   return (
-    <div className="app-shell">
-      <header className="app-header">
-        <h1>Sinopia</h1>
-      </header>
+    <div className="app">
+      <IconSprite />
 
-      <main className="app-content">
+      <main className="screen">
         <Suspense fallback={null}>
           <Routes>
             <Route path="/" element={<GlobePage />} />
@@ -60,30 +82,22 @@ function App() {
             <Route
               path="*"
               element={
-                <section className="not-found-screen">
-                  <h2>Nothing here</h2>
-                  <p>
-                    That page doesn&apos;t exist. <Link to="/">Back to the globe</Link>
-                  </p>
-                </section>
+                <div className="scroll">
+                  <section className="page empty">
+                    <h2>Nothing here</h2>
+                    <p>That page doesn&apos;t exist.</p>
+                    <Link className="btn-o" to="/">
+                      Back to the globe
+                    </Link>
+                  </section>
+                </div>
               }
             />
           </Routes>
         </Suspense>
       </main>
 
-      <nav className="app-nav" aria-label="Primary">
-        {NAV_ITEMS.map(({ to, label, end }) => (
-          <NavLink
-            key={to}
-            to={to}
-            end={end}
-            className={({ isActive }) => (isActive ? 'active' : undefined)}
-          >
-            {label}
-          </NavLink>
-        ))}
-      </nav>
+      <AppNav />
     </div>
   )
 }

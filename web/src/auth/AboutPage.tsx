@@ -55,6 +55,18 @@ const CREDITS: Credit[] = [
     terms: 'OpenStreetMap-based, free to use',
   },
   {
+    name: 'Gochi Hand, Gaegu and Karla',
+    href: 'https://fonts.google.com/',
+    what: 'the three typefaces: the marker, the pencil and the print',
+    terms: 'SIL Open Font License, via Google Fonts',
+  },
+  {
+    name: 'Doodle Icons by Khushmeen Sidhu',
+    href: 'https://khushmeen.com/icons.html',
+    what: 'the hand-drawn icon set',
+    terms: 'CC0, no attribution required',
+  },
+  {
     name: 'Open-Meteo',
     href: 'https://open-meteo.com/',
     what: 'the weather shown on a fresco, for when it was captured',
@@ -64,53 +76,58 @@ const CREDITS: Credit[] = [
 
 export function AboutPage() {
   return (
-    <section className="about-page">
-      <h2>About Sinopia</h2>
-      <p className="about-lede">Draw on the real world. Leave it where you found it.</p>
-      <p>
-        A <em>sinopia</em> is the reddish underdrawing a fresco painter sketched on the wall before
-        painting. Here the real world is the wall: you photograph a place, draw your interpretation
-        over the photo, and the finished piece — a <em>fresco</em> — stays where you made it.
-      </p>
+    <div className="scroll lined">
+      <section className="page about-page">
+        <h1>About Sinopia</h1>
+        <p className="about-lede">Draw on the real world. Leave it where you found it.</p>
+        <p>
+          A <em>sinopia</em> is the reddish underdrawing a fresco painter sketched on the wall
+          before painting. Here the real world is the wall: you photograph a place, draw your
+          interpretation over the photo, and the finished piece — a <em>fresco</em> — stays where
+          you made it.
+        </p>
 
-      <h3>Licence</h3>
-      <p>
-        Sinopia&apos;s code is open source under the MIT licence.{' '}
-        <strong>Frescoes belong to the artists who drew them</strong> — publishing one to the globe
-        does not sign it over to anyone.
-      </p>
+        <h3>Licence</h3>
+        <p>
+          Sinopia&apos;s code is open source under the MIT licence.{' '}
+          <strong>Frescoes belong to the artists who drew them</strong> — publishing one to the
+          globe does not sign it over to anyone.
+        </p>
 
-      <h3>Your location</h3>
-      <p>
-        The exact spot a photo was taken is stored where only you can read it. A published fresco
-        shows either that exact point, if you chose it and accepted the warning, or a point snapped
-        to roughly half a kilometre. Photo metadata, including GPS, is stripped from every image
-        before it is uploaded.
-      </p>
+        <h3>Your location</h3>
+        <p>
+          The exact spot a photo was taken is stored where only you can read it. A published fresco
+          shows either that exact point, if you chose it and accepted the warning, or a point
+          snapped to roughly half a kilometre. Photo metadata, including GPS, is stripped from every
+          image before it is uploaded.
+        </p>
 
-      <h3>References</h3>
-      <p>
-        Reference images come from Openverse and are shown with the licence, creator and source as
-        reported by the source. Sinopia does not store them. License information is as reported by
-        the source; check it before reuse.
-      </p>
+        <h3>References</h3>
+        <p>
+          Reference images come from Openverse and are shown with the licence, creator and source as
+          reported by the source. Sinopia does not store them. License information is as reported by
+          the source; check it before reuse.
+        </p>
 
-      <h3>Built with</h3>
-      <ul className="about-credits">
-        {CREDITS.map((credit) => (
-          <li key={credit.name}>
-            <a href={credit.href} target="_blank" rel="noreferrer noopener">
-              {credit.name}
-            </a>
-            <span className="about-credit-what"> — {credit.what}</span>
-            <span className="about-credit-terms">{credit.terms}</span>
-          </li>
-        ))}
-      </ul>
+        <h3>Built with</h3>
+        <ul className="about-credits">
+          {CREDITS.map((credit) => (
+            <li key={credit.name}>
+              <a href={credit.href} target="_blank" rel="noreferrer noopener">
+                {credit.name}
+              </a>
+              <span className="about-credit-what"> — {credit.what}</span>
+              <span className="about-credit-terms">{credit.terms}</span>
+            </li>
+          ))}
+        </ul>
 
-      <p className="about-back">
-        <Link to="/me">Back to profile</Link>
-      </p>
-    </section>
+        <p>
+          <Link className="link" to="/me">
+            Back to profile
+          </Link>
+        </p>
+      </section>
+    </div>
   )
 }
