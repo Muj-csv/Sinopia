@@ -96,7 +96,10 @@ function FinishFormInner({ draft, userId }: { draft: Draft; userId: string }) {
     // saveFresco always writes it private; publishing is the second, separate step, so a failure
     // to publish still leaves a saved fresco rather than losing the work.
     if (visibility === 'public') {
-      const published = await publishFresco(result.frescoId, userId, precision)
+      const published = await publishFresco(
+        { ownerId: userId, frescoId: result.frescoId },
+        precision,
+      )
       if (!published.ok) {
         setStatus('error')
         setError("Saved to your Sketchbook, but publishing didn't go through. Try from there.")

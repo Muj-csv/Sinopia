@@ -18,6 +18,15 @@ export interface LifecycleResult {
   error?: string
 }
 
+/**
+ * Named rather than positional: `ownerId` and `frescoId` are both strings, so a positional
+ * signature let a caller swap them and still compile, which silently published nothing.
+ */
+export interface FrescoRef {
+  ownerId: string
+  frescoId: string
+}
+
 async function copySketchbookFileToGlobe(client: SupabaseClient, path: string): Promise<void> {
   const { data, error: downloadError } = await client.storage.from('sketchbook').download(path)
   if (downloadError) throw downloadError
@@ -28,8 +37,7 @@ async function copySketchbookFileToGlobe(client: SupabaseClient, path: string): 
 }
 
 export async function publishFresco(
-  ownerId: string,
-  frescoId: string,
+  { ownerId, frescoId }: FrescoRef,
   precision: PinPrecision,
   client: SupabaseClient = supabase,
 ): Promise<LifecycleResult> {
@@ -50,8 +58,7 @@ export async function publishFresco(
 }
 
 export async function unpublishFresco(
-  ownerId: string,
-  frescoId: string,
+  { ownerId, frescoId }: FrescoRef,
   client: SupabaseClient = supabase,
 ): Promise<LifecycleResult> {
   try {

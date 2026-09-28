@@ -81,8 +81,10 @@ function build(tokens) {
 const css = build(JSON.parse(readFileSync(SRC, 'utf8')))
 
 if (process.argv.includes('--check')) {
-  const current = readFileSync(OUT, 'utf8')
-  if (current !== css) {
+  // Compare content, not line endings: a Windows checkout (core.autocrlf=true) holds CRLF on disk
+  // while this script emits LF, which is not a stale file.
+  const normalise = (text) => text.replace(/\r\n/g, '\n')
+  if (normalise(readFileSync(OUT, 'utf8')) !== normalise(css)) {
     console.error('theme.css is out of date. Run: node scripts/tokens-export.mjs')
     process.exit(1)
   }

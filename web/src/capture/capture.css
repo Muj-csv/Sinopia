@@ -137,3 +137,46 @@
     min-width: 200px;
   }
 }
+
+/* Place search floats over the map, same shape as the globe's. */
+.pin-check-search {
+  position: absolute;
+  top: var(--space-3);
+  left: var(--space-4);
+  right: var(--space-4);
+  z-index: 7;
+  max-width: 360px;
+  margin-inline: auto;
+}
+
+/* The origin card moves below the search so the two never overlap. */
+.pin-check-origin {
+  top: calc(var(--space-3) + 60px);
+}
+
+.pin-check-readout {
+  display: grid;
+  gap: 2px;
+}
+.pin-check-coords {
+  font: var(--text-body) / var(--leading-body) var(--print);
+  color: var(--ink);
+}
+
+/* ===== Tablet ===== */
+/* Enough width to put the dock beside the map instead of stacking it underneath. */
+@media (min-width: 768px) and (max-width: 899px) {
+  .pin-check {
+    flex-direction: row;
+  }
+  .pin-check-dock {
+    width: 320px;
+    flex: none;
+    border-top: 0;
+    border-left: var(--edge);
+    overflow-y: auto;
+  }
+  .pin-check-search {
+    right: calc(320px + var(--space-4));
+  }
+}

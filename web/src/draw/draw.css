@@ -230,3 +230,111 @@
     display: none;
   }
 }
+
+/* ===== Colour swatches ===== */
+.swatch {
+  position: relative;
+  display: grid;
+  place-items: center;
+}
+/* The tick makes the selection legible without relying on the colour itself. */
+.swatch-check {
+  width: 20px;
+  height: 20px;
+  opacity: 0;
+  stroke: var(--ink);
+  stroke-width: 3;
+  /* A paper-coloured halo so the tick survives on top of a dark swatch. */
+  paint-order: stroke;
+}
+.swatch[aria-pressed='true'] .swatch-check {
+  opacity: 1;
+}
+/* On a dark swatch the ink tick would disappear, so it flips to paper. */
+.swatch[aria-pressed='true'][style*='#1A1A1A'] .swatch-check,
+.swatch[aria-pressed='true'][style*='#1d3557'] .swatch-check,
+.swatch[aria-pressed='true'][style*='#6D4C8C'] .swatch-check {
+  stroke: var(--paper);
+}
+
+.swatch-custom {
+  display: grid;
+  place-items: center;
+  background: var(--paper);
+  cursor: pointer;
+  overflow: hidden;
+}
+/* The native picker is the control; the input itself is not what you see. */
+.swatch-custom input[type='color'] {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  width: 100%;
+  height: 100%;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+}
+.swatch-custom:focus-within {
+  outline: 3px solid var(--color-focus-ring);
+  outline-offset: 2px;
+}
+
+/* ===== Brush popover ===== */
+/* Each row shows the mark it makes, so the names are confirmed by something visible. */
+.brush-sample {
+  width: 40px;
+  height: 12px;
+  flex: none;
+  background: var(--ink);
+}
+.brush-sample-pencil {
+  height: 4px;
+  opacity: 0.75;
+  clip-path: polygon(0 40%, 100% 0, 100% 100%, 0 60%);
+}
+.brush-sample-pen {
+  height: 7px;
+  border-radius: 4px;
+}
+.brush-sample-marker {
+  height: 14px;
+  opacity: 0.55;
+  border-radius: 3px;
+}
+.layer-pick {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.size-choices {
+  display: grid;
+  gap: var(--space-1);
+}
+
+/* ===== Tablet ===== */
+/* An iPad has room for the rail without giving up canvas height, but not for the 340px reference
+ * panel as well -- that stays a bottom sheet until the laptop breakpoint. */
+@media (min-width: 768px) and (max-width: 899px) {
+  .draw-screen {
+    flex-direction: row;
+  }
+  .tray {
+    order: -1;
+    flex-direction: column;
+    justify-content: flex-start;
+    border-top: 0;
+    border-right: var(--edge);
+    padding: var(--space-3) var(--space-2);
+  }
+  .tool-slot .pop {
+    bottom: auto;
+    top: 0;
+    left: calc(100% + var(--space-2));
+    transform: none;
+  }
+  .reference-panel {
+    max-height: 45vh;
+  }
+}

@@ -9,7 +9,7 @@
  */
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { readExif } from '../lib/exif'
+import { hasGps, readExif } from '../lib/exif'
 import { createDraft, listDrafts, type Draft } from '../lib/draftStore'
 import { prepareImage } from '../lib/images'
 import { FlowBar } from '../ui/FlowBar'
@@ -44,14 +44,13 @@ export function CaptureSheet() {
     setStatus('reading')
     setError(null)
     try {
-      const [exif, devicePosition, prepared] = await Promise.all([
-        readExif(file),
-        // Only worth asking the device if the photo itself had no GPS -- but
-        // we don't know that until readExif resolves, so ask in parallel and
-        // resolveLocationSource() below decides which one actually gets used.
-        getDevicePosition(),
-        prepareImage(file),
-      ])
+      const [exif, prepared] = await Promise.all([readExif(file), prepareImage(file)])
+
+      // Only ask the device once we know the photo has no GPS of its own. Asking in parallel was
+      // faster, but it raised the browser's location prompt on every capture, including the
+      // photos that already carried a position -- a permission request nobody needed to answer.
+      // Pin check can still place it by hand, and offers "Use my location" on demand.
+      const devicePosition = hasGps(exif) ? null : await getDevicePosition()
       const resolved = resolveLocationSource(exif, devicePosition)
 
       const draft = await createDraft({

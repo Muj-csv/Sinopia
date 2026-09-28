@@ -52,7 +52,7 @@ describe('updateDraft', () => {
       type: 'stroke',
       id: 's1',
       layerIndex: 0,
-      tool: 'brush',
+      tool: 'pen',
       points: [{ x: 0, y: 0 }],
       color: '#000',
       size: 4,

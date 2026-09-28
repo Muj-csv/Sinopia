@@ -38,14 +38,20 @@ Every screen inherits the global do-nots in `DESIGN_BRIEF.md` §11: one yellow b
 
 ## Pin check · `/new/pin`
 **Purpose:** confirm where the photo was taken.
-**Layout:** a full-bleed map with a **fixed center pin** (drag the map, not the pin). A top card shows the photo thumbnail and where the location came from ("From your photo's location" / "Placed by you"). The bottom dock shows the place name, **Confirm spot** (yellow) and Use my location.
+**Layout:** a full-bleed map with a **fixed center pin** (drag the map, not the pin) and a place search over it. A top card shows the photo thumbnail and where the location came from ("From your photo's location" / "Placed by you"). The bottom dock reads back the selected coordinates (`15.1450° N, 120.5930° E`), then the editable place name, **Confirm spot** (yellow) and Use my location.
+
+Searching a place moves the map, and the centre pin follows it, so search and drag are the same act of choosing rather than two sources of truth. Device location is only ever asked for on demand, or when the photo carries no GPS of its own -- never as a way to avoid building the picker.
 **Primary:** Confirm spot.
 **States:** place-name lookup fails → "No place name here yet. You can add one when you finish." · location denied → one line.
 **Do not:** confirm silently without showing where the location came from.
 
 ## Canvas (the sinopia) · `/new/draw`: anchor screen
 **Purpose:** draw over the photo.
-**Layout (phone):** a top bar (close · save status · undo · redo · **Finish**), the canvas filling the middle, the reference sheet in the page flow (closed / peek / half) *above* the tray, and a 6-tool tray at the bottom (Brush · Eraser · Color · Size · Layers + badge · Refs). **Laptop:** the tray becomes a left rail and the reference panel docks on the right at 340 px.
+**Layout (phone):** a top bar (close · save status · undo · redo · **Finish**), the canvas filling the middle, the reference sheet in the page flow (closed / peek / half) *above* the tray, and a 6-tool tray at the bottom (Brush · Eraser · Color · Size · Layers + badge · Refs). **Tablet and laptop:** the tray becomes a left rail; at laptop width the reference panel also docks on the right at 340 px.
+
+**Brushes.** The first tray slot is the brush: tapping it when it is already active opens a popover with **Pencil · Pen · Marker**, and the slot's label names the current one, so the tray always says what the next mark will be. The eraser stays its own slot, because it is a mode rather than a brush, and returns you to the brush you were using. Pencil is thin, tapered and builds up; Pen is even and opaque; Marker is broad and translucent. Sizes are **Small · Medium · Large** with a fine-tune slider underneath.
+
+**Colour.** Nine named colours (black, white, red, orange, yellow, green, blue, purple, pink) plus a custom picker. Recently used colours come first, and the palette is always still there behind them. The selected swatch carries a tick, so the state never rests on colour alone.
 **Primary:** drawing. Finish is enabled once there's at least one stroke.
 **Visual priority:** 1) canvas 2) current tool and color 3) undo/redo 4) Refs 5) Finish 6) everything else.
 **States:** first-time 3-step hint · "Continuing your sinopia from 10:42" · draft kept / not being saved · hidden-layer warning · clear-layer inline confirm (undoable) · references: suggestions, 6 skeletons, stand-ins, pinned references.

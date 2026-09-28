@@ -5,6 +5,7 @@
  * layer's canvas, never the photo). Pinch-zoom/pan via usePinchZoom.
  */
 import type Konva from 'konva'
+import type { KonvaEventObject } from 'konva/lib/Node'
 import { useEffect, useRef, useState } from 'react'
 import { Image as KonvaImage, Layer, Line, Rect, Stage } from 'react-konva'
 import {
@@ -15,11 +16,13 @@ import {
   type Point,
 } from './strokeHistory'
 import { usePinchZoom } from './usePinchZoom'
+import type { ToolName } from './brushes'
 
 export interface Tool {
-  name: 'brush' | 'eraser'
+  name: ToolName
   color: string
   size: number
+  /** The brush sets this; a custom value still wins so the Colour popover can dial it down. */
   opacity: number
 }
 
@@ -48,7 +51,8 @@ export function DrawCanvas({
   const [photoImage, setPhotoImage] = useState<HTMLImageElement | null>(null)
   const currentPoints = useRef<Point[]>([])
   const [currentOutline, setCurrentOutline] = useState<number[]>([])
-  const drawing = useRef(false)
+  /** The pointer that owns the stroke in progress; null when not drawing. */
+  const activePointer = useRef<number | null>(null)
   const viewport = usePinchZoom(containerRef)
 
   useEffect(() => {
@@ -60,24 +64,66 @@ export function DrawCanvas({
     }
   }, [photoUrl])
 
-  const handlePointerDown = (e: { evt: PointerEvent }) => {
-    drawing.current = true
-    currentPoints.current = [{ x: e.evt.offsetX, y: e.evt.offsetY }]
-    setCurrentOutline(outlinePoints(currentPoints.current, tool.size))
+  /**
+   * Pointer position in STAGE coordinates. `evt.offsetX/Y` is in element space, which only agrees
+   * with the stage once it is unpanned and unzoomed -- after a pinch, strokes landed away from the
+   * finger. getRelativePointerPosition applies the stage transform.
+   */
+  const stagePoint = (e: KonvaEventObject<PointerEvent>): Point | null => {
+    const position = e.target.getStage()?.getRelativePointerPosition()
+    return position === null || position === undefined ? null : { x: position.x, y: position.y }
   }
 
-  const handlePointerMove = (e: { evt: PointerEvent }) => {
-    if (!drawing.current) return
-    currentPoints.current.push({ x: e.evt.offsetX, y: e.evt.offsetY })
-    setCurrentOutline(outlinePoints(currentPoints.current, tool.size))
+  const abortStroke = () => {
+    activePointer.current = null
+    currentPoints.current = []
+    setCurrentOutline([])
   }
 
-  const handlePointerUp = () => {
-    if (!drawing.current) return
-    drawing.current = false
+  const handlePointerDown = (e: KonvaEventObject<PointerEvent>) => {
+    // A second finger means a pinch, not a stroke: drop what was drawn so the gesture that zooms
+    // the canvas does not also leave a mark on it.
+    if (activePointer.current !== null) {
+      abortStroke()
+      return
+    }
+    const point = stagePoint(e)
+    if (point === null) return
+
+    activePointer.current = e.evt.pointerId
+    // Capture keeps move/up coming to this element even if the finger leaves it, so releasing
+    // outside the canvas still ends the stroke instead of leaving it stuck open.
+    if (e.evt.target instanceof Element && e.evt.target.hasPointerCapture !== undefined) {
+      try {
+        e.evt.target.setPointerCapture(e.evt.pointerId)
+      } catch {
+        /* capture is best-effort */
+      }
+    }
+    currentPoints.current = [point]
+    setCurrentOutline(outlinePoints(currentPoints.current, tool.size, tool.name))
+  }
+
+  const handlePointerMove = (e: KonvaEventObject<PointerEvent>) => {
+    if (activePointer.current !== e.evt.pointerId) return
+    const point = stagePoint(e)
+    if (point === null) return
+    currentPoints.current.push(point)
+    setCurrentOutline(outlinePoints(currentPoints.current, tool.size, tool.name))
+  }
+
+  const handlePointerUp = (e: KonvaEventObject<PointerEvent>) => {
+    if (activePointer.current !== e.evt.pointerId) return
+    activePointer.current = null
     if (currentPoints.current.length > 1) onStrokeComplete(currentPoints.current)
     currentPoints.current = []
     setCurrentOutline([])
+  }
+
+  /** The OS took the pointer (system gesture, call, palm rejection). Discard, never commit. */
+  const handlePointerCancel = (e: KonvaEventObject<PointerEvent>) => {
+    if (activePointer.current !== e.evt.pointerId) return
+    abortStroke()
   }
 
   return (
@@ -93,6 +139,7 @@ export function DrawCanvas({
         onPointerDown={handlePointerDown}
         onPointerMove={handlePointerMove}
         onPointerUp={handlePointerUp}
+        onPointerCancel={handlePointerCancel}
       >
         <Layer name="photo-layer" listening={false}>
           {photoImage !== null ? (
@@ -107,7 +154,7 @@ export function DrawCanvas({
             {visibleStrokes(history, layerIndex).map((stroke) => (
               <Line
                 key={stroke.id}
-                points={outlinePoints(stroke.points, stroke.size)}
+                points={outlinePoints(stroke.points, stroke.size, stroke.tool)}
                 closed
                 fill={stroke.color}
                 opacity={stroke.opacity}

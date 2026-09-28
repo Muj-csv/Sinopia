@@ -4,6 +4,7 @@ import {
   canUndo,
   emptyHistory,
   hasAnyStroke,
+  migrateHistory,
   pushEntry,
   redo,
   undo,
@@ -17,7 +18,7 @@ function stroke(id: string, layerIndex = 0): BrushStroke {
     type: 'stroke',
     id,
     layerIndex,
-    tool: 'brush',
+    tool: 'pen',
     points: [
       { x: 0, y: 0 },
       { x: 1, y: 1 },
@@ -151,5 +152,40 @@ describe('hasAnyStroke', () => {
     h = pushEntry(h, stroke('a'))
     h = undo(h)
     expect(hasAnyStroke(h)).toBe(false)
+  })
+})
+
+describe('migrateHistory', () => {
+  // Drafts live in the artist's IndexedDB, so one saved before brush types existed must still open.
+  it('reads a legacy "brush" stroke as a pen', () => {
+    const legacy = {
+      entries: [{ ...stroke('a'), tool: 'brush' as unknown as 'pen' }],
+      index: 1,
+    }
+    const migrated = migrateHistory(legacy)
+    expect(migrated.entries[0]).toMatchObject({ type: 'stroke', tool: 'pen' })
+  })
+
+  it('leaves the eraser and the new brushes alone', () => {
+    const history = {
+      entries: [
+        { ...stroke('a'), tool: 'eraser' as const },
+        { ...stroke('b'), tool: 'marker' as const },
+      ],
+      index: 2,
+    }
+    expect(
+      migrateHistory(history).entries.map((e) => (e.type === 'stroke' ? e.tool : null)),
+    ).toEqual(['eraser', 'marker'])
+  })
+
+  it('returns the same object when there is nothing to migrate, so React sees no change', () => {
+    const history = pushEntry(emptyHistory(), stroke('a'))
+    expect(migrateHistory(history)).toBe(history)
+  })
+
+  it('keeps clear-layer entries untouched', () => {
+    const history = pushEntry(emptyHistory(), clear('c'))
+    expect(migrateHistory(history).entries[0]).toEqual(clear('c'))
   })
 })

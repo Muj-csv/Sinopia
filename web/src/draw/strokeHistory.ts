@@ -8,17 +8,21 @@
  */
 
 import { getStroke } from 'perfect-freehand'
+import { strokeOptions, strokeWidth, type ToolName } from './brushes'
 
 export interface Point {
   x: number
   y: number
 }
 
-/** Perfect-Freehand outline for a stroke's raw input points, flattened for Konva's Line `points`. */
-export function outlinePoints(points: Point[], size: number): number[] {
+/**
+ * Perfect-Freehand outline for a stroke's raw input points, flattened for Konva's Line `points`.
+ * The brush decides how the line tapers, so the same gesture reads as pencil, pen or marker.
+ */
+export function outlinePoints(points: Point[], size: number, tool: ToolName = 'pen'): number[] {
   const stroke = getStroke(
     points.map((p) => [p.x, p.y]),
-    { size, thinning: 0.5, smoothing: 0.5, streamline: 0.5 },
+    { size: strokeWidth(tool, size), ...strokeOptions(tool) },
   )
   return stroke.flat()
 }
@@ -27,11 +31,28 @@ export interface BrushStroke {
   type: 'stroke'
   id: string
   layerIndex: number
-  tool: 'brush' | 'eraser'
+  tool: ToolName
   points: Point[]
   color: string
   size: number
   opacity: number
+}
+
+/**
+ * Drafts saved before brush types existed recorded `tool: 'brush'`. They live in the artist's
+ * IndexedDB, so they have to keep opening: the old single brush was an even, opaque line, which
+ * is the pen.
+ */
+export function migrateHistory(history: History): History {
+  let changed = false
+  const entries = history.entries.map((entry) => {
+    if (entry.type !== 'stroke') return entry
+    const tool = entry.tool as ToolName | 'brush'
+    if (tool !== 'brush') return entry
+    changed = true
+    return { ...entry, tool: 'pen' as const }
+  })
+  return changed ? { ...history, entries } : history
 }
 
 export interface ClearLayer {

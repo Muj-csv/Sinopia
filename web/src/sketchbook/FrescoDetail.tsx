@@ -91,7 +91,7 @@ export function FrescoDetail({
       }
     }
 
-    const result = await publishFresco(fresco.owner_id, fresco.id, precision)
+    const result = await publishFresco({ ownerId: fresco.owner_id, frescoId: fresco.id }, precision)
     setBusy(false)
     if (result.ok) onChanged()
     else setError(result.error ?? "Publishing didn't finish.")
@@ -100,7 +100,7 @@ export function FrescoDetail({
   const unpublish = async () => {
     setBusy(true)
     setError(null)
-    const result = await unpublishFresco(fresco.owner_id, fresco.id)
+    const result = await unpublishFresco({ ownerId: fresco.owner_id, frescoId: fresco.id })
     setBusy(false)
     if (result.ok) onChanged()
     else setError(result.error ?? "Couldn't unpublish.")

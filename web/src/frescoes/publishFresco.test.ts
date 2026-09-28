@@ -2,6 +2,8 @@ import { describe, expect, it, vi } from 'vitest'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { publishFresco, unpublishFresco } from './publishFresco'
 
+const REF = { ownerId: 'u1', frescoId: 'f1' }
+
 function makeClient(
   opts: {
     downloadError?: unknown
@@ -29,7 +31,7 @@ function makeClient(
 describe('publishFresco', () => {
   it('downloads all 4 sketchbook files and re-uploads them to globe', async () => {
     const { client, storageFrom, download, upload } = makeClient()
-    const result = await publishFresco('u1', 'f1', 'neighborhood', client)
+    const result = await publishFresco(REF, 'neighborhood', client)
 
     expect(result.ok).toBe(true)
     expect(storageFrom).toHaveBeenCalledWith('sketchbook')
@@ -41,7 +43,7 @@ describe('publishFresco', () => {
 
   it('sets visibility public with the chosen precision', async () => {
     const { client, from, update, eq } = makeClient()
-    await publishFresco('u1', 'f1', 'exact', client)
+    await publishFresco(REF, 'exact', client)
 
     expect(from).toHaveBeenCalledWith('frescoes')
     expect(update).toHaveBeenCalledWith({ visibility: 'public', pin_precision: 'exact' })
@@ -50,14 +52,14 @@ describe('publishFresco', () => {
 
   it('fails without updating the row when a download fails', async () => {
     const { client, update } = makeClient({ downloadError: new Error('not found') })
-    const result = await publishFresco('u1', 'f1', 'neighborhood', client)
+    const result = await publishFresco(REF, 'neighborhood', client)
     expect(result.ok).toBe(false)
     expect(update).not.toHaveBeenCalled()
   })
 
   it('fails when the visibility update fails', async () => {
     const { client } = makeClient({ updateError: new Error('rls denied') })
-    const result = await publishFresco('u1', 'f1', 'neighborhood', client)
+    const result = await publishFresco(REF, 'neighborhood', client)
     expect(result.ok).toBe(false)
   })
 })
@@ -65,7 +67,7 @@ describe('publishFresco', () => {
 describe('unpublishFresco', () => {
   it('sets visibility private, then removes the globe files', async () => {
     const { client, update, storageFrom, remove } = makeClient()
-    const result = await unpublishFresco('u1', 'f1', client)
+    const result = await unpublishFresco(REF, client)
 
     expect(result.ok).toBe(true)
     expect(update).toHaveBeenCalledWith({ visibility: 'private' })
@@ -80,7 +82,7 @@ describe('unpublishFresco', () => {
 
   it('fails without removing files when the update fails', async () => {
     const { client, remove } = makeClient({ updateError: new Error('rls denied') })
-    const result = await unpublishFresco('u1', 'f1', client)
+    const result = await unpublishFresco(REF, client)
     expect(result.ok).toBe(false)
     expect(remove).not.toHaveBeenCalled()
   })
