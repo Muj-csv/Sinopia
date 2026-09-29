@@ -9,8 +9,10 @@
  */
 import * as maplibregl from 'maplibre-gl'
 import 'maplibre-gl/dist/maplibre-gl.css'
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { Link, useParams } from 'react-router-dom'
 import '../lib/maplibreWorker'
+import { supabase } from '../lib/supabase'
 import { Icon } from '../ui/Icon'
 import './globe.css'
 import { toFeatureCollection, type GlobePoint } from './geoJson'
@@ -21,6 +23,8 @@ import { loadGlobePoints } from './loadGlobePoints'
 import { PlaceSearch } from './PlaceSearch'
 import type { PlaceResult } from './photonSearch'
 import { PreviewCard } from './PreviewCard'
+import { SpaceLayer } from './SpaceLayer'
+import { flyToPlace, warpTo } from './warp'
 import { useSession } from '../lib/useSession'
 
 const OPENFREEMAP_STYLE = 'https://tiles.openfreemap.org/styles/positron'
@@ -45,6 +49,12 @@ export function GlobePage() {
   /** One marker per visible unclustered fresco, keyed by id so we only build each once. */
   const pinsRef = useRef(new Map<string, maplibregl.Marker>())
   const { session } = useSession()
+  const myId = session?.user.id ?? null
+  /** Set on /s/:userId -- we are looking at someone else's world rather than the whole Earth. */
+  const { userId: visitingId } = useParams<{ userId: string }>()
+  const [artist, setArtist] = useState<{ id: string; name: string } | null>(null)
+  /** On your own Sinopia you can narrow the Earth to just your frescoes. */
+  const [scope, setScope] = useState<'everyone' | 'mine'>('everyone')
   /** Read inside the marker factory, which runs outside React's render. */
   const myIdRef = useRef<string | null>(null)
   useEffect(() => {
@@ -89,6 +99,39 @@ export function GlobePage() {
       pinsRef.current.delete(id)
     }
   }, [])
+
+  /**
+   * A Sinopia is a view of the one shared Earth, not a separate planet: visiting someone filters
+   * the same points to theirs. That is what keeps Same Wall meaningful -- two artists drawing one
+   * wall are still at one coordinate, whichever world you are looking through.
+   */
+  const visiblePoints = useMemo(() => {
+    if (visitingId !== undefined) return points.filter((p) => p.owner_id === visitingId)
+    if (scope === 'mine' && myId !== null) return points.filter((p) => p.owner_id === myId)
+    return points
+  }, [points, visitingId, scope, myId])
+
+  // Whose world this is. globe_points carries owner_id but no name, so the name is its own read.
+  // The id is stored alongside the name rather than cleared on the way out: that keeps the effect
+  // free of a synchronous setState, and means moving straight from one artist to another shows
+  // nothing rather than briefly showing the previous artist's name over the new one's frescoes.
+  useEffect(() => {
+    if (visitingId === undefined) return
+    let cancelled = false
+    supabase
+      .from('profiles')
+      .select('display_name')
+      .eq('id', visitingId)
+      .single()
+      .then(({ data }) => {
+        if (!cancelled) setArtist({ id: visitingId, name: data?.display_name ?? 'An artist' })
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [visitingId])
+
+  const visitingName = artist !== null && artist.id === visitingId ? artist.name : null
 
   // Frescoes first, on their own. This runs whatever the map does.
   useEffect(() => {
@@ -233,12 +276,23 @@ export function GlobePage() {
   useEffect(() => {
     if (mapStatus !== 'ready' || dataStatus !== 'ready') return
     const source = mapRef.current?.getSource(SOURCE_ID) as maplibregl.GeoJSONSource | undefined
-    source?.setData(toFeatureCollection(points))
-  }, [mapStatus, dataStatus, points])
+    source?.setData(toFeatureCollection(visiblePoints))
+  }, [mapStatus, dataStatus, visiblePoints])
 
-  const flyTo = (place: PlaceResult) => {
-    mapRef.current?.flyTo({ center: [place.lng, place.lat], zoom: 12 })
-  }
+  // Travelling to someone's Sinopia means arriving somewhere they have drawn. Their most recent
+  // fresco is the closest thing we have to "where they are", and globe_points is already in
+  // published order, so it is the first one through the filter.
+  useEffect(() => {
+    if (visitingId === undefined || mapStatus !== 'ready') return
+    const first = visiblePoints[0]
+    if (first === undefined) return
+    warpTo(mapRef.current, first.lng, first.lat)
+    // Only when the destination changes: re-running on every filter tick would yank the camera
+    // back while someone is looking around.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [visitingId, mapStatus])
+
+  const flyTo = (place: PlaceResult) => flyToPlace(mapRef.current, place.lng, place.lat)
 
   const mapFailed = mapStatus === 'failed'
 
@@ -247,12 +301,45 @@ export function GlobePage() {
       <div ref={containerRef} className="globe-map" aria-label="Globe" hidden={mapFailed} />
 
       {mapFailed ? (
-        <GlobeFallbackList points={points} dataFailed={dataStatus === 'error'} />
+        <GlobeFallbackList points={visiblePoints} dataFailed={dataStatus === 'error'} />
       ) : (
         <>
           <div className="globe-search">
             <PlaceSearch onSelect={flyTo} />
+            {/* Only on your own Sinopia: while visiting, the world already belongs to someone. */}
+            {visitingId === undefined && myId !== null && (
+              <div className="seg globe-scope" role="group" aria-label="Whose frescoes to show">
+                <button
+                  type="button"
+                  aria-pressed={scope === 'everyone'}
+                  onClick={() => setScope('everyone')}
+                >
+                  Everyone
+                </button>
+                <button
+                  type="button"
+                  aria-pressed={scope === 'mine'}
+                  onClick={() => setScope('mine')}
+                >
+                  Mine
+                </button>
+              </div>
+            )}
           </div>
+
+          {visitingId !== undefined && (
+            <div className="globe-visiting">
+              <p>
+                <span className="t-small">You are in</span>
+                <strong>{visitingName ?? 'a Sinopia'}</strong>
+              </p>
+              <Link className="btn-o" to="/">
+                Back to your Sinopia
+              </Link>
+            </div>
+          )}
+
+          <SpaceLayer />
           {(mapStatus === 'loading' || dataStatus === 'loading') && (
             <p className="globe-status">Loading the gallery&hellip;</p>
           )}
@@ -262,8 +349,14 @@ export function GlobePage() {
               The gallery is waking up.
             </p>
           )}
-          {dataStatus === 'ready' && points.length === 0 && (
-            <p className="globe-status">The world is blank. Be the first to leave a fresco.</p>
+          {dataStatus === 'ready' && visiblePoints.length === 0 && (
+            <p className="globe-status">
+              {visitingId !== undefined
+                ? 'This artist has not published a fresco yet.'
+                : scope === 'mine'
+                  ? 'Your Sinopia is still empty. Publish a fresco to put it on the map.'
+                  : 'The world is blank. Be the first to leave a fresco.'}
+            </p>
           )}
           {selected !== null && <PreviewCard point={selected} onClose={() => setSelected(null)} />}
         </>

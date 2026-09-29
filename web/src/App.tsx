@@ -1,6 +1,7 @@
 import { Suspense, lazy } from 'react'
 import { Link, NavLink, Route, Routes, useLocation } from 'react-router-dom'
 import { AuthGate } from './auth/AuthGate'
+import { SpaceDrawingProvider } from './globe/SpaceDrawingProvider'
 import { Icon, IconSprite } from './ui/Icon'
 
 // Lazy-loaded per route (ARCHITECTURE.md §7: keep the initial bundle small;
@@ -65,48 +66,54 @@ function AppNav() {
 
 function App() {
   return (
-    <div className="app">
-      <IconSprite />
+    // The space marks are held above the router: they belong to this visit, not to one screen, so
+    // they survive opening a fresco and coming back, and go when the page does (Update 1.2 §15).
+    <SpaceDrawingProvider>
+      <div className="app">
+        <IconSprite />
 
-      <main className="screen">
-        <Suspense fallback={null}>
-          <Routes>
-            <Route path="/" element={<GlobePage />} />
-            <Route
-              path="/new"
-              element={
-                <AuthGate message="Sign in to start a new underdrawing.">
-                  <CaptureSheet />
-                </AuthGate>
-              }
-            />
-            <Route path="/new/pin" element={<PinCheck />} />
-            <Route path="/new/draw" element={<DrawScreen />} />
-            <Route path="/new/finish" element={<FinishForm />} />
-            <Route path="/sketchbook" element={<SketchbookPage />} />
-            <Route path="/me" element={<ProfilePage />} />
-            <Route path="/about" element={<AboutPage />} />
-            <Route path="/f/:id" element={<FrescoViewer />} />
-            <Route
-              path="*"
-              element={
-                <div className="scroll">
-                  <section className="page empty">
-                    <h2>Nothing here</h2>
-                    <p>That page doesn&apos;t exist.</p>
-                    <Link className="btn-o" to="/">
-                      Back to your Sinopia
-                    </Link>
-                  </section>
-                </div>
-              }
-            />
-          </Routes>
-        </Suspense>
-      </main>
+        <main className="screen">
+          <Suspense fallback={null}>
+            <Routes>
+              <Route path="/" element={<GlobePage />} />
+              <Route
+                path="/new"
+                element={
+                  <AuthGate message="Sign in to start a new underdrawing.">
+                    <CaptureSheet />
+                  </AuthGate>
+                }
+              />
+              <Route path="/new/pin" element={<PinCheck />} />
+              <Route path="/new/draw" element={<DrawScreen />} />
+              <Route path="/new/finish" element={<FinishForm />} />
+              <Route path="/sketchbook" element={<SketchbookPage />} />
+              <Route path="/me" element={<ProfilePage />} />
+              <Route path="/about" element={<AboutPage />} />
+              <Route path="/f/:id" element={<FrescoViewer />} />
+              {/* Someone else's Sinopia: the same Earth, showing their frescoes instead of yours. */}
+              <Route path="/s/:userId" element={<GlobePage />} />
+              <Route
+                path="*"
+                element={
+                  <div className="scroll">
+                    <section className="page empty">
+                      <h2>Nothing here</h2>
+                      <p>That page doesn&apos;t exist.</p>
+                      <Link className="btn-o" to="/">
+                        Back to your Sinopia
+                      </Link>
+                    </section>
+                  </div>
+                }
+              />
+            </Routes>
+          </Suspense>
+        </main>
 
-      <AppNav />
-    </div>
+        <AppNav />
+      </div>
+    </SpaceDrawingProvider>
   )
 }
 
