@@ -310,10 +310,6 @@
 }
 
 /* ===== Whose Sinopia (Update 1.2) ===== */
-.globe-scope {
-  margin-top: var(--space-2);
-  width: 100%;
-}
 
 /* Says whose world you are standing in, and how to leave. Bottom-left so it clears the search
    above and the preview card, which docks bottom-centre on a phone. */
@@ -407,5 +403,73 @@
   }
   .globe-visiting {
     bottom: calc(var(--space-8) + env(safe-area-inset-bottom, 0px));
+  }
+}
+
+/* ===== Other worlds (Update 1.2) ===== */
+/* Each account's Sinopia is its own globe. The others are placed around the edge of the one you
+   are standing in, so the arrangement says "other worlds near mine" rather than "a list of
+   people". Paper and ink, not a starfield: DESIGN_BRIEF forbids glow and blur. */
+.sinopia-orbit {
+  position: absolute;
+  inset: 0;
+  z-index: 12;
+  /* The ring is decoration around the map; only the planets themselves are targets. */
+  pointer-events: none;
+}
+.sinopia-planet {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  pointer-events: auto;
+  display: grid;
+  justify-items: center;
+  gap: 2px;
+  padding: 4px;
+  max-width: 96px;
+  background: var(--paper);
+  border: var(--edge);
+  border-radius: 50%;
+  box-shadow: var(--offset);
+  cursor: pointer;
+}
+.sinopia-planet:active {
+  transform: translate(-50%, calc(-50% + 3px));
+  box-shadow: 0 1px 0 var(--ink);
+}
+.sinopia-planet:focus-visible {
+  outline: 3px solid var(--color-focus-ring);
+  outline-offset: 3px;
+}
+/* The name rides under the disc without stretching it, so the planets stay round. */
+.sinopia-planet-name {
+  position: absolute;
+  top: calc(100% + 2px);
+  font: 700 14px/16px var(--pencil);
+  color: var(--ink);
+  background: var(--paper);
+  border: 2px solid var(--ink);
+  border-radius: var(--r-ctl);
+  padding: 0 6px;
+  white-space: nowrap;
+  max-width: 120px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.sinopia-orbit-more {
+  position: absolute;
+  right: var(--space-4);
+  top: var(--space-4);
+  margin: 0;
+  font: var(--text-caption) / var(--leading-caption) var(--print);
+  color: var(--ink-2);
+}
+
+@media (max-width: 640px) {
+  /* Smaller planets and no names: at this width the labels collide with each other and the map. */
+  .sinopia-planet {
+    padding: 2px;
+  }
+  .sinopia-planet-name {
+    display: none;
   }
 }

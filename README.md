@@ -21,7 +21,7 @@
 
 You photograph a real place and draw your own interpretation on top of it: a creature on the rooftops, a fire hydrant that isn't there, a street as you remember it. When you're unsure how something looks, a reference panel beside the canvas finds openly licensed photos of anything you're drawing.
 
-A finished piece is a **fresco**. Keep it private in your **Sketchbook**, or publish it to your **Sinopia**, pinned where you took the photo. Anyone can spin the world, open your fresco, slide between the real photo and your drawing, and see every other fresco made at the same spot: **same wall, different eyes**.
+A finished piece is a **fresco**. Keep it private in your **Sketchbook**, or publish it to your **Sinopia** — your own globe, holding only your work — pinned where you took the photo. Other artists' Sinopias orbit yours as worlds of their own; travel to one, open a fresco, slide between the real photo and the drawing, and see every other fresco made at the same spot: **same wall, different eyes**.
 
 ## Features
 
@@ -32,8 +32,8 @@ A finished piece is a **fresco**. Keep it private in your **Sketchbook**, or pub
 | Reference panel: search anything you're drawing, with license and source on every image | Done |
 | Sketchbook: your private album of frescoes | Done |
 | Publish to your Sinopia, pinned at the exact spot or just the neighborhood | Done |
-| Sinopia: the world map, with clustered pins from world view to street level | Done |
-| Your own Sinopia (your frescoes) and visiting another artist's, with a warp between | Done |
+| Your own Sinopia: a globe of your frescoes alone, with clustered pins from world view to street level | Done |
+| Other artists' Sinopias orbiting yours as their own globes, with a warp into each | Done |
 | Draw in the space around your Sinopia (lasts the visit, clears on reload) | Done |
 | Profile with a drawn avatar you build from parts | Done |
 | Fresco viewer with a Reality ↔ Drawing slider | Done |
