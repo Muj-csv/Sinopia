@@ -50,6 +50,8 @@ function ProfileEditor({ userId }: { userId: string }) {
     'idle',
   )
   const avatarSaveTimer = useRef<number | null>(null)
+  /** The pick still waiting on the debounce below, if any -- flushed rather than dropped on unmount. */
+  const pendingAvatarRef = useRef<AvatarConfig | null>(null)
   const [friendCode, setFriendCode] = useState<string | null>(null)
 
   // Independent of the avatar load below: friend_code needs 0004_friends.sql applied, avatar
@@ -113,17 +115,11 @@ function ProfileEditor({ userId }: { userId: string }) {
       .then(({ count }) => setFrescoCount(count ?? 0))
   }, [userId])
 
-  useEffect(() => {
-    return () => {
-      if (avatarSaveTimer.current !== null) window.clearTimeout(avatarSaveTimer.current)
-    }
-  }, [])
-
   /** Writes just the avatar, independent of the name field and its own Save button. */
   const persistAvatar = useCallback(
     async (next: AvatarConfig) => {
       // Nothing to write without the column; the picker still works locally, and the notice
-      // under it already says why (see the `avatarStored` branch below).
+      // already says why (see the `avatarStored` branch below).
       if (!avatarStored) return
       setAvatarSaveStatus('saving')
       const { data, error } = await supabase
@@ -145,6 +141,23 @@ function ProfileEditor({ userId }: { userId: string }) {
     },
     [userId, avatarStored],
   )
+
+  useEffect(() => {
+    return () => {
+      // Flush rather than drop: cancelling the debounce here (the original bug) meant a pick made
+      // right before switching tabs or navigating away -- the debounce's whole window -- was lost
+      // with nothing saved and nothing shown. The write itself isn't tied to this component's
+      // lifetime once it's fired, so starting it here still lands even though we're unmounting.
+      if (avatarSaveTimer.current !== null) {
+        window.clearTimeout(avatarSaveTimer.current)
+        avatarSaveTimer.current = null
+        if (pendingAvatarRef.current !== null) {
+          void persistAvatar(pendingAvatarRef.current)
+          pendingAvatarRef.current = null
+        }
+      }
+    }
+  }, [persistAvatar])
 
   const save = async () => {
     setStatus('saving')
@@ -219,10 +232,16 @@ function ProfileEditor({ userId }: { userId: string }) {
             config={avatar}
             onChange={(next) => {
               setAvatar(next)
+              pendingAvatarRef.current = next
               if (avatarSaveTimer.current !== null) window.clearTimeout(avatarSaveTimer.current)
               // A short debounce, not an immediate write per tap: flipping through five hair
               // colours in a row shouldn't fire five requests, just the one that's left showing.
-              avatarSaveTimer.current = window.setTimeout(() => persistAvatar(next), 400)
+              // (If they leave before it fires, the unmount cleanup above flushes it anyway.)
+              avatarSaveTimer.current = window.setTimeout(() => {
+                avatarSaveTimer.current = null
+                pendingAvatarRef.current = null
+                void persistAvatar(next)
+              }, 400)
             }}
           />
           <p className="t-small" role="status">
