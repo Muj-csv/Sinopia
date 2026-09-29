@@ -6,6 +6,9 @@ import { Icon, IconSprite } from './ui/Icon'
 
 // Lazy-loaded per route (ARCHITECTURE.md §7: keep the initial bundle small;
 // Konva and MapLibre are the two heaviest dependencies).
+const SinopiaSystem = lazy(() =>
+  import('./globe/SinopiaSystem').then((m) => ({ default: m.SinopiaSystem })),
+)
 const GlobePage = lazy(() => import('./globe/GlobePage').then((m) => ({ default: m.GlobePage })))
 const CaptureSheet = lazy(() =>
   import('./capture/CaptureSheet').then((m) => ({ default: m.CaptureSheet })),
@@ -75,7 +78,8 @@ function App() {
         <main className="screen">
           <Suspense fallback={null}>
             <Routes>
-              <Route path="/" element={<GlobePage />} />
+              {/* The system of worlds. You look at globes here; you navigate one at /s/:userId. */}
+              <Route path="/" element={<SinopiaSystem />} />
               <Route
                 path="/new"
                 element={

@@ -10,7 +10,7 @@
 import * as maplibregl from 'maplibre-gl'
 import 'maplibre-gl/dist/maplibre-gl.css'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { Link, useNavigate, useParams } from 'react-router-dom'
+import { Link, useParams } from 'react-router-dom'
 import '../lib/maplibreWorker'
 import { supabase } from '../lib/supabase'
 import { Icon } from '../ui/Icon'
@@ -23,9 +23,6 @@ import { loadGlobePoints } from './loadGlobePoints'
 import { PlaceSearch } from './PlaceSearch'
 import type { PlaceResult } from './photonSearch'
 import { PreviewCard } from './PreviewCard'
-import { SinopiaOrbit } from './SinopiaOrbit'
-import { loadSinopias, type Sinopia } from './sinopiaDirectory'
-import { SpaceLayer } from './SpaceLayer'
 import { flyToPlace, warpTo } from './warp'
 import { useSession } from '../lib/useSession'
 
@@ -51,15 +48,11 @@ export function GlobePage() {
   /** One marker per visible unclustered fresco, keyed by id so we only build each once. */
   const pinsRef = useRef(new Map<string, maplibregl.Marker>())
   const { session } = useSession()
-  const navigate = useNavigate()
   const myId = session?.user.id ?? null
-  /** Set on /s/:userId -- we are looking at someone else's world rather than the whole Earth. */
+  /** Whose world this is. Always set: you reach this screen by entering a globe from the system. */
   const { userId: visitingId } = useParams<{ userId: string }>()
+  const isMine = visitingId !== undefined && visitingId === myId
   const [artist, setArtist] = useState<{ id: string; name: string } | null>(null)
-  /** Every account that has a globe, so the others can orbit the one you are in. */
-  const [sinopias, setSinopias] = useState<Sinopia[]>([])
-  /** Drives how many worlds the orbit shows; a phone cannot hold the whole ring. */
-  const [viewportWidth, setViewportWidth] = useState(() => window.innerWidth)
   /** Read inside the marker factory, which runs outside React's render. */
   const myIdRef = useRef<string | null>(null)
   useEffect(() => {
@@ -119,12 +112,6 @@ export function GlobePage() {
     [points, currentOwner],
   )
 
-  /** The other worlds: every artist with a globe of their own, excluding the one you are in. */
-  const otherSinopias = useMemo(
-    () => sinopias.filter((s) => s.ownerId !== currentOwner),
-    [sinopias, currentOwner],
-  )
-
   // Whose world this is. globe_points carries owner_id but no name, so the name is its own read.
   // The id is stored alongside the name rather than cleared on the way out: that keeps the effect
   // free of a synchronous setState, and means moving straight from one artist to another shows
@@ -150,26 +137,15 @@ export function GlobePage() {
   // Frescoes first, on their own. This runs whatever the map does.
   useEffect(() => {
     let cancelled = false
-    loadGlobePoints().then(async ({ points: loaded, error }) => {
+    loadGlobePoints().then(({ points: loaded, error }) => {
       if (cancelled) return
       pointsRef.current = loaded
       setPoints(loaded)
       setDataStatus(error ? 'error' : 'ready')
-      // The worlds are derived from the same points, so this costs one profiles read rather than
-      // a second trip for the map data.
-      const worlds = await loadSinopias(loaded)
-      if (!cancelled) setSinopias(worlds)
     })
     return () => {
       cancelled = true
     }
-  }, [])
-
-  // The orbit thins out on a narrow screen, so it has to know when the screen changes.
-  useEffect(() => {
-    const onResize = () => setViewportWidth(window.innerWidth)
-    window.addEventListener('resize', onResize)
-    return () => window.removeEventListener('resize', onResize)
   }, [])
 
   useEffect(() => {
@@ -319,16 +295,6 @@ export function GlobePage() {
 
   const flyTo = (place: PlaceResult) => flyToPlace(mapRef.current, place.lng, place.lat)
 
-  /**
-   * Travel to another world. The camera leaves first and the route changes with it, so the arc
-   * plays over the globe you are leaving rather than over an empty map -- the swap of pins
-   * happens mid-flight, which is what makes it read as arriving somewhere.
-   */
-  const visit = (sinopia: Sinopia) => {
-    warpTo(mapRef.current, sinopia.arrival.lng, sinopia.arrival.lat)
-    navigate(`/s/${sinopia.ownerId}`)
-  }
-
   const mapFailed = mapStatus === 'failed'
 
   return (
@@ -343,22 +309,17 @@ export function GlobePage() {
             <PlaceSearch onSelect={flyTo} />
           </div>
 
-          {/* The other worlds, around the edge of this one. */}
-          <SinopiaOrbit sinopias={otherSinopias} width={viewportWidth} onVisit={visit} />
+          {/* You are inside one world now. The others are out in the system, not around this. */}
+          <div className="globe-visiting">
+            <p>
+              <span className="t-small">You are in</span>
+              <strong>{isMine ? 'your Sinopia' : (visitingName ?? 'a Sinopia')}</strong>
+            </p>
+            <Link className="btn-o" to="/">
+              Back to the system
+            </Link>
+          </div>
 
-          {visitingId !== undefined && (
-            <div className="globe-visiting">
-              <p>
-                <span className="t-small">You are in</span>
-                <strong>{visitingName ?? 'a Sinopia'}</strong>
-              </p>
-              <Link className="btn-o" to="/">
-                Back to your Sinopia
-              </Link>
-            </div>
-          )}
-
-          <SpaceLayer />
           {(mapStatus === 'loading' || dataStatus === 'loading') && (
             <p className="globe-status">Loading the gallery&hellip;</p>
           )}
@@ -368,16 +329,12 @@ export function GlobePage() {
               The gallery is waking up.
             </p>
           )}
-          {/* Four different emptinesses, and only one of them is the artist's fault. */}
+          {/* An empty world of your own is an invitation; someone else's is just a fact. */}
           {dataStatus === 'ready' && visiblePoints.length === 0 && (
             <p className="globe-status">
-              {visitingId !== undefined
-                ? 'This artist has not published a fresco yet.'
-                : myId === null
-                  ? otherSinopias.length > 0
-                    ? 'Pick a Sinopia to visit, or sign in to start your own.'
-                    : 'Nobody has published a fresco yet.'
-                  : 'Your Sinopia is empty. Publish a fresco to put it on your globe.'}
+              {isMine
+                ? 'Your Sinopia is empty. Publish a fresco to put it on your globe.'
+                : 'This artist has not published a fresco yet.'}
             </p>
           )}
           {selected !== null && <PreviewCard point={selected} onClose={() => setSelected(null)} />}
