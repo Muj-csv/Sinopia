@@ -67,6 +67,20 @@ function AppNav() {
   )
 }
 
+/**
+ * Shown while a route's chunk downloads. Deliberately plain: it appears for a fraction of a
+ * second on a good connection, so anything more would flash.
+ */
+function ScreenLoading() {
+  return (
+    <div className="scroll lined">
+      <p className="page t-small" role="status">
+        Loading&hellip;
+      </p>
+    </div>
+  )
+}
+
 function App() {
   return (
     // The space marks are held above the router: they belong to this visit, not to one screen, so
@@ -76,7 +90,11 @@ function App() {
         <IconSprite />
 
         <main className="screen">
-          <Suspense fallback={null}>
+          {/* Every screen but this one is a separate chunk, so a route change renders the
+              fallback while it downloads. `null` meant an empty white page for as long as that
+              took -- brief on a laptop, a lasting blank screen on a phone or a cold cache, and
+              indistinguishable from a crash. */}
+          <Suspense fallback={<ScreenLoading />}>
             <Routes>
               {/* The system of worlds. You look at globes here; you navigate one at /s/:userId. */}
               <Route path="/" element={<SinopiaSystem />} />

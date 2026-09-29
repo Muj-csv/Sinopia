@@ -1,12 +1,17 @@
 /**
- * The system: every account's Sinopia as its own globe, yours at the centre and the others
- * orbiting it.
+ * The system: every account's Sinopia as its own globe, yours in the middle and the others fixed
+ * around it in the sky.
+ *
+ * The worlds do not travel. Each holds its own spot and turns on its axis there, so the sky is a
+ * place you can learn rather than a carousel you have to wait for -- a world you saw to the left
+ * last time is still to the left now. Its spot, size and spin rate all come from the account's
+ * own id (see `systemLayout.ts`), so signing up gives you a permanent address up there.
  *
  * This is what you land on. Nothing here is navigable -- you are outside the worlds, looking at
  * them. Choosing one takes you into it, and that is where panning, zooming and opening frescoes
  * happen (GlobePage, at /s/:userId).
  *
- * How many orbit at once is capped by screen width, and the cap is a hard technical limit rather
+ * How many appear at once is capped by screen width, and the cap is a hard technical limit rather
  * than taste: every globe is a MapLibre map holding a WebGL context, and a browser starts
  * discarding the oldest once a page has too many.
  */
@@ -15,17 +20,17 @@ import { useNavigate } from 'react-router-dom'
 import { useSession } from '../lib/useSession'
 import { Icon } from '../ui/Icon'
 import './globe.css'
-import { GlobeFallbackList } from './GlobeFallbackList'
 import { GlobeSphere } from './GlobeSphere'
 import type { GlobePoint } from './geoJson'
 import { loadGlobePoints } from './loadGlobePoints'
 import { loadSinopias } from './sinopiaDirectory'
 import type { Sinopia } from './sinopias'
+import { placeWorld } from './systemLayout'
 import { SpaceLayer } from './SpaceLayer'
 
 type DataStatus = 'loading' | 'ready' | 'error'
 
-/** Orbiting globes on screen at once. See the WebGL note above: this is a ceiling, not a taste. */
+/** Globes on screen at once. See the WebGL note above: this is a ceiling, not a taste. */
 function orbitCapacity(width: number): number {
   if (width < 640) return 2
   if (width < 900) return 4
@@ -33,24 +38,9 @@ function orbitCapacity(width: number): number {
 }
 
 function sphereSizes(width: number): { centre: number; orbiting: number } {
-  if (width < 640) return { centre: 170, orbiting: 66 }
-  if (width < 900) return { centre: 240, orbiting: 84 }
-  return { centre: 320, orbiting: 104 }
-}
-
-/**
- * One orbit per world, laid out like a planetary system: each sits further out than the last and
- * takes longer to come round, so the ring never locks into a turning wheel.
- */
-function orbitOf(index: number, total: number) {
-  const spread = total === 1 ? 0 : index / (total - 1)
-  return {
-    // Percentages of the smaller viewport edge, so the system scales with the window.
-    radius: 34 + spread * 14,
-    duration: 90 + index * 26,
-    // Spaced around the ring so two worlds never start on top of each other.
-    delay: -(index * (90 / Math.max(total, 1))),
-  }
+  if (width < 640) return { centre: 190, orbiting: 62 }
+  if (width < 900) return { centre: 280, orbiting: 82 }
+  return { centre: 380, orbiting: 104 }
 }
 
 export function SinopiaSystem() {
@@ -104,13 +94,33 @@ export function SinopiaSystem() {
   const sizes = sphereSizes(width)
   const enter = (ownerId: string) => navigate(`/s/${ownerId}`)
 
-  if (status === 'error') {
-    return (
-      <div className="globe-container">
-        <GlobeFallbackList points={points} dataFailed />
-      </div>
-    )
-  }
+  /**
+   * The single line under the system, in priority order. A system of one is worth saying out
+   * loud: without it, one lonely globe looks like the others failed to load.
+   */
+  const note: { text: string; tone: 'plain' | 'info' | 'warn' } | null =
+    status === 'loading'
+      ? { text: 'Finding the worlds…', tone: 'plain' }
+      : status === 'error'
+        ? {
+            text: 'The frescoes are waking up. The worlds are here; what is drawn on them isn’t.',
+            tone: 'warn',
+          }
+        : sinopias.length === 0
+          ? {
+              text: 'No Sinopias yet. Every account that signs up gets a world here.',
+              tone: 'info',
+            }
+          : others.length === 0
+            ? {
+                text: 'Yours is the only Sinopia so far. Others appear here as accounts join.',
+                tone: 'info',
+              }
+            : null
+
+  // A failed fresco fetch used to replace the whole system with an empty list, which read as a
+  // blank page. The worlds do not depend on that fetch -- they come from profiles -- so the
+  // system still stands, and the notice says only what is actually missing.
 
   return (
     <div className="globe-container sinopia-system">
@@ -138,45 +148,40 @@ export function SinopiaSystem() {
         )}
 
         {orbiting.map((sinopia, i) => {
-          const orbit = orbitOf(i, orbiting.length)
+          // Spot, size and spin all come from the account's id, so this world is always here.
+          const place = placeWorld(sinopia.ownerId, i, orbiting.length, sizes.orbiting)
           return (
-            <div
+            <button
               key={sinopia.ownerId}
-              className="system-orbit"
-              style={{
-                // Custom properties drive the keyframes, so one animation serves every orbit.
-                ['--orbit-radius' as string]: `${orbit.radius}%`,
-                ['--orbit-duration' as string]: `${orbit.duration}s`,
-                ['--orbit-delay' as string]: `${orbit.delay}s`,
-              }}
+              type="button"
+              className="system-planet"
+              style={{ left: `${place.x}%`, top: `${place.y}%` }}
+              onClick={() => enter(sinopia.ownerId)}
+              aria-label={`Enter ${sinopia.name}'s Sinopia, ${sinopia.count} ${
+                sinopia.count === 1 ? 'fresco' : 'frescoes'
+              }`}
             >
-              {/* Counter-rotated so the world itself stays upright while its orbit carries it. */}
-              <div className="system-orbit-body">
-                <button
-                  type="button"
-                  className="system-planet"
-                  onClick={() => enter(sinopia.ownerId)}
-                  aria-label={`Enter ${sinopia.name}'s Sinopia, ${sinopia.count} ${
-                    sinopia.count === 1 ? 'fresco' : 'frescoes'
-                  }`}
-                >
-                  <GlobeSphere
-                    points={pointsFor.get(sinopia.ownerId) ?? []}
-                    size={sizes.orbiting}
-                  />
-                  <span className="system-label">{sinopia.name}</span>
-                </button>
-              </div>
-            </div>
+              <GlobeSphere
+                points={pointsFor.get(sinopia.ownerId) ?? []}
+                size={place.size}
+                spin
+                spinSpeed={place.spin}
+              />
+              <span className="system-label">{sinopia.name}</span>
+            </button>
           )
         })}
       </div>
 
-      {status === 'loading' && <p className="globe-status">Finding the worlds&hellip;</p>}
-      {status === 'ready' && sinopias.length === 0 && (
-        <p className="globe-status">
-          <Icon name="info" />
-          Nobody has published a fresco yet.
+      {/* One line at a time. These all dock to the same spot, so rendering two at once stacked
+          them on top of each other and neither could be read. */}
+      {note !== null && (
+        <p
+          className={note.tone === 'warn' ? 'globe-status notice' : 'globe-status'}
+          role={note.tone === 'warn' ? 'alert' : 'status'}
+        >
+          {note.tone !== 'plain' && <Icon name={note.tone === 'warn' ? 'warn' : 'info'} />}
+          {note.text}
         </p>
       )}
       {others.length > orbiting.length && (

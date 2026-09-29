@@ -19,6 +19,25 @@ import { centreOf } from './sinopias'
 
 const SOURCE_ID = 'frescoes'
 
+/**
+ * A full turn every 72 seconds. The first version ran at 0.3 deg/s -- a twenty-minute rotation,
+ * which is real motion that nobody can see, and the system read as a still picture. This is slow
+ * enough to stay calm and fast enough that a glance catches it.
+ */
+const SPIN_DEGREES_PER_SECOND = 5
+
+/**
+ * Roughly the diameter, in CSS pixels, that MapLibre draws the globe at zoom 0. The sphere is a
+ * fixed size on screen whatever the container is, so a big container at zoom 0 gets a small globe
+ * marooned in the middle of it.
+ */
+const SPHERE_AT_ZOOM_0 = 150
+
+/** The zoom that makes the sphere fill a container of this size, and slightly overflow it. */
+function zoomToFill(size: number): number {
+  return Math.max(0, Math.log2(size / SPHERE_AT_ZOOM_0))
+}
+
 function themeColor(varName: string, fallback: string): string {
   const value = getComputedStyle(document.documentElement).getPropertyValue(varName).trim()
   return value === '' ? fallback : value
@@ -28,11 +47,14 @@ export function GlobeSphere({
   points,
   size,
   spin = false,
+  spinSpeed = SPIN_DEGREES_PER_SECOND,
 }: {
   points: readonly GlobePoint[]
   size: number
-  /** The centre world turns slowly on its axis; the distant ones hold still to stay cheap. */
+  /** Whether this world turns on its axis. */
   spin?: boolean
+  /** Degrees per second, so each world in the sky can turn at its own rate. */
+  spinSpeed?: number
 }) {
   const containerRef = useRef<HTMLDivElement>(null)
   const mapRef = useRef<maplibregl.Map | null>(null)
@@ -50,7 +72,7 @@ export function GlobeSphere({
           container: containerRef.current,
           style,
           center: [centreLng, centreLat],
-          zoom: 0,
+          zoom: zoomToFill(size),
           interactive: false,
           // One credit line covers the whole system; a control per sphere would stack up.
           attributionControl: false,
@@ -105,9 +127,12 @@ export function GlobeSphere({
   }, [centreLng, centreLat])
 
   /**
-   * The slow turn of the centre world. Rotating the camera rather than animating CSS keeps it a
-   * real globe rather than a spinning picture of one, and it is paused for anyone who asked for
-   * less motion.
+   * The turn of a world on its axis. Rotating the camera rather than animating CSS keeps it a
+   * real globe rather than a spinning picture of one, and it stops for anyone who asked for less
+   * motion.
+   *
+   * Degrees per second, not per frame: tying the step to elapsed time means a world turns at the
+   * same rate on a 120Hz screen as on a struggling phone, instead of twice as fast.
    */
   useEffect(() => {
     if (!spin) return
@@ -117,15 +142,15 @@ export function GlobeSphere({
     const step = (now: number) => {
       const map = mapRef.current
       if (map !== null) {
-        // A degree every three seconds: present when you watch for it, invisible when you don't.
-        map.setCenter([map.getCenter().lng + (now - last) * 0.0003, map.getCenter().lat])
+        const centre = map.getCenter()
+        map.setCenter([centre.lng + ((now - last) / 1000) * spinSpeed, centre.lat])
       }
       last = now
       frame = requestAnimationFrame(step)
     }
     frame = requestAnimationFrame(step)
     return () => cancelAnimationFrame(frame)
-  }, [spin])
+  }, [spin, spinSpeed])
 
   return (
     <div
