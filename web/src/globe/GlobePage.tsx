@@ -10,7 +10,7 @@
 import * as maplibregl from 'maplibre-gl'
 import 'maplibre-gl/dist/maplibre-gl.css'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { Link, useParams } from 'react-router-dom'
+import { Link, useNavigate, useParams } from 'react-router-dom'
 import '../lib/maplibreWorker'
 import { supabase } from '../lib/supabase'
 import { Icon } from '../ui/Icon'
@@ -23,6 +23,8 @@ import { loadGlobePoints } from './loadGlobePoints'
 import { PlaceSearch } from './PlaceSearch'
 import type { PlaceResult } from './photonSearch'
 import { PreviewCard } from './PreviewCard'
+import { SinopiaOrbit } from './SinopiaOrbit'
+import { loadSinopias, type Sinopia } from './sinopiaDirectory'
 import { SpaceLayer } from './SpaceLayer'
 import { flyToPlace, warpTo } from './warp'
 import { useSession } from '../lib/useSession'
@@ -49,12 +51,15 @@ export function GlobePage() {
   /** One marker per visible unclustered fresco, keyed by id so we only build each once. */
   const pinsRef = useRef(new Map<string, maplibregl.Marker>())
   const { session } = useSession()
+  const navigate = useNavigate()
   const myId = session?.user.id ?? null
   /** Set on /s/:userId -- we are looking at someone else's world rather than the whole Earth. */
   const { userId: visitingId } = useParams<{ userId: string }>()
   const [artist, setArtist] = useState<{ id: string; name: string } | null>(null)
-  /** On your own Sinopia you can narrow the Earth to just your frescoes. */
-  const [scope, setScope] = useState<'everyone' | 'mine'>('everyone')
+  /** Every account that has a globe, so the others can orbit the one you are in. */
+  const [sinopias, setSinopias] = useState<Sinopia[]>([])
+  /** Drives how many worlds the orbit shows; a phone cannot hold the whole ring. */
+  const [viewportWidth, setViewportWidth] = useState(() => window.innerWidth)
   /** Read inside the marker factory, which runs outside React's render. */
   const myIdRef = useRef<string | null>(null)
   useEffect(() => {
@@ -101,15 +106,24 @@ export function GlobePage() {
   }, [])
 
   /**
-   * A Sinopia is a view of the one shared Earth, not a separate planet: visiting someone filters
-   * the same points to theirs. That is what keeps Same Wall meaningful -- two artists drawing one
-   * wall are still at one coordinate, whichever world you are looking through.
+   * Every account has its own globe, and no globe ever mixes two artists' work.
+   *
+   * `currentOwner` is whose world is on screen: the artist named in the URL when visiting, and
+   * your own otherwise. A signed-out visitor owns no globe, so there is nothing to show until
+   * they pick one out of the orbit -- which is the point, rather than dropping everybody's
+   * frescoes onto one shared sphere.
    */
-  const visiblePoints = useMemo(() => {
-    if (visitingId !== undefined) return points.filter((p) => p.owner_id === visitingId)
-    if (scope === 'mine' && myId !== null) return points.filter((p) => p.owner_id === myId)
-    return points
-  }, [points, visitingId, scope, myId])
+  const currentOwner = visitingId ?? myId
+  const visiblePoints = useMemo(
+    () => (currentOwner === null ? [] : points.filter((p) => p.owner_id === currentOwner)),
+    [points, currentOwner],
+  )
+
+  /** The other worlds: every artist with a globe of their own, excluding the one you are in. */
+  const otherSinopias = useMemo(
+    () => sinopias.filter((s) => s.ownerId !== currentOwner),
+    [sinopias, currentOwner],
+  )
 
   // Whose world this is. globe_points carries owner_id but no name, so the name is its own read.
   // The id is stored alongside the name rather than cleared on the way out: that keeps the effect
@@ -136,15 +150,26 @@ export function GlobePage() {
   // Frescoes first, on their own. This runs whatever the map does.
   useEffect(() => {
     let cancelled = false
-    loadGlobePoints().then(({ points: loaded, error }) => {
+    loadGlobePoints().then(async ({ points: loaded, error }) => {
       if (cancelled) return
       pointsRef.current = loaded
       setPoints(loaded)
       setDataStatus(error ? 'error' : 'ready')
+      // The worlds are derived from the same points, so this costs one profiles read rather than
+      // a second trip for the map data.
+      const worlds = await loadSinopias(loaded)
+      if (!cancelled) setSinopias(worlds)
     })
     return () => {
       cancelled = true
     }
+  }, [])
+
+  // The orbit thins out on a narrow screen, so it has to know when the screen changes.
+  useEffect(() => {
+    const onResize = () => setViewportWidth(window.innerWidth)
+    window.addEventListener('resize', onResize)
+    return () => window.removeEventListener('resize', onResize)
   }, [])
 
   useEffect(() => {
@@ -294,6 +319,16 @@ export function GlobePage() {
 
   const flyTo = (place: PlaceResult) => flyToPlace(mapRef.current, place.lng, place.lat)
 
+  /**
+   * Travel to another world. The camera leaves first and the route changes with it, so the arc
+   * plays over the globe you are leaving rather than over an empty map -- the swap of pins
+   * happens mid-flight, which is what makes it read as arriving somewhere.
+   */
+  const visit = (sinopia: Sinopia) => {
+    warpTo(mapRef.current, sinopia.arrival.lng, sinopia.arrival.lat)
+    navigate(`/s/${sinopia.ownerId}`)
+  }
+
   const mapFailed = mapStatus === 'failed'
 
   return (
@@ -306,26 +341,10 @@ export function GlobePage() {
         <>
           <div className="globe-search">
             <PlaceSearch onSelect={flyTo} />
-            {/* Only on your own Sinopia: while visiting, the world already belongs to someone. */}
-            {visitingId === undefined && myId !== null && (
-              <div className="seg globe-scope" role="group" aria-label="Whose frescoes to show">
-                <button
-                  type="button"
-                  aria-pressed={scope === 'everyone'}
-                  onClick={() => setScope('everyone')}
-                >
-                  Everyone
-                </button>
-                <button
-                  type="button"
-                  aria-pressed={scope === 'mine'}
-                  onClick={() => setScope('mine')}
-                >
-                  Mine
-                </button>
-              </div>
-            )}
           </div>
+
+          {/* The other worlds, around the edge of this one. */}
+          <SinopiaOrbit sinopias={otherSinopias} width={viewportWidth} onVisit={visit} />
 
           {visitingId !== undefined && (
             <div className="globe-visiting">
@@ -349,13 +368,16 @@ export function GlobePage() {
               The gallery is waking up.
             </p>
           )}
+          {/* Four different emptinesses, and only one of them is the artist's fault. */}
           {dataStatus === 'ready' && visiblePoints.length === 0 && (
             <p className="globe-status">
               {visitingId !== undefined
                 ? 'This artist has not published a fresco yet.'
-                : scope === 'mine'
-                  ? 'Your Sinopia is still empty. Publish a fresco to put it on the map.'
-                  : 'The world is blank. Be the first to leave a fresco.'}
+                : myId === null
+                  ? otherSinopias.length > 0
+                    ? 'Pick a Sinopia to visit, or sign in to start your own.'
+                    : 'Nobody has published a fresco yet.'
+                  : 'Your Sinopia is empty. Publish a fresco to put it on your globe.'}
             </p>
           )}
           {selected !== null && <PreviewCard point={selected} onClose={() => setSelected(null)} />}
