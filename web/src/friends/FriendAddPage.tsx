@@ -28,12 +28,17 @@ function AddByCode({ myId, code }: { myId: string; code: string }) {
 
   useEffect(() => {
     let cancelled = false
-    supabase
-      .from('profiles')
-      .select('id, display_name, avatar')
-      .eq('friend_code', code.toUpperCase())
-      .maybeSingle()
-      .then(({ data, error }) => {
+    // A plain async function rather than .then().catch() chained straight off the query builder:
+    // PostgrestFilterBuilder is only a "thenable" (has .then, to be awaitable), not a full Promise,
+    // so TypeScript's build config (tsc -b, unlike a plain tsc --noEmit check) rejects .catch() on
+    // it directly.
+    const lookup = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('id, display_name, avatar')
+          .eq('friend_code', code.toUpperCase())
+          .maybeSingle()
         if (cancelled) return
         // A dropped error here used to read identically to "no such code" -- a real failure (RLS,
         // network) looked exactly like a typo, with nothing to tell them apart.
@@ -44,13 +49,13 @@ function AddByCode({ myId, code }: { myId: string; code: string }) {
         else if (data.id === myId) setLookup({ status: 'self' })
         else
           setLookup({ status: 'found', id: data.id, name: data.display_name, avatar: data.avatar })
-      })
-      .catch((err: unknown) => {
+      } catch (err) {
         if (cancelled) return
-
         console.error('friend_code lookup threw:', err)
         setLookup({ status: 'error', message: 'Something went wrong looking that up.' })
-      })
+      }
+    }
+    void lookup()
     return () => {
       cancelled = true
     }
