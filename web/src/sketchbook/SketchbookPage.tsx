@@ -5,8 +5,9 @@
  * horizontal shelf per group. Not a bento or masonry grid, and drafts are never shown as frescoes.
  */
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import { AuthGate } from '../auth/AuthGate'
+import { getFavoriteFrescoId, setFavoriteFresco } from '../friends/friends'
 import { listDrafts, type Draft } from '../lib/draftStore'
 import { supabase } from '../lib/supabase'
 import { useSession } from '../lib/useSession'
@@ -61,6 +62,14 @@ function SketchbookGrid({ userId }: { userId: string }) {
   const [openId, setOpenId] = useState<string | null>(null)
   const [drafts, setDrafts] = useState<Draft[]>([])
   const [mode, setMode] = useState<GroupMode>('place')
+  /** The fresco shown beside this artist's globe to Sinopia Neighbors, if they've chosen one. */
+  const [favoriteId, setFavoriteId] = useState<string | null>(null)
+
+  const loadFavorite = useCallback(() => {
+    getFavoriteFrescoId(userId)
+      .then(setFavoriteId)
+      .catch(() => setFavoriteId(null))
+  }, [userId])
 
   const load = useCallback(async () => {
     setStatus('loading')
@@ -94,6 +103,10 @@ function SketchbookGrid({ userId }: { userId: string }) {
   }, [load])
 
   useEffect(() => {
+    loadFavorite()
+  }, [loadFavorite])
+
+  useEffect(() => {
     listDrafts()
       .then(setDrafts)
       .catch(() => setDrafts([]))
@@ -106,11 +119,6 @@ function SketchbookGrid({ userId }: { userId: string }) {
       <div className="page sketchbook">
         <div className="sb-head">
           <h1>Sketchbook</h1>
-          <p className="t-small">
-            <Link className="link" to="/me">
-              Your profile and sign out
-            </Link>
-          </p>
         </div>
 
         <UnderdrawingsShelf drafts={drafts} />
@@ -191,7 +199,18 @@ function SketchbookGrid({ userId }: { userId: string }) {
           ))}
 
         {openFresco !== undefined && (
-          <FrescoDetail fresco={openFresco} onClose={() => setOpenId(null)} onChanged={load} />
+          <FrescoDetail
+            fresco={openFresco}
+            onClose={() => setOpenId(null)}
+            onChanged={load}
+            isFavorite={openFresco.id === favoriteId}
+            onToggleFavorite={() => {
+              const next = openFresco.id === favoriteId ? null : openFresco.id
+              setFavoriteFresco(userId, next).then((result) => {
+                if (result.ok) setFavoriteId(next)
+              })
+            }}
+          />
         )}
       </div>
     </div>

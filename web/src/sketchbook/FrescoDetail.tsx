@@ -30,10 +30,15 @@ export function FrescoDetail({
   fresco,
   onClose,
   onChanged,
+  isFavorite = false,
+  onToggleFavorite,
 }: {
   fresco: FrescoRow
   onClose: () => void
   onChanged: () => void
+  /** Whether this is the fresco chosen to show beside the artist's globe (Sinopia Neighbors). */
+  isFavorite?: boolean
+  onToggleFavorite?: () => void
 }) {
   const [imageUrl, setImageUrl] = useState<string | null>(null)
   const [title, setTitle] = useState(fresco.title)
@@ -205,9 +210,19 @@ export function FrescoDetail({
               </button>
             </>
           ) : (
-            <button type="button" className="btn-o" disabled={busy} onClick={unpublish}>
-              Unpublish
-            </button>
+            <>
+              {/* Only a published fresco can be a favorite -- it's shown to Sinopia Neighbors
+                  beside your globe, so it has to be something they're already allowed to see. */}
+              {onToggleFavorite !== undefined && (
+                <button type="button" className="btn-o" disabled={busy} onClick={onToggleFavorite}>
+                  <Icon name={isFavorite ? 'check' : 'star'} />
+                  {isFavorite ? 'Your Sinopia favorite' : 'Set as your Sinopia favorite'}
+                </button>
+              )}
+              <button type="button" className="btn-o" disabled={busy} onClick={unpublish}>
+                Unpublish
+              </button>
+            </>
           )}
         </div>
 

@@ -1,0 +1,151 @@
+/* Friends (/friends): who you've added and who's waiting on an answer. Own code/QR live on
+ * Profile (auth.css) -- this is other people's requests and your neighbor list. */
+
+.friends-page {
+  max-width: 640px;
+}
+
+.friends-add {
+  display: grid;
+  gap: var(--space-2);
+  padding: var(--space-4);
+  background: var(--paper);
+  border: var(--edge);
+  border-radius: var(--r-card);
+  box-shadow: var(--offset);
+}
+.friends-add h2 {
+  font: var(--text-h3) / var(--leading-h3) var(--marker);
+  font-weight: 400;
+}
+
+.friends-add-row {
+  display: flex;
+  gap: var(--space-2);
+}
+.friends-code-input {
+  flex: 1;
+  min-width: 0;
+  font: 700 var(--text-body) / var(--leading-body) var(--print);
+  letter-spacing: 0.06em;
+  color: var(--ink);
+  background: var(--paper);
+  border: var(--edge);
+  border-radius: var(--r-ctl);
+  padding: 10px var(--space-3);
+  min-height: 44px;
+  text-transform: uppercase;
+}
+
+.friends-section {
+  display: grid;
+  gap: var(--space-2);
+}
+.friends-section h2 {
+  font: var(--text-h3) / var(--leading-h3) var(--marker);
+  font-weight: 400;
+}
+
+.friend-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--space-2);
+}
+.friend-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  background: var(--paper);
+  border: var(--edge);
+  border-radius: var(--r-card);
+  box-shadow: var(--offset);
+}
+.friend-row-link {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  flex: 1;
+  min-width: 0;
+  color: inherit;
+  text-decoration: none;
+}
+.friend-row-name {
+  flex: 1;
+  min-width: 0;
+  font: 700 17px/20px var(--pencil);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.friend-row-actions {
+  display: flex;
+  gap: var(--space-1);
+  flex: none;
+}
+
+/* ===== Add-by-code / QR deep link (/friend/:code) ===== */
+.friend-add-page {
+  display: grid;
+  place-items: center;
+  min-height: 60vh;
+}
+.friend-add-card {
+  display: grid;
+  justify-items: center;
+  gap: var(--space-3);
+  text-align: center;
+  padding: var(--space-5);
+  background: var(--paper);
+  border: var(--edge);
+  border-radius: var(--r-card);
+  box-shadow: var(--offset);
+  max-width: 360px;
+}
+.friend-add-card h2 {
+  font: var(--text-h3) / var(--leading-h3) var(--marker);
+  font-weight: 400;
+}
+
+/* ===== In-app scan (ScanCode.tsx) ===== */
+.scan-view {
+  display: grid;
+  gap: var(--space-3);
+  justify-items: center;
+}
+.scan-video {
+  width: 100%;
+  max-width: 360px;
+  aspect-ratio: 1;
+  object-fit: cover;
+  background: var(--desk);
+  border: var(--edge);
+  border-radius: var(--r-card);
+}
+
+/* ===== Profile: your own code + QR (ProfilePage.tsx) ===== */
+.profile-code-card {
+  display: grid;
+  justify-items: center;
+  gap: var(--space-2);
+  padding: var(--space-4);
+  background: var(--paper);
+  border: var(--edge);
+  border-radius: var(--r-card);
+  box-shadow: var(--offset);
+}
+.profile-code-value {
+  font: 700 22px/26px var(--print);
+  letter-spacing: 0.12em;
+  color: var(--ink);
+}
+.profile-code-qr {
+  width: 160px;
+  height: 160px;
+  display: block;
+  border: var(--edge);
+  border-radius: var(--r-ctl);
+  background: var(--paper);
+}

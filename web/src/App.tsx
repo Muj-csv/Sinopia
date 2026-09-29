@@ -28,6 +28,12 @@ const AboutPage = lazy(() => import('./auth/AboutPage').then((m) => ({ default: 
 const FrescoViewer = lazy(() =>
   import('./viewer/FrescoViewer').then((m) => ({ default: m.FrescoViewer })),
 )
+const FriendsPage = lazy(() =>
+  import('./friends/FriendsPage').then((m) => ({ default: m.FriendsPage })),
+)
+const FriendAddPage = lazy(() =>
+  import('./friends/FriendAddPage').then((m) => ({ default: m.FriendAddPage })),
+)
 
 /**
  * Capture, Pin check, Canvas and Finish are full-screen and carry their own exit, so the nav is
@@ -57,8 +63,14 @@ function AppNav() {
         <Icon name="book" />
         <span>Sketchbook</span>
       </NavLink>
-      {/* Four items is the ceiling for a thumb-reachable bar. Settings, About and Sign out live
-          inside Profile rather than lengthening this (Update 1.2 §3: "Do not overload the navbar"). */}
+      {/* Friends: who you've added as a Sinopia Neighbor, and requests waiting on an answer. Your
+          own code/QR to hand out live on Profile instead (Sinopia Neighbors, this session). */}
+      <NavLink to="/friends" className={({ isActive }) => (isActive ? 'active' : undefined)}>
+        <Icon name="friends" />
+        <span>Friends</span>
+      </NavLink>
+      {/* Settings, About and Sign out live inside Profile rather than lengthening this bar further
+          (Update 1.2 §3: "Do not overload the navbar"). */}
       <NavLink to="/me" className={({ isActive }) => (isActive ? 'active' : undefined)}>
         <Icon name="person" />
         <span>Profile</span>
@@ -110,6 +122,9 @@ function App() {
               <Route path="/new/draw" element={<DrawScreen />} />
               <Route path="/new/finish" element={<FinishForm />} />
               <Route path="/sketchbook" element={<SketchbookPage />} />
+              <Route path="/friends" element={<FriendsPage />} />
+              {/* The QR deep link: scanning someone's code with an ordinary camera app opens this. */}
+              <Route path="/friend/:code" element={<FriendAddPage />} />
               <Route path="/me" element={<ProfilePage />} />
               <Route path="/about" element={<AboutPage />} />
               <Route path="/f/:id" element={<FrescoViewer />} />

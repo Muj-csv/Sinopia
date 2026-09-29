@@ -1,6 +1,6 @@
 /** PHASE-3 task 1, extended by Update 1.2: avatar, display name, how much you have drawn, sign
  *  out. Now a nav destination of its own rather than a link buried in the Sketchbook header. */
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useSession } from '../lib/useSession'
@@ -10,6 +10,7 @@ import { Avatar } from './Avatar'
 import { AvatarPicker } from './AvatarPicker'
 import { DEFAULT_AVATAR, parseAvatar, type AvatarConfig } from './avatarConfig'
 import { SignInPrompt } from './SignInPrompt'
+import { SinopiaCodeCard } from '../friends/SinopiaCodeCard'
 
 const MAX_NAME_LENGTH = 40
 
@@ -38,6 +39,37 @@ function ProfileEditor({ userId }: { userId: string }) {
   const [saved, setSaved] = useState(true)
   const [status, setStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle')
   const [problem, setProblem] = useState<string | null>(null)
+  /**
+   * Separate from `status`/`saved`: those track the display-name field, which needs an explicit
+   * Save so typing doesn't fire a write per keystroke. A tap on a swatch is already one complete,
+   * deliberate choice -- closer to flipping a switch than typing a sentence -- so it saves itself,
+   * the moment it's picked, rather than waiting on a Save button below the fold that a "Done with
+   * the avatar" button right above it reads as already having pressed.
+   */
+  const [avatarSaveStatus, setAvatarSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>(
+    'idle',
+  )
+  const avatarSaveTimer = useRef<number | null>(null)
+  const [friendCode, setFriendCode] = useState<string | null>(null)
+
+  // Independent of the avatar load below: friend_code needs 0004_friends.sql applied, avatar
+  // needs 0003_profile_avatar.sql, and a project can be ahead of its database on either one
+  // without the other. Missing here just means the code card doesn't render, same as avatar
+  // falls back to a name-only editor -- neither blocks the rest of the page.
+  useEffect(() => {
+    let cancelled = false
+    supabase
+      .from('profiles')
+      .select('friend_code')
+      .eq('id', userId)
+      .maybeSingle()
+      .then(({ data }) => {
+        if (!cancelled) setFriendCode(data?.friend_code ?? null)
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [userId])
 
   useEffect(() => {
     let cancelled = false
@@ -80,6 +112,39 @@ function ProfileEditor({ userId }: { userId: string }) {
       .eq('owner_id', userId)
       .then(({ count }) => setFrescoCount(count ?? 0))
   }, [userId])
+
+  useEffect(() => {
+    return () => {
+      if (avatarSaveTimer.current !== null) window.clearTimeout(avatarSaveTimer.current)
+    }
+  }, [])
+
+  /** Writes just the avatar, independent of the name field and its own Save button. */
+  const persistAvatar = useCallback(
+    async (next: AvatarConfig) => {
+      // Nothing to write without the column; the picker still works locally, and the notice
+      // under it already says why (see the `avatarStored` branch below).
+      if (!avatarStored) return
+      setAvatarSaveStatus('saving')
+      const { data, error } = await supabase
+        .from('profiles')
+        .update({ avatar: next })
+        .eq('id', userId)
+        .select('id')
+
+      if (isMissingAvatarColumn(error)) {
+        setAvatarStored(false)
+        setAvatarSaveStatus('idle')
+        return
+      }
+      if (error !== null || data === null || data.length === 0) {
+        setAvatarSaveStatus('error')
+        return
+      }
+      setAvatarSaveStatus('saved')
+    },
+    [userId, avatarStored],
+  )
 
   const save = async () => {
     setStatus('saving')
@@ -149,13 +214,29 @@ function ProfileEditor({ userId }: { userId: string }) {
       </div>
 
       {editingAvatar && (
-        <AvatarPicker
-          config={avatar}
-          onChange={(next) => {
-            setAvatar(next)
-            setSaved(false)
-          }}
-        />
+        <>
+          <AvatarPicker
+            config={avatar}
+            onChange={(next) => {
+              setAvatar(next)
+              if (avatarSaveTimer.current !== null) window.clearTimeout(avatarSaveTimer.current)
+              // A short debounce, not an immediate write per tap: flipping through five hair
+              // colours in a row shouldn't fire five requests, just the one that's left showing.
+              avatarSaveTimer.current = window.setTimeout(() => persistAvatar(next), 400)
+            }}
+          />
+          <p className="t-small" role="status">
+            {!avatarStored
+              ? 'Your name is saved. The avatar needs migration 0003 applying first.'
+              : avatarSaveStatus === 'saving'
+                ? 'Saving…'
+                : avatarSaveStatus === 'error'
+                  ? "Couldn't save your avatar. Try picking again."
+                  : avatarSaveStatus === 'saved'
+                    ? 'Saved.'
+                    : null}
+          </p>
+        </>
       )}
 
       <label className="field">
@@ -196,6 +277,8 @@ function ProfileEditor({ userId }: { userId: string }) {
           Saved.
         </p>
       )}
+
+      {friendCode !== null && <SinopiaCodeCard code={friendCode} />}
 
       <button type="button" className="btn-o" onClick={() => supabase.auth.signOut()}>
         Sign out

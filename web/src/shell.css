@@ -116,10 +116,10 @@
   background: none;
 }
 
-/* Update 1.2 added Profile, so the bar carries four items instead of three. On a narrow phone
- * 4 x 76px plus the New button overflows, so below this width the items give up their fixed
- * minimum and share the row instead. The New button keeps its size: it is the thumb target. */
-@media (max-width: 480px) {
+/* Five items now (Sinopia, New, Sketchbook, Friends, Profile): 5 x 76px plus the New button
+ * overflows well before a phone screen runs out, so below this width the items give up their
+ * fixed minimum and share the row instead. The New button keeps its size: it is the thumb target. */
+@media (max-width: 600px) {
   .nav a {
     min-width: 0;
     flex: 1;

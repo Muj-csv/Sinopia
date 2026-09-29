@@ -31,4 +31,7 @@
   <symbol id="i-zoomin" viewBox="0 0 24 24"><path d="M12 5.4v13.2M5.4 12h13.2"/></symbol>
   <symbol id="i-zoomout" viewBox="0 0 24 24"><path d="M5.4 12.1h13.2"/></symbol>
   <symbol id="i-bigpin" viewBox="0 0 40 52"><path d="M20 49C12 38.8 4 30.4 4 20.4a16 16 0 0 1 32 0C36 30.4 28 38.8 20 49z" fill="var(--yellow)" stroke="var(--ink)" stroke-width="2.5"/><circle cx="20" cy="20" r="5.6" fill="var(--paper)" stroke="var(--ink)" stroke-width="2.5"/></symbol>
+  <symbol id="i-friends" viewBox="0 0 24 24"><circle cx="8.6" cy="7.6" r="3.2"/><path d="M3.2 19.4c.3-3.4 2.7-5.4 5.6-5.4"/><circle cx="16.2" cy="9.2" r="2.8"/><path d="M11.6 19.6c.4-3.2 2.6-5 4.8-5 2.6 0 4.7 1.9 5 5"/></symbol>
+  <symbol id="i-qr" viewBox="0 0 24 24"><rect x="3.4" y="3.4" width="6.2" height="6.2" rx="0.8"/><rect x="14.4" y="3.4" width="6.2" height="6.2" rx="0.8"/><rect x="3.4" y="14.4" width="6.2" height="6.2" rx="0.8"/><path d="M14.4 14.6h2.6M19 14.6v2.6M14.4 19.4h2.6M19 19.4v-2.6"/></symbol>
+  <symbol id="i-star" viewBox="0 0 24 24"><path d="M12 3.4 14.6 9.4 21 10 16.2 14 17.6 20.4 12 17 6.4 20.4 7.8 14 3 10 9.4 9.4Z"/></symbol>
 </svg>
