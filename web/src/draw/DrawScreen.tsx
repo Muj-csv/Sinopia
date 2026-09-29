@@ -156,7 +156,7 @@ export function DrawScreen() {
   if (draftId === null || draft === null || photoUrl === null) {
     return (
       <>
-        <FlowBar title="Your sinopia" exit="back" />
+        <FlowBar title="Your underdrawing" exit="back" />
         <p className="page t-small">Photo decoding&hellip;</p>
       </>
     )
@@ -164,7 +164,7 @@ export function DrawScreen() {
 
   return (
     <div className="draw-screen-layout">
-      <FlowBar title="Your sinopia" exit="back">
+      <FlowBar title="Your underdrawing" exit="back">
         {/* Save status lives in the bar so it is always visible without taking canvas height. */}
         <span className={save.failed ? 'savestate failed' : 'savestate'}>
           {save.failed
@@ -205,7 +205,7 @@ export function DrawScreen() {
       <div className="draw-screen">
         {resuming && (
           <p className="draw-resume">
-            Continuing your sinopia from {new Date(draft.updatedAt).toLocaleTimeString()}
+            Continuing your underdrawing from {new Date(draft.updatedAt).toLocaleTimeString()}
           </p>
         )}
 

@@ -108,7 +108,7 @@ export function FrescoViewer() {
             <h2>This fresco isn&apos;t available.</h2>
             <p>It may have been unpublished, or the link may be wrong.</p>
             <button type="button" className="btn-o" onClick={() => navigate('/')}>
-              Back to the globe
+              Back to your Sinopia
             </button>
           </section>
         </div>
@@ -165,7 +165,7 @@ export function FrescoViewer() {
 
             <p>
               <Link className="link" to="/">
-                Back to the globe
+                Back to your Sinopia
               </Link>
             </p>
           </div>

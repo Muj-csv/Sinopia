@@ -1,9 +1,15 @@
 /**
- * Draft ("sinopia") storage (PRD §10: "Drafts stored in the browser
+ * Draft ("underdrawing") storage (PRD §10: "Drafts stored in the browser
  * (IndexedDB) until finished; never uploaded"). Shape chosen to map
  * cleanly onto `frescoes`/`fresco_locations` (docs/schema.sql) once a
  * draft is finished and actually saved -- that save step is a later
  * phase, not built here.
+ *
+ * The store is still named 'sinopia-drafts' even though the word for a draft
+ * is now "underdrawing" (Update 1.2, which freed "Sinopia" to mean the
+ * artist's world). The name is a database key, not copy: renaming it points
+ * idb-keyval at a fresh, empty store and every unfinished drawing already on
+ * someone's device becomes unreachable. It stays as it is.
  */
 import { createStore, del, get, keys, set } from 'idb-keyval'
 import type { LocationSource } from '../capture/LocationFallback'

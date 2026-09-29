@@ -68,7 +68,7 @@ export function ReportDialog({
             </div>
             <p>It&apos;s hidden while we review it.</p>
             <button type="button" className="btn-o btn-wide" onClick={onClose}>
-              Back to the globe
+              Back to your Sinopia
             </button>
           </>
         ) : (
@@ -105,7 +105,7 @@ export function ReportDialog({
             </label>
 
             <p className="t-small">
-              A reported fresco is hidden from the globe straight away while someone looks at it.
+              A reported fresco is hidden from Sinopia straight away while someone looks at it.
             </p>
 
             {status === 'error' && (

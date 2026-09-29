@@ -38,8 +38,10 @@ function AppNav() {
   return (
     <nav className="nav" aria-label="Primary">
       <NavLink to="/" end className={({ isActive }) => (isActive ? 'active' : undefined)}>
+        {/* The icon still draws a globe, because the thing on screen is still the Earth. The
+            word is Sinopia: the world is yours, and the map is how you look at it. */}
         <Icon name="globe" />
-        <span>Globe</span>
+        <span>Sinopia</span>
       </NavLink>
       {/* New is the centre item and the only bordered one. There is no floating action button:
           the bar already puts New in the thumb zone, and yellow is reserved per screen. */}
@@ -67,7 +69,7 @@ function App() {
             <Route
               path="/new"
               element={
-                <AuthGate message="Sign in to start a new sinopia.">
+                <AuthGate message="Sign in to start a new underdrawing.">
                   <CaptureSheet />
                 </AuthGate>
               }
@@ -87,7 +89,7 @@ function App() {
                     <h2>Nothing here</h2>
                     <p>That page doesn&apos;t exist.</p>
                     <Link className="btn-o" to="/">
-                      Back to the globe
+                      Back to your Sinopia
                     </Link>
                   </section>
                 </div>

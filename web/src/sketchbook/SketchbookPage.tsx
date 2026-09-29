@@ -1,7 +1,7 @@
 /** PHASE-3 task 5: the owner's frescoes, grouped by place or month.
  *
  * SCREENS.md "Sketchbook": a lined page. Heading, then who you're signed in as, then a Place/Month
- * segmented control. Sinopias (unfinished drafts, on this device only) come first, then one
+ * segmented control. Underdrawings (unfinished drafts, on this device only) come first, then one
  * horizontal shelf per group. Not a bento or masonry grid, and drafts are never shown as frescoes.
  */
 import { useCallback, useEffect, useMemo, useState } from 'react'
@@ -19,7 +19,7 @@ import './sketchbook.css'
 type Status = 'loading' | 'ready' | 'error'
 
 /** The unfinished drafts shelf. Drafts live only on this device, so it says so. */
-function SinopiasShelf({ drafts }: { drafts: Draft[] }) {
+function UnderdrawingsShelf({ drafts }: { drafts: Draft[] }) {
   const navigate = useNavigate()
   const thumbs = useMemo(() => drafts.map((d) => URL.createObjectURL(d.thumb)), [drafts])
   useEffect(() => {
@@ -31,7 +31,7 @@ function SinopiasShelf({ drafts }: { drafts: Draft[] }) {
   return (
     <section className="shelf">
       <div className="shelf-head">
-        <h2>Sinopias</h2>
+        <h2>Underdrawings</h2>
         <span className="t-small">On this device only</span>
       </div>
       <div className="shelf-strip">
@@ -113,7 +113,7 @@ function SketchbookGrid({ userId }: { userId: string }) {
           </p>
         </div>
 
-        <SinopiasShelf drafts={drafts} />
+        <UnderdrawingsShelf drafts={drafts} />
 
         {status === 'ready' && rows.length > 0 && (
           <div className="seg" role="group" aria-label="Group frescoes by">
@@ -176,7 +176,7 @@ function SketchbookGrid({ userId }: { userId: string }) {
                     <span className="meta">
                       {row.visibility === 'public' ? (
                         <>
-                          <Icon name="globe" /> On the globe
+                          <Icon name="globe" /> On Sinopia
                         </>
                       ) : (
                         <>

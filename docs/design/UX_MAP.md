@@ -52,4 +52,4 @@ flowchart LR
 ## Copy rules
 - Say what happened and what to do next, in plain words; never blame the user.
 - Privacy choices are stated plainly at the moment they matter: "Everyone can see this fresco and its neighborhood" / "Everyone can see the exact spot where you took this photo."
-- Use the vocabulary: *fresco*, *sinopia* (draft), *Sketchbook*, *Same Wall*. Never "post", "likes", "followers", "trending".
+- Use the vocabulary: *fresco*, *underdrawing* (draft), *Sketchbook*, *Same Wall*, *Sinopia* (the artist's world). Never "post", "likes", "followers", "trending". Since Update 1.2 "sinopia" names the world, never the draft — a screen that says both is a bug.
