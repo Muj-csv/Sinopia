@@ -17,6 +17,9 @@ create type public.moderation_state  as enum ('ok', 'flagged', 'removed');
 create table public.profiles (
   id           uuid primary key references auth.users (id) on delete cascade,
   display_name text not null check (char_length(display_name) between 1 and 40),
+  -- Avatar part indices, drawn in the browser (web/src/auth/avatarConfig.ts). Null until chosen.
+  -- Added by 0003_profile_avatar.sql; see that migration for why it is jsonb on this row.
+  avatar       jsonb,
   created_at   timestamptz not null default now()
 );
 

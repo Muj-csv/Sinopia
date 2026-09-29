@@ -24,17 +24,58 @@
   width: min(360px, calc(100vw - var(--space-6)));
 }
 
-.place-search input {
-  width: 100%;
-  min-height: 48px;
-  padding: 10px var(--space-4);
-  font: var(--text-body) / var(--leading-body) var(--print);
-  color: var(--ink);
+/* The drawn box moved from the input to this wrapper so the magnifier and the clear button sit
+   inside the same box as the text, rather than floating beside it. */
+.place-search-field {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding-inline: var(--space-2);
   /* A drawn box with a hard offset, not a pill with a blurred shadow. */
   border: var(--edge);
   border-radius: var(--r-ctl);
   background: var(--paper);
   box-shadow: var(--offset);
+}
+/* Focus belongs to the whole box now: the input's own ring would draw inside the border. */
+.place-search-field:focus-within {
+  outline: 3px solid var(--color-focus-ring);
+  outline-offset: 2px;
+}
+.place-search-icon {
+  display: flex;
+  color: var(--ink-2);
+}
+.place-search input {
+  flex: 1;
+  min-width: 0;
+  min-height: 48px;
+  padding: 10px var(--space-1);
+  font: var(--text-body) / var(--leading-body) var(--print);
+  color: var(--ink);
+  border: 0;
+  background: none;
+}
+.place-search input:focus {
+  outline: none;
+}
+/* WebKit draws its own clear "x" inside type=search; ours is the one that matches the icon set. */
+.place-search input::-webkit-search-cancel-button {
+  appearance: none;
+}
+.place-search-clear {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  /* Smaller than the 44px rule because it sits inside a 48px target that is already comfortable,
+     and a full 44px button here would crowd the text on a phone. */
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--ink-2);
+  cursor: pointer;
 }
 .place-search input::placeholder {
   font-family: var(--pencil);
@@ -266,4 +307,105 @@
 /* Clusters sit above pins: at a glance the count matters more than any one thumbnail under it. */
 .maplibregl-marker {
   z-index: 1;
+}
+
+/* ===== Whose Sinopia (Update 1.2) ===== */
+.globe-scope {
+  margin-top: var(--space-2);
+  width: 100%;
+}
+
+/* Says whose world you are standing in, and how to leave. Bottom-left so it clears the search
+   above and the preview card, which docks bottom-centre on a phone. */
+.globe-visiting {
+  position: absolute;
+  left: var(--space-4);
+  bottom: calc(var(--space-4) + env(safe-area-inset-bottom, 0px));
+  z-index: 12;
+  display: grid;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  max-width: min(260px, calc(100vw - var(--space-6)));
+  background: var(--paper);
+  border: var(--edge);
+  border-radius: var(--r-card);
+  box-shadow: var(--offset);
+}
+.globe-visiting p {
+  margin: 0;
+  display: grid;
+}
+.globe-visiting strong {
+  font: var(--text-h3) / var(--leading-h3) var(--marker);
+  font-weight: 400;
+}
+
+/* ===== Space marks (Update 1.2) ===== */
+/* Sits over the map but lets every gesture through until drawing is armed -- otherwise a doodle
+   happens whenever someone means to spin the world. */
+.space-layer {
+  position: absolute;
+  inset: 0;
+  z-index: 11;
+  pointer-events: none;
+}
+.space-layer.armed {
+  pointer-events: auto;
+  /* The browser's own pan/zoom would fight the stroke on a touch screen. */
+  touch-action: none;
+  cursor: crosshair;
+}
+
+.space-rail {
+  position: absolute;
+  right: var(--space-4);
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 13;
+  display: grid;
+  gap: var(--space-2);
+  justify-items: center;
+  padding: var(--space-2);
+  background: var(--paper);
+  border: var(--edge);
+  border-radius: var(--r-card);
+  box-shadow: var(--offset);
+}
+.space-colors {
+  display: grid;
+  grid-template-columns: repeat(3, auto);
+  gap: 6px;
+}
+.space-color {
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  border: var(--edge);
+  border-radius: 50%;
+  cursor: pointer;
+}
+.space-color[aria-pressed='true'] {
+  outline: 3px solid var(--ink);
+  outline-offset: 2px;
+}
+.space-size input {
+  width: 88px;
+}
+
+/* Phones: the rail would cover a third of a small map stood on its end, so it lies along the
+   bottom instead, clear of the nav bar. */
+@media (max-width: 640px) {
+  .space-rail {
+    top: auto;
+    right: var(--space-4);
+    left: var(--space-4);
+    bottom: calc(var(--space-4) + env(safe-area-inset-bottom, 0px));
+    transform: none;
+    grid-auto-flow: column;
+    align-items: center;
+    justify-content: center;
+  }
+  .globe-visiting {
+    bottom: calc(var(--space-8) + env(safe-area-inset-bottom, 0px));
+  }
 }

@@ -21,7 +21,7 @@
 
 You photograph a real place and draw your own interpretation on top of it: a creature on the rooftops, a fire hydrant that isn't there, a street as you remember it. When you're unsure how something looks, a reference panel beside the canvas finds openly licensed photos of anything you're drawing.
 
-A finished piece is a **fresco**. Keep it private in your **Sketchbook**, or publish it to the **globe**, pinned where you took the photo. Anyone can spin the globe, open your fresco, slide between the real photo and your drawing, and see every other fresco made at the same spot: **same wall, different eyes**.
+A finished piece is a **fresco**. Keep it private in your **Sketchbook**, or publish it to your **Sinopia**, pinned where you took the photo. Anyone can spin the world, open your fresco, slide between the real photo and your drawing, and see every other fresco made at the same spot: **same wall, different eyes**.
 
 ## Features
 
@@ -31,8 +31,11 @@ A finished piece is a **fresco**. Keep it private in your **Sketchbook**, or pub
 | Draw over the photo: brush, eraser, colors, layers, undo/redo | Done |
 | Reference panel: search anything you're drawing, with license and source on every image | Done |
 | Sketchbook: your private album of frescoes | Done |
-| Publish to the globe, pinned at the exact spot or just the neighborhood | Done |
-| Globe with clustered pins, from world view to street level | Done |
+| Publish to your Sinopia, pinned at the exact spot or just the neighborhood | Done |
+| Sinopia: the world map, with clustered pins from world view to street level | Done |
+| Your own Sinopia (your frescoes) and visiting another artist's, with a warp between | Done |
+| Draw in the space around your Sinopia (lasts the visit, clears on reload) | Done |
+| Profile with a drawn avatar you build from parts | Done |
 | Fresco viewer with a Reality ↔ Drawing slider | Done |
 | Same Wall: other frescoes made within 50 m | Done |
 | Report a fresco | Done |
@@ -40,7 +43,7 @@ A finished piece is a **fresco**. Keep it private in your **Sketchbook**, or pub
 | In-browser safety check before publishing | Done |
 | Weather at capture ("light rain, 24°C") | Done |
 | About page: licences, privacy and credits | Done |
-| Seeded demo frescoes on the globe | Script ready, artwork pending |
+| Seeded demo frescoes on the map | Script ready, artwork pending |
 
 ## How it works
 
@@ -50,14 +53,14 @@ flowchart LR
   R[Reference panel] -.-> D
   D --> F[Fresco]
   F --> S[Sketchbook\nprivate]
-  F --> G[Globe\npublic]
+  F --> G[Sinopia\npublic]
   G --> V[Viewer: real ↔ drawing\nSame Wall · street view]
 ```
 
 1. **Capture.** Take or upload a photo; Sinopia reads where and when it was taken.
 2. **Draw.** Sketch over the photo on your phone or laptop. The photo itself is never changed.
 3. **Reference.** Type what you're drawing ("fire hydrant", "shiba inu") and keep the results beside the canvas.
-4. **Keep or share.** Save to your Sketchbook, or publish to the globe at the exact spot or neighborhood level.
+4. **Keep or share.** Save to your Sketchbook, or publish to your Sinopia at the exact spot or neighborhood level.
 5. **Explore.** Open any fresco, compare it with the real place, and see how others drew the same wall.
 
 ## Privacy and licensing
@@ -117,7 +120,7 @@ npm i @electric-sql/pglite @electric-sql/pglite-postgis && node docs/schema.test
 web/                The Sinopia web app (capture, draw, references, frescoes, sketchbook, globe, viewer, safety)
 web/api/            Vercel function: references proxy (Openverse)
 supabase/           Migrations (tables, Row Level Security, storage policies)
-scripts/            Seed script for the demo frescoes on the globe (see scripts/README.md)
+scripts/            Seed script for the demo frescoes on the map (see scripts/README.md)
 docs/               Concept, PRD, architecture, plan, decisions, design, build phases
 ```
 

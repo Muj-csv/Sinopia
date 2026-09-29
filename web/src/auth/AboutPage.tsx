@@ -81,17 +81,22 @@ export function AboutPage() {
         <h1>About Sinopia</h1>
         <p className="about-lede">Draw on the real world. Leave it where you found it.</p>
         <p>
-          A <em>sinopia</em> is the reddish underdrawing a fresco painter sketched on the wall
-          before painting. Here the real world is the wall: you photograph a place, draw your
-          interpretation over the photo, and the finished piece — a <em>fresco</em> — stays where
-          you made it.
+          Sinopia is named after the red earth pigment from Sinope that fresco painters used to
+          sketch the <em>underdrawing</em> on a wall before painting it. Here the real world is the
+          wall: you photograph a place, draw your interpretation over the photo, and the finished
+          piece — a <em>fresco</em> — stays where you made it.
+        </p>
+        <p>
+          Your <em>Sinopia</em> is your own world: the places you have drawn, seen from above. Other
+          artists have theirs, made of the places they have drawn. They are all the same Earth, so
+          two people can draw the same wall and find each other there.
         </p>
 
         <h3>Licence</h3>
         <p>
           Sinopia&apos;s code is open source under the MIT licence.{' '}
-          <strong>Frescoes belong to the artists who drew them</strong> — publishing one to the
-          globe does not sign it over to anyone.
+          <strong>Frescoes belong to the artists who drew them</strong> — publishing one to Sinopia
+          does not sign it over to anyone.
         </p>
 
         <h3>Your location</h3>

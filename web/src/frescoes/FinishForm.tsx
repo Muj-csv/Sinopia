@@ -5,7 +5,7 @@
  * the draft lives in IndexedDB independent of auth state.
  *
  * SCREENS.md "Finish": a lined page ending in a sticky bar with ONE yellow button whose label
- * follows the choice ("Keep in Sketchbook" / "Publish to Globe"). Keep and Publish are equal
+ * follows the choice ("Keep in Sketchbook" / "Publish to Sinopia"). Keep and Publish are equal
  * choices, which is why they are a pair of choice cards and not two competing buttons.
  */
 import { useEffect, useMemo, useState } from 'react'
@@ -228,7 +228,7 @@ function FinishFormInner({ draft, userId }: { draft: Draft; userId: string }) {
                 onChange={() => setVisibility('public')}
               />
               <span className="title">Everyone</span>
-              <span className="desc">It appears on the globe for anyone to find.</span>
+              <span className="desc">It appears on Sinopia for anyone to find.</span>
             </label>
           </fieldset>
 
@@ -270,7 +270,7 @@ function FinishFormInner({ draft, userId }: { draft: Draft; userId: string }) {
 
               {publicPoint !== null && (
                 <p className="t-small t-num">
-                  The globe will show {publicPoint.lat.toFixed(4)}, {publicPoint.lng.toFixed(4)}.
+                  Sinopia will show {publicPoint.lat.toFixed(4)}, {publicPoint.lng.toFixed(4)}.
                 </p>
               )}
             </fieldset>
@@ -296,7 +296,7 @@ function FinishFormInner({ draft, userId }: { draft: Draft; userId: string }) {
           {status === 'submitting'
             ? 'Saving…'
             : visibility === 'public'
-              ? 'Publish to Globe'
+              ? 'Publish to Sinopia'
               : 'Keep in Sketchbook'}
         </button>
       </div>
@@ -333,7 +333,7 @@ export function FinishForm() {
   }
 
   return (
-    <AuthGate message="Sign in to save your sinopia to your Sketchbook.">
+    <AuthGate message="Sign in to save your underdrawing to your Sketchbook.">
       {session !== null && <FinishFormInner draft={draft} userId={session.user.id} />}
     </AuthGate>
   )

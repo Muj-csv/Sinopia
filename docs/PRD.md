@@ -44,11 +44,13 @@ Sinopia is a place-based drawing app. You photograph a real place, draw your own
 
 | Term | Meaning |
 |---|---|
-| **Sinopia** | A drawing in progress (a draft) |
+| **Underdrawing** | A drawing in progress (a draft). Called a *sinopia* before Update 1.2 |
 | **Fresco** | A finished piece: original photo + drawing layer + place + time + text |
 | **Sketchbook** | The artist's private album of frescoes |
-| **Globe** | The public world map of published frescoes |
+| **Sinopia** | The world map of published frescoes. *Your* Sinopia is that same Earth filtered to your own frescoes; visiting someone else's filters it to theirs. One Earth, many views — which is what lets Same Wall exist at all |
 | **Same Wall** | All public frescoes made within ~50 m of a spot |
+
+The word moved deliberately in Update 1.2: it used to name the draft, and now names the world. Historically a sinopia *is* the underdrawing, so the draft took the plain English term and the brand took the pigment.
 
 ## 6. Scope
 

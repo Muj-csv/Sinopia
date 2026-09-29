@@ -108,7 +108,7 @@ export function FrescoViewer() {
             <h2>This fresco isn&apos;t available.</h2>
             <p>It may have been unpublished, or the link may be wrong.</p>
             <button type="button" className="btn-o" onClick={() => navigate('/')}>
-              Back to the globe
+              Back to your Sinopia
             </button>
           </section>
         </div>
@@ -141,7 +141,11 @@ export function FrescoViewer() {
           <div className="viewer-details">
             <h1 className="viewer-title">{fresco.title}</h1>
             <p className="viewer-meta">
-              {fresco.profiles?.display_name ?? 'An artist'}
+              {/* The artist's name is the way into their Sinopia. Discovery here is "I liked this,
+                  show me their world", not a follow button (Update 1.2 §17). */}
+              <Link className="link" to={`/s/${fresco.owner_id}`}>
+                {fresco.profiles?.display_name ?? 'An artist'}
+              </Link>
               {fresco.place_name !== null && ` · ${fresco.place_name}`}
               {date !== null && ` · ${new Date(date).toLocaleDateString()}`}
               {weather !== null && ` · ${formatWeather(weather)}`}
@@ -165,7 +169,7 @@ export function FrescoViewer() {
 
             <p>
               <Link className="link" to="/">
-                Back to the globe
+                Back to your Sinopia
               </Link>
             </p>
           </div>

@@ -116,6 +116,21 @@
   background: none;
 }
 
+/* Update 1.2 added Profile, so the bar carries four items instead of three. On a narrow phone
+ * 4 x 76px plus the New button overflows, so below this width the items give up their fixed
+ * minimum and share the row instead. The New button keeps its size: it is the thumb target. */
+@media (max-width: 480px) {
+  .nav a {
+    min-width: 0;
+    flex: 1;
+    font-size: 15px;
+  }
+  .nav a.new {
+    flex: 0 0 auto;
+    padding-inline: var(--space-3);
+  }
+}
+
 /* Laptop: the bar becomes a left rail so the artwork keeps the full height. */
 @media (min-width: 900px) {
   .app {

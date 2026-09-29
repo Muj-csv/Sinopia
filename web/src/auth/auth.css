@@ -38,6 +38,72 @@
   width: 100%;
 }
 
+/* ===== Avatar (Update 1.2) ===== */
+.profile-identity {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+}
+.profile-count {
+  margin: 0 0 var(--space-2);
+  color: var(--ink-2);
+}
+.avatar {
+  display: block;
+}
+
+.avatar-picker {
+  display: grid;
+  gap: var(--space-3);
+  width: 100%;
+}
+.avatar-preview {
+  justify-self: center;
+}
+/* A fieldset carries the grouping for screen readers; the browser's default box would read as a
+   second card inside the page, so it is stripped back to a label over a row. */
+.avatar-row {
+  border: 0;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--space-1);
+}
+.avatar-row legend {
+  padding: 0;
+  font: 700 17px/20px var(--pencil);
+  color: var(--ink-2);
+}
+/* The rows scroll sideways rather than wrapping, so adding an option later never reflows the
+   page, and on a phone the whole builder stays within a thumb's reach. */
+.avatar-swatches,
+.avatar-chips {
+  display: flex;
+  gap: var(--space-2);
+  overflow-x: auto;
+  padding-bottom: var(--space-1);
+}
+.avatar-swatch {
+  flex: 0 0 auto;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: var(--edge);
+  border-radius: 50%;
+  cursor: pointer;
+}
+/* Selection is an ink ring, not a tick floating on the colour: the swatch has to stay readable
+   whatever tone is under it. */
+.avatar-swatch[aria-pressed='true'] {
+  outline: 3px solid var(--ink);
+  outline-offset: 3px;
+}
+.avatar-swatch:focus-visible,
+.avatar-chips .chip:focus-visible {
+  outline: 3px solid var(--color-focus-ring);
+  outline-offset: 3px;
+}
+
 /* ===== About ===== */
 .about-page h2 {
   margin-top: var(--space-5);

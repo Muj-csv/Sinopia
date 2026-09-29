@@ -115,3 +115,21 @@ await as(A, async () => {
   await q(`delete from storage.objects where bucket_id='globe' and name like '${A}/%'`)
   ok((await q(`select count(*)::int n from storage.objects where bucket_id='globe'`)).rows[0].n === 0, 'owner can unpublish (delete) their globe files')
 })
+
+// ===== Update 1.2: profile avatars (0003_profile_avatar.sql) =====
+// The avatar is public by design (it appears beside every published fresco), but it is still
+// yours to set. profiles has no column-level grants, so these checks are what prove the existing
+// row-level update policy actually covers a column added after it was written.
+await as(A, async () => {
+  await q(`update public.profiles set avatar = $1 where id = $2`, ['{"skin":2,"hair":5}', A])
+  const r = await q(`select avatar->>'skin' as skin from public.profiles where id=$1`, [A])
+  ok(r.rows[0].skin === '2', 'owner can set their own avatar')
+})
+await as(B, async () => {
+  const r = await q(`select avatar->>'skin' as skin from public.profiles where id=$1`, [A])
+  ok(r.rows[0].skin === '2', 'B can see A avatar (profiles are public)')
+  const u = await q(`update public.profiles set avatar = $1 where id = $2 returning id`, ['{"skin":0}', A])
+  ok(u.rows.length === 0, 'B cannot change A avatar')
+})
+ok((await q(`select avatar is null as n from public.profiles where id=$1`, [B])).rows[0].n,
+   'a profile with no avatar chosen stays null')

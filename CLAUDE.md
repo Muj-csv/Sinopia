@@ -1,6 +1,6 @@
 # Sinopia
 
-Mobile-first web app for drawing on the real world. The artist photographs a place, draws over the photo (with an in-canvas reference panel for anything they're drawing), and saves the result, a **fresco**, to a private **Sketchbook** or publishes it to a public **globe** at the photo's location. The viewer shows a Reality ↔ Drawing slider, other frescoes at the same spot (**Same Wall**), and optionally the street-level view.
+Mobile-first web app for drawing on the real world. The artist photographs a place, draws over the photo (with an in-canvas reference panel for anything they're drawing), and saves the result, a **fresco**, to a private **Sketchbook** or publishes it to **Sinopia**, the shared world map, at the photo's location. Every artist's Sinopia is the same Earth filtered to their own frescoes, which is what keeps Same Wall working. The viewer shows a Reality ↔ Drawing slider, other frescoes at the same spot (**Same Wall**), and optionally the street-level view.
 
 Read first: `docs/CONCEPT.md` (one page) → `docs/PRD.md` (what and why) → `docs/ARCHITECTURE.md` (how) → `docs/IMPLEMENTATION_PLAN.md` (order) → `docs/DECISIONS.md` (open questions). Design: `docs/design/DESIGN_BRIEF.md` (locked: tokens, type, colour, components, forbidden list) → `docs/design/UX_MAP.md` (flows and copy; it wins where the two differ) → `docs/design/SCREENS.md` (per-screen layout, states and do-nots). Schema: `docs/schema.sql`.
 
@@ -16,7 +16,7 @@ Read first: `docs/CONCEPT.md` (one page) → `docs/PRD.md` (what and why) → `d
 - **The look is ink on notebook paper with one yellow (D-014).** Shared components live in `web/src/ui/` (`ui.css`, `Icon.tsx`, `FlowBar.tsx`, `Popover.tsx`); build screens from those rather than inventing a button or card. The rules that are easiest to break: one yellow button per screen; yellow is only ever a fill with ink on it; one 2 px ink edge plus a hard offset on pressable things, and **no blurred shadows and no `backdrop-filter` anywhere**; handwriting (Gochi, Gaegu) never in long text; no lined paper or yellow behind or around a photo, the canvas, the globe or a fresco; notices never get a coloured side stripe. The full forbidden list is `DESIGN_BRIEF.md` §11.
 - **Drawing model:** brushes and colours are defined once, in `web/src/draw/brushes.ts` and `web/src/draw/palette.ts`. Add a brush or a colour there, never inline in a component. Stroke geometry goes through `outlinePoints(points, size, tool)`; a stroke's `tool` is persisted in the draft, so widening `ToolName` needs a case in `migrateHistory`.
 - **References:** Openverse only; always show license, creator and source link; don't store reference images.
-- **Copy:** fresco, sinopia (draft), Sketchbook, Same Wall. No likes, follower counts, rankings or "trending".
+- **Copy:** fresco, underdrawing (draft), Sketchbook, Same Wall, **Sinopia** (the artist's world — the map of published frescoes; Update 1.2 moved this word off the draft and onto the world, so "sinopia" no longer means a draft in any user-facing string). No likes, follower counts, rankings or "trending"; appreciation, when it lands, is visible only to the artist who made the fresco.
 - Attribution for OpenStreetMap/OpenFreeMap (and Mapillary/Panoramax when shown) is always visible on maps.
 
 ## Layout

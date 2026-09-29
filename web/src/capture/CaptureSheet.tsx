@@ -76,7 +76,7 @@ export function CaptureSheet() {
 
   return (
     <>
-      <FlowBar title="New sinopia" />
+      <FlowBar title="New underdrawing" />
       <div className="scroll lined">
         <div className="page capture-sheet">
           <div>
@@ -123,7 +123,7 @@ export function CaptureSheet() {
               >
                 <Icon name="edit" />
                 <span className="option-text">
-                  <span className="option-title">Resume your sinopia</span>
+                  <span className="option-title">Resume your underdrawing</span>
                   <span className="option-meta">
                     {draft.placeName ?? 'Untitled spot'} ·{' '}
                     {new Date(draft.updatedAt).toLocaleString()}

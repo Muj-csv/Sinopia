@@ -201,7 +201,7 @@ export function FrescoDetail({
                 </p>
               )}
               <button type="button" className="btn-o" disabled={busy} onClick={publish}>
-                Publish to Globe
+                Publish to Sinopia
               </button>
             </>
           ) : (

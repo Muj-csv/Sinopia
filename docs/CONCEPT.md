@@ -10,16 +10,19 @@ You take a photo of a real place (a Tokyo side street, your campus, a jeepney st
 
 ## 2. Why the name works
 
-A *sinopia* is the underdrawing a fresco painter sketched on the wall before painting. In the app, the real world is the wall:
+*Sinopia* is the red earth pigment from Sinope that fresco painters used to sketch the underdrawing on a wall before painting it. In the app, the real world is the wall:
 
 | In fresco painting | In Sinopia |
 |---|---|
 | The wall | Your photo of a real place |
-| The sinopia (underdrawing) | Your drawing while it's in progress (a draft) |
-| The fresco | Your finished piece, private or on the globe |
+| The underdrawing | Your drawing while it's in progress (a draft) |
+| The fresco | Your finished piece, private or published |
+| The painted world the frescoes live in | **Your Sinopia**: the Earth, showing your frescoes |
 | A workshop's pattern books | The reference panel |
 
-So the vocabulary is built in: you draw a **sinopia**, you finish a **fresco**, you keep them in your **Sketchbook**, and the place view is **Same Wall** (every fresco made at one spot). *Alternative unit name if you'd rather go Filipino: **Bakas** ("trace, footprint").*
+So the vocabulary is built in: you draw an **underdrawing**, you finish a **fresco**, you keep them in your **Sketchbook**, you publish to your **Sinopia**, and the place view is **Same Wall** (every fresco made at one spot). *Alternative unit name if you'd rather go Filipino: **Bakas** ("trace, footprint").*
+
+Update 1.2 moved the word: "sinopia" named the draft until then. The draft took the plain English *underdrawing*, and the pigment's name went to the world — because what the artist ends up owning is a world, not a pile of drafts.
 
 ## 3. Who it's for
 
