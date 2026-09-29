@@ -131,6 +131,36 @@
   }
 }
 
+/* Small phones (iPhone SE and narrower): even shared-width labels start touching each other at 5
+ * items. The label stays in the accessible name (same technique as .sr-only) rather than
+ * disappearing from screen readers -- only the icon is left for sighted users to tap. */
+@media (max-width: 380px) {
+  .nav a:not(.new) span {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+  /* The "you are here" cue was the highlighter stroke through the (now hidden) label -- give the
+   * icon its own small stroke underneath instead of losing the cue entirely. */
+  .nav a.active:not(.new) {
+    position: relative;
+  }
+  .nav a.active:not(.new)::after {
+    content: '';
+    position: absolute;
+    bottom: 4px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 20px;
+    height: 4px;
+    background: var(--yellow);
+    border-radius: 2px;
+  }
+}
+
 /* Laptop: the bar becomes a left rail so the artwork keeps the full height. */
 @media (min-width: 900px) {
   .app {

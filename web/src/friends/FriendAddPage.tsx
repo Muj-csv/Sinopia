@@ -17,6 +17,7 @@ import { sendFriendRequestByCode } from './friends'
 type Lookup =
   | { status: 'loading' }
   | { status: 'not-found' }
+  | { status: 'error'; message: string }
   | { status: 'self' }
   | { status: 'found'; id: string; name: string; avatar: unknown }
 
@@ -32,12 +33,23 @@ function AddByCode({ myId, code }: { myId: string; code: string }) {
       .select('id, display_name, avatar')
       .eq('friend_code', code.toUpperCase())
       .maybeSingle()
-      .then(({ data }) => {
+      .then(({ data, error }) => {
         if (cancelled) return
-        if (data === null || data === undefined) setLookup({ status: 'not-found' })
+        // A dropped error here used to read identically to "no such code" -- a real failure (RLS,
+        // network) looked exactly like a typo, with nothing to tell them apart.
+        if (error !== null) {
+          console.error('friend_code lookup failed:', error)
+          setLookup({ status: 'error', message: error.message })
+        } else if (data === null || data === undefined) setLookup({ status: 'not-found' })
         else if (data.id === myId) setLookup({ status: 'self' })
         else
           setLookup({ status: 'found', id: data.id, name: data.display_name, avatar: data.avatar })
+      })
+      .catch((err: unknown) => {
+        if (cancelled) return
+
+        console.error('friend_code lookup threw:', err)
+        setLookup({ status: 'error', message: 'Something went wrong looking that up.' })
       })
     return () => {
       cancelled = true
@@ -46,9 +58,12 @@ function AddByCode({ myId, code }: { myId: string; code: string }) {
 
   const add = async () => {
     setSending(true)
-    const result = await sendFriendRequestByCode(myId, code)
-    setSending(false)
-    setSent(result.ok ? 'Request sent.' : result.message)
+    try {
+      const result = await sendFriendRequestByCode(myId, code)
+      setSent(result.ok ? 'Request sent.' : result.message)
+    } finally {
+      setSending(false)
+    }
   }
 
   if (lookup.status === 'loading') return <p className="t-small">Looking that code up&hellip;</p>
@@ -58,6 +73,15 @@ function AddByCode({ myId, code }: { myId: string; code: string }) {
       <p className="notice danger" role="alert">
         <Icon name="warn" />
         <span>No artist found with that code.</span>
+      </p>
+    )
+  }
+
+  if (lookup.status === 'error') {
+    return (
+      <p className="notice danger" role="alert">
+        <Icon name="warn" />
+        <span>Couldn&apos;t look that code up: {lookup.message}</span>
       </p>
     )
   }

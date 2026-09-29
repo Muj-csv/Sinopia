@@ -8,6 +8,10 @@
 .friends-add {
   display: grid;
   gap: var(--space-2);
+  /* A grid item's default min-width is auto (its content's natural width), not 0 -- without this,
+     a track inside `.page`'s own grid can't shrink to the viewport and silently pushes content
+     past the right edge instead of wrapping it. Every nested row below needs the same override. */
+  min-width: 0;
   padding: var(--space-4);
   background: var(--paper);
   border: var(--edge);
@@ -22,6 +26,7 @@
 .friends-add-row {
   display: flex;
   gap: var(--space-2);
+  min-width: 0;
 }
 .friends-code-input {
   flex: 1;
@@ -40,6 +45,7 @@
 .friends-section {
   display: grid;
   gap: var(--space-2);
+  min-width: 0;
 }
 .friends-section h2 {
   font: var(--text-h3) / var(--leading-h3) var(--marker);
@@ -52,11 +58,13 @@
   padding: 0;
   display: grid;
   gap: var(--space-2);
+  min-width: 0;
 }
 .friend-row {
   display: flex;
   align-items: center;
   gap: var(--space-3);
+  min-width: 0;
   padding: var(--space-2) var(--space-3);
   background: var(--paper);
   border: var(--edge);
@@ -130,6 +138,7 @@
   display: grid;
   justify-items: center;
   gap: var(--space-2);
+  min-width: 0;
   padding: var(--space-4);
   background: var(--paper);
   border: var(--edge);

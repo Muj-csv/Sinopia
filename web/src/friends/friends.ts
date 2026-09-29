@@ -57,16 +57,24 @@ export async function getMyFriendCode(userId: string): Promise<string | null> {
   return data?.friend_code ?? null
 }
 
-export async function findProfileByCode(
+/**
+ * Looks a code up. Distinguishes "no such code" from "the lookup itself failed" -- an RLS or
+ * network error used to come back identical to a typo, which made a real failure invisible.
+ */
+async function findProfileByCode(
   rawCode: string,
-): Promise<{ id: string; name: string } | null> {
+): Promise<{ id: string; name: string } | null | { queryError: string }> {
   const code = rawCode.trim().toUpperCase()
   if (code === '') return null
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from('profiles')
     .select('id, display_name')
     .eq('friend_code', code)
     .maybeSingle()
+  if (error !== null) {
+    console.error('findProfileByCode failed:', error)
+    return { queryError: error.message }
+  }
   return data === null || data === undefined ? null : { id: data.id, name: data.display_name }
 }
 
@@ -77,26 +85,45 @@ export async function sendFriendRequestByCode(
   myId: string,
   rawCode: string,
 ): Promise<SendRequestResult> {
-  const target = await findProfileByCode(rawCode)
-  if (target === null) {
-    return { ok: false, reason: 'not-found', message: 'No artist found with that code.' }
-  }
-  if (target.id === myId) {
-    return { ok: false, reason: 'self', message: "That's your own code." }
-  }
-  const { error } = await supabase
-    .from('friend_requests')
-    .insert({ requester_id: myId, addressee_id: target.id })
-  if (error === null) return { ok: true }
-  // 23505: unique_violation -- the pair_key already has a row, pending or accepted either way.
-  if (error.code === '23505') {
-    return {
-      ok: false,
-      reason: 'exists',
-      message: `You and ${target.name} already have a connection -- check your Friends tab.`,
+  // Wraps the whole thing: a thrown exception (a dropped connection mid-request, for example)
+  // used to propagate past every layer up to the button's onClick with nothing catching it, which
+  // left the UI stuck on "Sending…" forever with no message and nothing in `friend_requests` --
+  // exactly "nothing happens" from the artist's side, with no trace of why in the UI.
+  try {
+    const found = await findProfileByCode(rawCode)
+    if (found !== null && 'queryError' in found) {
+      return {
+        ok: false,
+        reason: 'error',
+        message: `Couldn't look up that code: ${found.queryError}`,
+      }
     }
+    if (found === null) {
+      return { ok: false, reason: 'not-found', message: 'No artist found with that code.' }
+    }
+    if (found.id === myId) {
+      return { ok: false, reason: 'self', message: "That's your own code." }
+    }
+
+    const { error } = await supabase
+      .from('friend_requests')
+      .insert({ requester_id: myId, addressee_id: found.id })
+    if (error === null) return { ok: true }
+    // 23505: unique_violation -- the pair_key already has a row, pending or accepted either way.
+    if (error.code === '23505') {
+      return {
+        ok: false,
+        reason: 'exists',
+        message: `You and ${found.name} already have a connection -- check your Friends tab.`,
+      }
+    }
+
+    console.error('friend_requests insert failed:', error)
+    return { ok: false, reason: 'error', message: `Couldn't send that request: ${error.message}` }
+  } catch (err) {
+    console.error('sendFriendRequestByCode threw:', err)
+    return { ok: false, reason: 'error', message: "Couldn't send that request. Try again." }
   }
-  return { ok: false, reason: 'error', message: "Couldn't send that request. Try again." }
 }
 
 export async function acceptFriendRequest(requestId: string): Promise<boolean> {
@@ -114,10 +141,17 @@ export async function removeFriendRequest(requestId: string): Promise<boolean> {
 }
 
 export async function loadFriendsData(myId: string): Promise<FriendsData> {
-  const { data: rows } = await supabase
+  const { data: rows, error } = await supabase
     .from('friend_requests')
     .select('id, requester_id, addressee_id, status, created_at')
     .or(`requester_id.eq.${myId},addressee_id.eq.${myId}`)
+  // A dropped error here used to come back as an empty (but "successful") result -- indistinguish-
+  // able from genuinely having no requests, so a real failure just silently rendered as "No
+  // Sinopia Neighbors yet" instead of the error state that would have said something was wrong.
+  if (error !== null) {
+    console.error('loadFriendsData failed:', error)
+    throw error
+  }
   const all = rows ?? []
 
   const otherIds = [
