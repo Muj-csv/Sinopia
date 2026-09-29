@@ -40,7 +40,12 @@ interface ProfileRow {
 }
 
 function toNeighbor(row: ProfileRow): Neighbor {
-  return { id: row.id, name: row.display_name, avatar: parseAvatar(row.avatar), friendCode: row.friend_code }
+  return {
+    id: row.id,
+    name: row.display_name,
+    avatar: parseAvatar(row.avatar),
+    friendCode: row.friend_code,
+  }
 }
 
 export async function getMyFriendCode(userId: string): Promise<string | null> {
@@ -52,7 +57,9 @@ export async function getMyFriendCode(userId: string): Promise<string | null> {
   return data?.friend_code ?? null
 }
 
-export async function findProfileByCode(rawCode: string): Promise<{ id: string; name: string } | null> {
+export async function findProfileByCode(
+  rawCode: string,
+): Promise<{ id: string; name: string } | null> {
   const code = rawCode.trim().toUpperCase()
   if (code === '') return null
   const { data } = await supabase
@@ -64,10 +71,12 @@ export async function findProfileByCode(rawCode: string): Promise<{ id: string; 
 }
 
 export type SendRequestResult =
-  | { ok: true }
-  | { ok: false; reason: 'not-found' | 'self' | 'exists' | 'error'; message: string }
+  { ok: true } | { ok: false; reason: 'not-found' | 'self' | 'exists' | 'error'; message: string }
 
-export async function sendFriendRequestByCode(myId: string, rawCode: string): Promise<SendRequestResult> {
+export async function sendFriendRequestByCode(
+  myId: string,
+  rawCode: string,
+): Promise<SendRequestResult> {
   const target = await findProfileByCode(rawCode)
   if (target === null) {
     return { ok: false, reason: 'not-found', message: 'No artist found with that code.' }
@@ -111,7 +120,9 @@ export async function loadFriendsData(myId: string): Promise<FriendsData> {
     .or(`requester_id.eq.${myId},addressee_id.eq.${myId}`)
   const all = rows ?? []
 
-  const otherIds = [...new Set(all.map((r) => (r.requester_id === myId ? r.addressee_id : r.requester_id)))]
+  const otherIds = [
+    ...new Set(all.map((r) => (r.requester_id === myId ? r.addressee_id : r.requester_id))),
+  ]
   const { data: profiles } =
     otherIds.length === 0
       ? { data: [] as ProfileRow[] }
@@ -178,7 +189,9 @@ export interface FavoriteInfo {
  * (enforced in the database, see 0004_friends.sql), so its thumbnail is always the public one --
  * no signed URL, no visibility check needed here.
  */
-export async function loadFavorites(ownerIds: readonly string[]): Promise<Map<string, FavoriteInfo>> {
+export async function loadFavorites(
+  ownerIds: readonly string[],
+): Promise<Map<string, FavoriteInfo>> {
   const result = new Map<string, FavoriteInfo>()
   if (ownerIds.length === 0) return result
 

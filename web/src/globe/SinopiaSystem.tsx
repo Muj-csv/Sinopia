@@ -224,7 +224,9 @@ export function SinopiaSystem() {
             className={entering === myId ? 'system-centre entering' : 'system-centre'}
             onClick={() => enter(myId)}
             onMouseEnter={hoverCapable ? () => setHoveredId(myId) : undefined}
-            onMouseLeave={hoverCapable ? () => setHoveredId((h) => (h === myId ? null : h)) : undefined}
+            onMouseLeave={
+              hoverCapable ? () => setHoveredId((h) => (h === myId ? null : h)) : undefined
+            }
             disabled={entering !== null && entering !== myId}
             aria-label="Enter your Sinopia"
           >
