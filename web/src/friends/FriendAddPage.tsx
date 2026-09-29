@@ -36,7 +36,8 @@ function AddByCode({ myId, code }: { myId: string; code: string }) {
         if (cancelled) return
         if (data === null || data === undefined) setLookup({ status: 'not-found' })
         else if (data.id === myId) setLookup({ status: 'self' })
-        else setLookup({ status: 'found', id: data.id, name: data.display_name, avatar: data.avatar })
+        else
+          setLookup({ status: 'found', id: data.id, name: data.display_name, avatar: data.avatar })
       })
     return () => {
       cancelled = true
@@ -99,7 +100,9 @@ export function FriendAddPage() {
     <div className="scroll lined">
       <section className="page friend-add-page">
         <AuthGate message="Sign in to add a Sinopia Neighbor.">
-          {session !== null && code !== undefined && <AddByCode myId={session.user.id} code={code} />}
+          {session !== null && code !== undefined && (
+            <AddByCode myId={session.user.id} code={code} />
+          )}
         </AuthGate>
       </section>
     </div>

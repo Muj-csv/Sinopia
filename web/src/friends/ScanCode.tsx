@@ -71,8 +71,8 @@ export function ScanCode({ onClose }: { onClose: () => void }) {
         <p className="notice">
           <Icon name="info" />
           <span>
-            In-app scanning isn&apos;t available in this browser. Point your phone&apos;s own
-            camera app at the code instead -- it opens Sinopia straight to the add-neighbor screen.
+            In-app scanning isn&apos;t available in this browser. Point your phone&apos;s own camera
+            app at the code instead -- it opens Sinopia straight to the add-neighbor screen.
           </span>
         </p>
         <button type="button" className="btn-o" onClick={onClose}>
@@ -84,7 +84,13 @@ export function ScanCode({ onClose }: { onClose: () => void }) {
 
   return (
     <div className="scan-view">
-      <video ref={videoRef} className="scan-video" muted playsInline aria-label="Point the camera at a Sinopia code" />
+      <video
+        ref={videoRef}
+        className="scan-video"
+        muted
+        playsInline
+        aria-label="Point the camera at a Sinopia code"
+      />
       {error !== null && (
         <p className="notice danger" role="alert">
           <Icon name="warn" />
