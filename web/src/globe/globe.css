@@ -24,17 +24,58 @@
   width: min(360px, calc(100vw - var(--space-6)));
 }
 
-.place-search input {
-  width: 100%;
-  min-height: 48px;
-  padding: 10px var(--space-4);
-  font: var(--text-body) / var(--leading-body) var(--print);
-  color: var(--ink);
+/* The drawn box moved from the input to this wrapper so the magnifier and the clear button sit
+   inside the same box as the text, rather than floating beside it. */
+.place-search-field {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding-inline: var(--space-2);
   /* A drawn box with a hard offset, not a pill with a blurred shadow. */
   border: var(--edge);
   border-radius: var(--r-ctl);
   background: var(--paper);
   box-shadow: var(--offset);
+}
+/* Focus belongs to the whole box now: the input's own ring would draw inside the border. */
+.place-search-field:focus-within {
+  outline: 3px solid var(--color-focus-ring);
+  outline-offset: 2px;
+}
+.place-search-icon {
+  display: flex;
+  color: var(--ink-2);
+}
+.place-search input {
+  flex: 1;
+  min-width: 0;
+  min-height: 48px;
+  padding: 10px var(--space-1);
+  font: var(--text-body) / var(--leading-body) var(--print);
+  color: var(--ink);
+  border: 0;
+  background: none;
+}
+.place-search input:focus {
+  outline: none;
+}
+/* WebKit draws its own clear "x" inside type=search; ours is the one that matches the icon set. */
+.place-search input::-webkit-search-cancel-button {
+  appearance: none;
+}
+.place-search-clear {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  /* Smaller than the 44px rule because it sits inside a 48px target that is already comfortable,
+     and a full 44px button here would crowd the text on a phone. */
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--ink-2);
+  cursor: pointer;
 }
 .place-search input::placeholder {
   font-family: var(--pencil);
