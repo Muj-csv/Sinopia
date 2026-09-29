@@ -224,3 +224,46 @@
     max-width: 640px;
   }
 }
+
+/* ===== Fresco pins ===== */
+/* A fresco on the globe is its own drawing: a printed photo with an ink edge and a hard offset,
+ * not a stock teardrop. The offset is what makes it read as pressable. */
+.pin {
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  display: block;
+  background: var(--paper);
+  border: var(--edge);
+  border-radius: var(--radius-photo);
+  box-shadow: 0 3px 0 var(--ink);
+  cursor: pointer;
+  /* MapLibre centres a marker on its coordinate; nudging it up puts the fresco above the spot
+     rather than sitting on top of it. */
+  transform: translateY(-3px);
+}
+.pin img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  border-radius: 1px;
+}
+.pin:active {
+  transform: translateY(0);
+  box-shadow: 0 0 0 var(--ink);
+}
+/* Your own frescoes, so you can find them on a crowded map. */
+.pin-mine {
+  outline: 3px solid var(--yellow);
+  outline-offset: 1px;
+}
+.pin:focus-visible {
+  outline: 3px solid var(--color-focus-ring);
+  outline-offset: 3px;
+}
+
+/* Clusters sit above pins: at a glance the count matters more than any one thumbnail under it. */
+.maplibregl-marker {
+  z-index: 1;
+}

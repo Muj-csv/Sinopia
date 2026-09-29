@@ -129,10 +129,34 @@
 }
 
 .spot-map {
-  height: 160px;
+  /* 160px left barely any map once the credit line was on it. Tall enough now to show the streets
+     around the spot, and capped against the viewport so it never pushes the artwork off screen. */
+  height: min(52vh, 320px);
+  min-height: 220px;
   border: var(--edge);
   border-radius: var(--r-card);
   overflow: hidden;
+}
+
+/* The app's own pin, rather than MapLibre's default teardrop. */
+.spot-map-pin {
+  width: 18px;
+  height: 18px;
+  background: var(--yellow);
+  border: var(--edge);
+  border-radius: 50%;
+}
+
+/* The collapsed attribution button, drawn in the same ink as everything else. */
+.spot-map .maplibregl-ctrl-attrib.maplibregl-compact {
+  background: var(--paper);
+  border: var(--edge);
+  border-radius: var(--r-ctl);
+  margin: var(--space-2);
+  min-height: 24px;
+}
+.spot-map .maplibregl-ctrl-attrib-button {
+  border-radius: var(--r-ctl);
 }
 
 /* ===== Same Wall ===== */
@@ -200,6 +224,8 @@
   border-radius: var(--radius-photo);
   display: block;
 }
+/* Said in the same quiet voice as the credit: it qualifies the image, it is not a warning. */
+.street-level-distance,
 .street-level-credit {
   font: var(--text-caption) / var(--leading-caption) var(--print);
   color: var(--ink-2);
