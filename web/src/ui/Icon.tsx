@@ -9,6 +9,7 @@ export type IconName =
   | 'x'
   | 'back'
   | 'globe'
+  | 'person'
   | 'plus'
   | 'book'
   | 'search'

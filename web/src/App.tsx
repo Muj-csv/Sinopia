@@ -53,6 +53,12 @@ function AppNav() {
         <Icon name="book" />
         <span>Sketchbook</span>
       </NavLink>
+      {/* Four items is the ceiling for a thumb-reachable bar. Settings, About and Sign out live
+          inside Profile rather than lengthening this (Update 1.2 §3: "Do not overload the navbar"). */}
+      <NavLink to="/me" className={({ isActive }) => (isActive ? 'active' : undefined)}>
+        <Icon name="person" />
+        <span>Profile</span>
+      </NavLink>
     </nav>
   )
 }
