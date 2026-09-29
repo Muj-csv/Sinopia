@@ -20,6 +20,41 @@ export interface Sinopia {
   arrival: { lng: number; lat: number }
 }
 
+export interface ProfileRow {
+  id: string
+  display_name: string
+  avatar?: unknown
+}
+
+/**
+ * A world per **account**, not per artist who has published.
+ *
+ * Deriving the system from published frescoes was wrong: it meant an account that had not
+ * published yet had no globe at all, so a system with three accounts and one publisher showed a
+ * single world. A Sinopia is something you own from the moment you have an account; what you have
+ * drawn only decides what is on it.
+ *
+ * `parseAvatarFn` is passed in so this module stays free of anything that imports the database.
+ */
+export function buildSinopias(
+  profiles: readonly ProfileRow[],
+  points: readonly GlobePoint[],
+  parseAvatarFn: (raw: unknown) => AvatarConfig,
+): Sinopia[] {
+  const byOwner = groupByOwner(points)
+  return profiles.map((profile) => {
+    const own = byOwner.get(profile.id)
+    return {
+      ownerId: profile.id,
+      name: profile.display_name,
+      avatar: 'avatar' in profile ? parseAvatarFn(profile.avatar) : DEFAULT_AVATAR,
+      count: own?.count ?? 0,
+      // An empty world still needs somewhere to face when you arrive on it.
+      arrival: own?.arrival ?? { lng: 15, lat: 20 },
+    }
+  })
+}
+
 /**
  * Groups points by artist. globe_points returns published-descending, so the first point seen for
  * an artist is their most recent, and that becomes where you arrive in their world.
