@@ -11,8 +11,15 @@
  * The canvas only takes pointer events while drawing is armed. Otherwise every drag, pinch and
  * wheel belongs to the map, which is what stops a doodle happening when someone meant to spin the
  * world.
+ *
+ * Committed strokes live on an offscreen cache canvas, repainted only when the stroke list itself
+ * changes (finish a stroke, undo, clear -- all rare). The hand actually moving draws straight to
+ * the visible canvas via requestAnimationFrame, skipping React state entirely: the first version
+ * ran the *entire* repaint -- every past stroke, plus a canvas resize, which clears and
+ * reallocates the whole backing store -- on every single pointer-move event, so the page got
+ * slower to draw on the more you'd already drawn, and could lock the tab up on a longer stroke.
  */
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef } from 'react'
 import { BRUSHES, type BrushName } from '../draw/brushes'
 import { PALETTE } from '../draw/palette'
 import { outlinePoints, type Point } from '../draw/strokeHistory'
@@ -42,41 +49,107 @@ export function SpaceLayer() {
   const { strokes, armed, color, size, tool, setArmed, setColor, setSize, addStroke, undo, clear } =
     useSpaceDrawing()
   const canvasRef = useRef<HTMLCanvasElement>(null)
+  /** Committed strokes only. Redrawn far less often than the visible canvas repaints. */
+  const cacheRef = useRef<HTMLCanvasElement | null>(null)
+  const ratioRef = useRef(1)
+  const strokesRef = useRef<SpaceStroke[]>(strokes)
   const drawingRef = useRef<Point[] | null>(null)
-  // Kept in state as well as the ref so the in-progress stroke repaints as the hand moves.
-  const [live, setLive] = useState<Point[] | null>(null)
+  const rafRef = useRef<number | null>(null)
+  /** The live stroke's colour/size/tool, read by the rAF paint loop without waiting on React. */
+  const liveStyleRef = useRef({ color, size, tool })
 
-  // Repaint everything whenever the committed strokes, the live stroke, or the size changes.
+  useEffect(() => {
+    strokesRef.current = strokes
+    liveStyleRef.current = { color, size, tool }
+  }, [strokes, color, size, tool])
+
+  const repaintCache = () => {
+    const cache = cacheRef.current
+    if (cache === null) return
+    const ctx = cache.getContext('2d')
+    if (ctx === null) return
+    ctx.setTransform(ratioRef.current, 0, 0, ratioRef.current, 0, 0)
+    ctx.clearRect(0, 0, cache.width, cache.height)
+    for (const stroke of strokesRef.current) paintStroke(ctx, stroke)
+  }
+
+  /** Visible canvas = the committed cache, plus whatever's mid-stroke right now (if anything). */
+  const repaintVisible = (live: Point[] | null) => {
+    const canvas = canvasRef.current
+    const cache = cacheRef.current
+    if (canvas === null || cache === null) return
+    const ctx = canvas.getContext('2d')
+    if (ctx === null) return
+    ctx.setTransform(1, 0, 0, 1, 0, 0)
+    ctx.clearRect(0, 0, canvas.width, canvas.height)
+    ctx.drawImage(cache, 0, 0)
+    if (live !== null && live.length > 1) {
+      const { color: c, size: s, tool: t } = liveStyleRef.current
+      ctx.setTransform(ratioRef.current, 0, 0, ratioRef.current, 0, 0)
+      paintStroke(ctx, { id: 'live', points: live, color: c, size: s, tool: t })
+    }
+  }
+
+  // Sizes both canvases to the container. Only on mount and on resize -- never while drawing,
+  // since setting canvas.width/height clears and reallocates the whole backing store.
   useEffect(() => {
     const canvas = canvasRef.current
     if (canvas === null) return
-    const ctx = canvas.getContext('2d')
-    if (ctx === null) return
+    if (cacheRef.current === null) cacheRef.current = document.createElement('canvas')
+    const cache = cacheRef.current
 
-    const ratio = window.devicePixelRatio || 1
-    const { width, height } = canvas.getBoundingClientRect()
-    // Backing store in device pixels, drawing in CSS pixels: a stroke on a phone is otherwise
-    // drawn at a third of its width and looks blurred.
-    canvas.width = Math.round(width * ratio)
-    canvas.height = Math.round(height * ratio)
-    ctx.setTransform(ratio, 0, 0, ratio, 0, 0)
-    ctx.clearRect(0, 0, width, height)
-
-    for (const stroke of strokes) paintStroke(ctx, stroke)
-    if (live !== null && live.length > 1) {
-      paintStroke(ctx, { id: 'live', points: live, color, size, tool })
+    const resize = () => {
+      const ratio = window.devicePixelRatio || 1
+      const { width, height } = canvas.getBoundingClientRect()
+      ratioRef.current = ratio
+      canvas.width = Math.round(width * ratio)
+      canvas.height = Math.round(height * ratio)
+      cache.width = canvas.width
+      cache.height = canvas.height
+      repaintCache()
+      repaintVisible(drawingRef.current)
     }
-  }, [strokes, live, color, size, tool])
+    resize()
+    window.addEventListener('resize', resize)
+    return () => window.removeEventListener('resize', resize)
+    // Deliberately mount-only otherwise: repaintCache/repaintVisible read the current values via
+    // refs, so this doesn't need strokes/color/size/tool as dependencies.
+  }, [])
+
+  // Committed strokes changed (a stroke finished, undo, or clear) -- repaint the cache, and the
+  // visible canvas from it. Rare compared to a pointer moving, so redrawing everything is fine.
+  useEffect(() => {
+    repaintCache()
+    repaintVisible(drawingRef.current)
+  }, [strokes])
+
+  useEffect(() => {
+    return () => {
+      if (rafRef.current !== null) cancelAnimationFrame(rafRef.current)
+    }
+  }, [])
 
   const pointFrom = (e: React.PointerEvent<HTMLCanvasElement>): Point => {
     const rect = e.currentTarget.getBoundingClientRect()
     return { x: e.clientX - rect.left, y: e.clientY - rect.top }
   }
 
+  const scheduleRepaint = () => {
+    if (rafRef.current !== null) return
+    rafRef.current = requestAnimationFrame(() => {
+      rafRef.current = null
+      repaintVisible(drawingRef.current)
+    })
+  }
+
   const finish = () => {
     const points = drawingRef.current
     drawingRef.current = null
-    setLive(null)
+    if (rafRef.current !== null) {
+      cancelAnimationFrame(rafRef.current)
+      rafRef.current = null
+    }
+    repaintVisible(null)
     if (points === null || points.length < 2) return
     addStroke({ id: crypto.randomUUID(), points, color, size, tool })
   }
@@ -93,12 +166,12 @@ export function SpaceLayer() {
           e.currentTarget.setPointerCapture(e.pointerId)
           const point = pointFrom(e)
           drawingRef.current = [point]
-          setLive([point])
+          scheduleRepaint()
         }}
         onPointerMove={(e) => {
           if (!armed || drawingRef.current === null) return
-          drawingRef.current = [...drawingRef.current, pointFrom(e)]
-          setLive(drawingRef.current)
+          drawingRef.current.push(pointFrom(e))
+          scheduleRepaint()
         }}
         onPointerUp={finish}
         onPointerCancel={finish}

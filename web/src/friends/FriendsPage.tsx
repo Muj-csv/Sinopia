@@ -50,12 +50,17 @@ function NeighborsPage({ userId }: { userId: string }) {
   const addByCode = async () => {
     setSending(true)
     setMessage(null)
-    const result = await sendFriendRequestByCode(userId, code)
-    setSending(false)
-    setMessage(result.ok ? 'Request sent.' : result.message)
-    if (result.ok) {
-      setCode('')
-      void load()
+    try {
+      const result = await sendFriendRequestByCode(userId, code)
+      setMessage(result.ok ? 'Request sent.' : result.message)
+      if (result.ok) {
+        setCode('')
+        void load()
+      }
+    } finally {
+      // Always, even if something above threw: this used to be able to leave the button reading
+      // "Sending…" forever with no explanation.
+      setSending(false)
     }
   }
 
