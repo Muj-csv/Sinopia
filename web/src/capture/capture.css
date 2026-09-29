@@ -60,7 +60,10 @@
   flex: 1;
   min-height: 0;
 }
-.pin-picker-map {
+/* Scoped through the parent: see the matching note in globe.css. MapLibre's own `.maplibregl-map`
+ * rule (`position: relative`) ties with a bare `.pin-picker-map` on specificity, and losing that
+ * tie collapses the map to 0 height depending on stylesheet load order. */
+.pin-picker .pin-picker-map {
   position: absolute;
   inset: 0;
 }
@@ -98,6 +101,15 @@
   box-shadow: var(--offset);
   width: max-content;
   max-width: calc(100% - var(--space-6));
+}
+/* The source line is the one part of this card with no fixed length ("From your photo's
+   location" vs. "Placed by you"), so on a narrow phone it's what has to give: ellipsis rather
+   than pushing the card past its own max-width. */
+.pin-check-origin .t-label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .pin-check-thumb {
   width: 40px;

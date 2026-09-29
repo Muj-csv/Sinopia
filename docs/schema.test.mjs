@@ -34,8 +34,11 @@ await pg.exec(`grant usage on schema extensions to anon, authenticated;`)
 console.log('schema applied')
 
 const A = '11111111-1111-1111-1111-111111111111', B = '22222222-2222-2222-2222-222222222222'
-await pg.exec(`insert into auth.users (id, raw_user_meta_data) values ('${A}', '{"name":"Ian"}'), ('${B}', '{}');`)
-ok((await q(`select count(*)::int n from public.profiles`)).rows[0].n === 2, 'profiles auto-created')
+const C = '55555555-5555-5555-5555-555555555555'
+await pg.exec(
+  `insert into auth.users (id, raw_user_meta_data) values ('${A}', '{"name":"Ian"}'), ('${B}', '{}'), ('${C}', '{}');`,
+)
+ok((await q(`select count(*)::int n from public.profiles`)).rows[0].n === 3, 'profiles auto-created')
 
 async function as(uid, fn) {
   await pg.exec(`set role authenticated; select set_config('request.jwt.claim.sub', '${uid}', false);`)
@@ -133,3 +136,103 @@ await as(B, async () => {
 })
 ok((await q(`select avatar is null as n from public.profiles where id=$1`, [B])).rows[0].n,
    'a profile with no avatar chosen stays null')
+
+// ===== Update: Sinopia Neighbors (0004_friends.sql) =====
+{
+  const codes = (await q(`select id, friend_code from public.profiles where id in ($1,$2,$3)`, [A, B, C])).rows
+  ok(codes.every((r) => /^[0-9A-F]{8}$/.test(r.friend_code)), 'every profile got an 8-char friend_code')
+  ok(new Set(codes.map((r) => r.friend_code)).size === 3, 'friend_codes are unique')
+
+  // A sends B a request (the client looks B up by code first; simulated here with the id it finds).
+  let req
+  await as(A, async () => {
+    req = (await q(
+      `insert into public.friend_requests (requester_id, addressee_id) values ($1,$2) returning id`,
+      [A, B],
+    )).rows[0]
+  })
+  await as(B, async () => {
+    ok((await q(`select status from public.friend_requests where id=$1`, [req.id])).rows[0].status === 'pending',
+       'B sees the pending request A sent')
+  })
+  await as(C, async () => {
+    ok((await q(`select count(*)::int n from public.friend_requests`)).rows[0].n === 0,
+       'a stranger sees no one else’s friend requests')
+  })
+
+  // B trying to friend-request themselves, or request A a second time, both fail.
+  await as(B, async () => {
+    let e = null
+    try { await q(`insert into public.friend_requests (requester_id, addressee_id) values ($1,$1)`, [B]) }
+    catch (x) { e = x }
+    ok(!!e, 'cannot send a friend request to yourself')
+
+    e = null
+    try { await q(`insert into public.friend_requests (requester_id, addressee_id) values ($1,$2)`, [B, A]) }
+    catch (x) { e = x }
+    ok(!!e, 'B requesting A while A’s request to B is still pending collides on the same pair')
+  })
+
+  // The requester cannot accept their own request -- only the addressee can.
+  await as(A, async () => {
+    const u = await q(`update public.friend_requests set status='accepted' where id=$1 returning id`, [req.id])
+    ok(u.rows.length === 0, 'the requester cannot accept their own request')
+  })
+  await as(B, async () => {
+    const u = await q(`update public.friend_requests set status='accepted' where id=$1 returning id`, [req.id])
+    ok(u.rows.length === 1, 'the addressee accepts the request')
+  })
+  await as(A, async () => {
+    ok((await q(`select status from public.friend_requests where id=$1`, [req.id])).rows[0].status === 'accepted',
+       'A sees the request as accepted too')
+  })
+
+  // Either side can end an accepted friendship.
+  await as(A, async () => {
+    const d = await q(`delete from public.friend_requests where id=$1 returning id`, [req.id])
+    ok(d.rows.length === 1, 'either side can remove an accepted friendship (unfriend)')
+  })
+
+  // A fresh pending request: the addressee can decline (delete) it, and a third party cannot.
+  let req2
+  await as(A, async () => {
+    req2 = (await q(
+      `insert into public.friend_requests (requester_id, addressee_id) values ($1,$2) returning id`,
+      [A, B],
+    )).rows[0]
+  })
+  await as(C, async () => {
+    const d = await q(`delete from public.friend_requests where id=$1 returning id`, [req2.id])
+    ok(d.rows.length === 0, 'a stranger cannot delete someone else’s pending request')
+  })
+  await as(B, async () => {
+    const d = await q(`delete from public.friend_requests where id=$1 returning id`, [req2.id])
+    ok(d.rows.length === 1, 'the addressee can decline a pending request')
+  })
+
+  // Favorite fresco: must be your own, published, unflagged work. F (above) has since been
+  // reported and unpublished, so this uses a fresh, clean fresco of A's own rather than reusing it.
+  const H = '66666666-6666-6666-6666-666666666666'
+  await as(A, () =>
+    q(
+      `insert into public.frescoes (id, owner_id, title, visibility, pin_precision, photo_path, drawing_path, composite_path, thumb_path)
+       values ($1, $2, 'A clean corner', 'public', 'neighborhood', 'a/p2','a/d2','a/c2','a/t2')`,
+      [H, A],
+    ),
+  )
+  await as(A, async () => {
+    let e = null
+    try { await q(`update public.profiles set favorite_fresco_id=$1 where id=$2`, [G, A]) } catch (x) { e = x }
+    ok(!!e, 'cannot favorite someone else’s fresco')
+
+    e = null
+    try { await q(`update public.profiles set favorite_fresco_id=$1 where id=$2`, [H, A]) } catch (x) { e = x }
+    ok(!e, 'can favorite your own published fresco' + (e ? ': ' + e.message : ''))
+  })
+  ok((await q(`select favorite_fresco_id from public.profiles where id=$1`, [A])).rows[0].favorite_fresco_id === H,
+     'favorite is set')
+
+  await as(A, () => q(`update public.frescoes set visibility='private' where id=$1`, [H]))
+  ok((await q(`select favorite_fresco_id is null as n from public.profiles where id=$1`, [A])).rows[0].n,
+     'unpublishing the favorited fresco clears the favorite')
+}

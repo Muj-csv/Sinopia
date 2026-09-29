@@ -37,6 +37,9 @@ export type IconName =
   | 'zoomin'
   | 'zoomout'
   | 'bigpin'
+  | 'friends'
+  | 'qr'
+  | 'star'
 
 /**
  * Inlined once at the app root so `<use href="#i-name">` resolves without a network round trip and

@@ -14,6 +14,13 @@ body,
   height: 100%;
 }
 
+html {
+  /* A belt-and-braces guard: every screen already fits its own width, but this is what stops a
+     one-off overflow (a long unbroken string, a control pinned past the edge) from turning into a
+     sideways-scrolling page on a phone. */
+  overflow-x: hidden;
+}
+
 body {
   margin: 0;
   background: var(--desk);
