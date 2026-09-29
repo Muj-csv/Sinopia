@@ -473,3 +473,169 @@
     display: none;
   }
 }
+
+/* ===== The system: many globes, one per account (Update 1.2) ===== */
+.sinopia-system {
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+}
+.system-field {
+  position: relative;
+  width: min(92vw, 92vh);
+  aspect-ratio: 1;
+  display: grid;
+  place-items: center;
+}
+
+/* Your own world, at the middle of your system. */
+.system-centre {
+  position: relative;
+  display: grid;
+  justify-items: center;
+  gap: var(--space-2);
+  padding: 0;
+  background: none;
+  border: 0;
+  cursor: pointer;
+  z-index: 2;
+}
+.system-centre-empty {
+  max-width: 260px;
+  padding: var(--space-4);
+  text-align: center;
+  background: var(--paper);
+  border: var(--edge);
+  border-radius: var(--r-card);
+  box-shadow: var(--offset);
+  cursor: default;
+}
+.system-centre-empty p {
+  margin: 0;
+}
+
+/* A globe is a real map, so it gets the ink edge every photographic thing here gets -- and no
+   glow or atmosphere halo, which DESIGN_BRIEF forbids. */
+.globe-sphere {
+  border-radius: 50%;
+  overflow: hidden;
+  background: var(--paper);
+  border: var(--edge);
+}
+.globe-sphere.failed {
+  /* A world whose tiles never arrived is still a world; it just has nothing drawn on it. */
+  background: var(--sea);
+}
+
+.system-label {
+  font: 700 15px/18px var(--pencil);
+  color: var(--ink);
+  background: var(--paper);
+  border: 2px solid var(--ink);
+  border-radius: var(--r-ctl);
+  padding: 0 8px;
+  max-width: 140px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.system-label-mine {
+  background: var(--yellow);
+}
+
+/* Each orbit is a full-size box pinned to the centre; the keyframes swing its child around the
+   rim. Animating a transform on this wrapper never touches the MapLibre canvas inside, so the
+   worlds move without a single map re-render. */
+.system-orbit {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  pointer-events: none;
+  animation: sinopia-orbit var(--orbit-duration, 120s) linear infinite;
+  animation-delay: var(--orbit-delay, 0s);
+}
+.system-orbit-body {
+  transform: translateX(var(--orbit-radius, 38%));
+  display: grid;
+  place-items: center;
+  /* Cancels the parent's turn so the planet stays upright as it travels. */
+  animation: sinopia-orbit-upright var(--orbit-duration, 120s) linear infinite;
+  animation-delay: var(--orbit-delay, 0s);
+}
+.system-planet {
+  display: grid;
+  justify-items: center;
+  gap: 4px;
+  padding: 0;
+  background: none;
+  border: 0;
+  cursor: pointer;
+  pointer-events: auto;
+}
+.system-planet:active .globe-sphere {
+  transform: translateY(3px);
+}
+.system-planet:focus-visible {
+  outline: 3px solid var(--color-focus-ring);
+  outline-offset: 4px;
+  border-radius: var(--r-ctl);
+}
+
+@keyframes sinopia-orbit {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+@keyframes sinopia-orbit-upright {
+  from {
+    transform: translateX(var(--orbit-radius, 38%)) rotate(0deg);
+  }
+  to {
+    transform: translateX(var(--orbit-radius, 38%)) rotate(-360deg);
+  }
+}
+
+/* Motion is the whole point of a system, but it is never the price of using one. */
+@media (prefers-reduced-motion: reduce) {
+  .system-orbit,
+  .system-orbit-body {
+    animation: none;
+  }
+  .system-orbit-body {
+    transform: translateX(var(--orbit-radius, 38%));
+  }
+}
+
+.system-attribution {
+  position: absolute;
+  right: var(--space-3);
+  bottom: calc(var(--space-2) + env(safe-area-inset-bottom, 0px));
+  z-index: 14;
+  margin: 0;
+  font: var(--text-caption) / var(--leading-caption) var(--print);
+  color: var(--ink-2);
+  background: var(--paper);
+  border: 2px solid var(--rule);
+  border-radius: var(--r-ctl);
+  padding: 0 6px;
+}
+.system-more {
+  position: absolute;
+  left: var(--space-3);
+  bottom: calc(var(--space-2) + env(safe-area-inset-bottom, 0px));
+  z-index: 14;
+  margin: 0;
+  font: var(--text-caption) / var(--leading-caption) var(--print);
+  color: var(--ink-2);
+}
+
+@media (max-width: 640px) {
+  /* Labels crowd the worlds at this size; the name is still on the button for a screen reader. */
+  .system-orbit .system-label {
+    display: none;
+  }
+}

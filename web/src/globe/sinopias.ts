@@ -45,3 +45,22 @@ export function groupByOwner(points: readonly GlobePoint[]): Map<string, Sinopia
   }
   return worlds
 }
+
+/**
+ * Where to point a world's camera: the mean of everything on it, so an artist's frescoes are the
+ * part of the Earth facing you rather than whatever happens to sit at 0,0.
+ *
+ * A mean, not a bounding-box centre: one fresco on the far side of the world should pull the view
+ * a little, not drag it into the ocean halfway between two continents.
+ */
+export function centreOf(points: readonly GlobePoint[]): [number, number] {
+  // An empty world still has to face somewhere; this is land rather than open sea.
+  if (points.length === 0) return [15, 20]
+  let lng = 0
+  let lat = 0
+  for (const point of points) {
+    lng += point.lng
+    lat += point.lat
+  }
+  return [lng / points.length, lat / points.length]
+}
