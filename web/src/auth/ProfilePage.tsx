@@ -13,25 +13,62 @@ import { SignInPrompt } from './SignInPrompt'
 
 const MAX_NAME_LENGTH = 40
 
+/**
+ * True when Postgres is telling us `profiles.avatar` does not exist, which means
+ * 0003_profile_avatar.sql has not been applied to this project yet. Merging a migration does not
+ * run it (CLAUDE.md), so a deploy can easily be ahead of its database, and when that happens the
+ * name must still be savable.
+ */
+function isMissingAvatarColumn(error: { code?: string; message?: string } | null): boolean {
+  if (error === null) return false
+  // 42703 is Postgres "undefined column"; PGRST204 is PostgREST's schema-cache equivalent.
+  return (
+    error.code === '42703' ||
+    error.code === 'PGRST204' ||
+    (error.message?.includes('avatar') === true && error.message.includes('column'))
+  )
+}
+
 function ProfileEditor({ userId }: { userId: string }) {
   const [name, setName] = useState('')
   const [avatar, setAvatar] = useState<AvatarConfig>(DEFAULT_AVATAR)
+  const [avatarStored, setAvatarStored] = useState(true)
   const [editingAvatar, setEditingAvatar] = useState(false)
   const [frescoCount, setFrescoCount] = useState<number | null>(null)
   const [saved, setSaved] = useState(true)
   const [status, setStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle')
+  const [problem, setProblem] = useState<string | null>(null)
 
   useEffect(() => {
-    supabase
-      .from('profiles')
-      .select('display_name, avatar')
-      .eq('id', userId)
-      .single()
-      .then(({ data }) => {
-        if (data === null) return
-        setName(data.display_name)
-        setAvatar(parseAvatar(data.avatar))
-      })
+    let cancelled = false
+    const load = async () => {
+      const withAvatar = await supabase
+        .from('profiles')
+        .select('display_name, avatar')
+        .eq('id', userId)
+        .maybeSingle()
+
+      if (!isMissingAvatarColumn(withAvatar.error)) {
+        if (cancelled || withAvatar.data === null) return
+        setName(withAvatar.data.display_name)
+        setAvatar(parseAvatar(withAvatar.data.avatar))
+        return
+      }
+
+      // Without the column there is still a name to edit, so the page keeps working.
+      const nameOnly = await supabase
+        .from('profiles')
+        .select('display_name')
+        .eq('id', userId)
+        .maybeSingle()
+      if (cancelled || nameOnly.data === null) return
+      setAvatarStored(false)
+      setName(nameOnly.data.display_name)
+    }
+    load()
+    return () => {
+      cancelled = true
+    }
   }, [userId])
 
   // How much you have made, which is the only number on this page. Not a score, and nobody
@@ -46,12 +83,46 @@ function ProfileEditor({ userId }: { userId: string }) {
 
   const save = async () => {
     setStatus('saving')
-    const { error } = await supabase
-      .from('profiles')
-      .update({ display_name: name, avatar })
-      .eq('id', userId)
-    setStatus(error ? 'error' : 'saved')
-    setSaved(!error)
+    setProblem(null)
+
+    /**
+     * Asks for the changed row back. An `update` that matches nothing is not an error in
+     * PostgREST -- it reports success having written precisely nothing -- so without `select()`
+     * a save that silently hit no row is indistinguishable from one that worked. That is the
+     * difference between "Saved" and actually saved.
+     */
+    const write = (payload: Record<string, unknown>) =>
+      supabase.from('profiles').update(payload).eq('id', userId).select('id')
+
+    let { data, error } = await write(
+      avatarStored ? { display_name: name, avatar } : { display_name: name },
+    )
+
+    // The database is behind the app: keep the name, and say what is missing rather than failing
+    // the whole save because of the avatar.
+    if (isMissingAvatarColumn(error)) {
+      setAvatarStored(false)
+      ;({ data, error } = await write({ display_name: name }))
+      if (error === null && data !== null && data.length > 0) {
+        setStatus('saved')
+        setSaved(true)
+        setProblem('Your name is saved. The avatar needs migration 0003 applying first.')
+        return
+      }
+    }
+
+    if (error !== null) {
+      setStatus('error')
+      setProblem(error.message)
+      return
+    }
+    if (data === null || data.length === 0) {
+      setStatus('error')
+      setProblem('That profile could not be found, so nothing was saved. Try signing in again.')
+      return
+    }
+    setStatus('saved')
+    setSaved(true)
   }
 
   return (
@@ -105,10 +176,24 @@ function ProfileEditor({ userId }: { userId: string }) {
         {status === 'saving' ? 'Saving…' : 'Save'}
       </button>
 
+      {/* The reason is shown, not just "try again": the two ways this actually fails -- an
+          unapplied migration and a missing profile row -- are both fixable, and neither is fixed
+          by pressing the button a second time. */}
       {status === 'error' && (
         <p className="notice danger" role="alert">
           <Icon name="warn" />
-          <span>Couldn&apos;t save. Try again.</span>
+          <span>{problem ?? "Couldn't save. Try again."}</span>
+        </p>
+      )}
+      {status === 'saved' && problem !== null && (
+        <p className="notice" role="status">
+          <Icon name="info" />
+          <span>{problem}</span>
+        </p>
+      )}
+      {status === 'saved' && problem === null && (
+        <p className="t-small" role="status">
+          Saved.
         </p>
       )}
 
