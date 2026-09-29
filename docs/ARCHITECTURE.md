@@ -84,7 +84,7 @@ Unpublish reverses it: `update visibility='private'` (trigger clears the public 
 2. Tap pin → preview card with thumbnail from `globe` bucket public URL.
 3. Open → `frescoes` row (RLS returns only public or own) → composite + photo URLs → slider.
 4. `rpc('same_wall', {p_fresco, p_radius_m: 50})` → strip.
-5. *(if time)* Mapillary search: `GET https://graph.mapillary.com/images?fields=id,computed_geometry&bbox=<±0.0006°>&limit=5` with the client token → nearest image within 60 m → MapillaryJS viewer; else Panoramax STAC search (`https://api.panoramax.xyz/api/search?bbox=…&limit=5`) → its viewer; else map only.
+5. Mapillary search: `GET https://graph.mapillary.com/images?fields=id,computed_geometry,geometry&bbox=<150 m>&limit=50` with the client token → MapillaryJS viewer; else Panoramax STAC search (`/api/search?bbox=…&limit=50`) → static image + link; else map only. Both APIs return bbox matches **unordered**, so `streetLevel.ts` ranks the candidates by real distance and takes the nearest; a match beyond 150 m is discarded as no coverage, and one beyond 60 m is labelled with its distance rather than presented as the spot itself. Panoramax is federated and `api.panoramax.xyz` is not reachable from every network, so the instances in `PANORAMAX_INSTANCES` are queried in parallel (6 s timeout each) and the nearest result across them wins. "Could not ask" and "nothing here" are returned as distinct outcomes so the panel can show `UX_MAP.md`'s error copy instead of the empty copy.
 
 ## 4. Data model
 

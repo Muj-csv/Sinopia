@@ -224,6 +224,8 @@
   border-radius: var(--radius-photo);
   display: block;
 }
+/* Said in the same quiet voice as the credit: it qualifies the image, it is not a warning. */
+.street-level-distance,
 .street-level-credit {
   font: var(--text-caption) / var(--leading-caption) var(--print);
   color: var(--ink-2);

@@ -9,11 +9,11 @@
  */
 import { useEffect, useRef, useState } from 'react'
 import 'mapillary-js/dist/mapillary.css'
-import { findStreetLevelImage, type StreetLevelImage } from './streetLevel'
+import { findStreetLevelImage, NEAR_RADIUS_M, type StreetLevelImage } from './streetLevel'
 
 const MAPILLARY_TOKEN = import.meta.env.VITE_MAPILLARY_TOKEN ?? ''
 
-type Status = 'loading' | 'found' | 'none'
+type Status = 'loading' | 'found' | 'none' | 'error'
 
 export function StreetLevelPanel({ lat, lng }: { lat: number; lng: number }) {
   const [status, setStatus] = useState<Status>('loading')
@@ -22,10 +22,10 @@ export function StreetLevelPanel({ lat, lng }: { lat: number; lng: number }) {
 
   useEffect(() => {
     let cancelled = false
-    findStreetLevelImage(lat, lng, MAPILLARY_TOKEN).then((found) => {
+    findStreetLevelImage(lat, lng, MAPILLARY_TOKEN).then((outcome) => {
       if (cancelled) return
-      setImage(found)
-      setStatus(found === null ? 'none' : 'found')
+      setImage(outcome.status === 'found' ? outcome.image : null)
+      setStatus(outcome.status)
     })
     return () => {
       cancelled = true
@@ -54,6 +54,12 @@ export function StreetLevelPanel({ lat, lng }: { lat: number; lng: number }) {
     return <div className="street-level-panel street-level-loading">Loading street view...</div>
   }
 
+  // UX_MAP.md: the error row is "Street-level view unavailable". Kept separate from the empty
+  // copy below so a missing token or an unreachable provider never reads as an empty street.
+  if (status === 'error') {
+    return <p className="street-level-empty">Street-level view unavailable</p>
+  }
+
   if (status === 'none' || image === null) {
     return <p className="street-level-empty">No street-level imagery here yet.</p>
   }
@@ -70,6 +76,13 @@ export function StreetLevelPanel({ lat, lng }: { lat: number; lng: number }) {
             className="street-level-image"
           />
         </a>
+      )}
+      {/* Close enough and it is simply the spot; further out, say so rather than imply the
+          camera stood where the artist did. */}
+      {image.distanceM > NEAR_RADIUS_M && (
+        <p className="street-level-distance">
+          Nearest street view, about {Math.round(image.distanceM / 10) * 10} m away.
+        </p>
       )}
       <p className="street-level-credit">
         Street-level imagery © {image.provider === 'mapillary' ? 'Mapillary' : 'Panoramax'}{' '}
