@@ -347,6 +347,13 @@
 .space-layer {
   position: absolute;
   inset: 0;
+  /* A <canvas> is a replaced element (like <img>), not a plain box: "inset: 0" alone positions it
+   * at the top-left corner but does NOT stretch it, because its auto width/height fall back to its
+   * intrinsic HTML size (300x150) instead of filling the containing block the way a <div> would.
+   * That silently capped the whole drawable area to a 300x150 box in the corner of the screen from
+   * the start -- explicit 100%/100% is what actually makes it fill .globe-container. */
+  width: 100%;
+  height: 100%;
   z-index: 11;
   pointer-events: none;
 }
@@ -410,7 +417,11 @@
     left: var(--space-4);
     bottom: calc(var(--space-4) + env(safe-area-inset-bottom, 0px));
     transform: none;
-    grid-auto-flow: column;
+    /* Wrap rather than the single row grid-auto-flow gave it: the eraser toggle added a group
+     * that, on a narrow phone, no longer fits the row alongside colours, size, undo and clear --
+     * it was clipping the last icon off the edge of the screen instead of ever showing it. */
+    display: flex;
+    flex-wrap: wrap;
     align-items: center;
     justify-content: center;
   }
@@ -424,6 +435,28 @@
   display: grid;
   place-items: center;
   overflow: hidden;
+}
+
+/* Drawing mode (Update 1.2 floating marks): wraps everything except the marks and the canvas
+ * itself. Mirrors the parent's own inset/grid/centring exactly, so wrapping this around the
+ * existing content changes nothing about where anything sits -- only whether it's visible and
+ * clickable. Dimmed rather than removed: the worlds stay visible as context for what you're
+ * drawing around, they just stop being a second, confusing place taps could land. */
+.system-chrome {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  transition: opacity 250ms ease;
+}
+.system-chrome.dimmed {
+  opacity: 0.16;
+  pointer-events: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .system-chrome {
+    transition: none;
+  }
 }
 .system-field {
   position: relative;
