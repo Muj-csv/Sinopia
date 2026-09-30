@@ -19,6 +19,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Avatar } from '../auth/Avatar'
 import { loadFavorites, loadFriendIds, type FavoriteInfo } from '../friends/friends'
+import { useSpaceDrawing } from './spaceDrawingContext'
 import { useSession } from '../lib/useSession'
 import { Icon } from '../ui/Icon'
 import './globe.css'
@@ -56,6 +57,8 @@ export function SinopiaSystem() {
   const navigate = useNavigate()
   const { session } = useSession()
   const myId = session?.user.id ?? null
+  /** Drawing mode: the canvas takes the whole screen, and everything else recedes out of the way. */
+  const { armed } = useSpaceDrawing()
 
   const [points, setPoints] = useState<GlobePoint[]>([])
   const [sinopias, setSinopias] = useState<Sinopia[]>([])
@@ -214,117 +217,122 @@ export function SinopiaSystem() {
           never sit between a tap and the world it was meant for. */}
       <FloatingMarks />
 
-      {/* One credit for every globe in the system, rather than a control on each sphere. */}
-      <p className="system-attribution">© OpenStreetMap contributors · tiles by OpenFreeMap</p>
+      {/* Drawing mode is meant to feel like the canvas *is* the screen: everything below fades
+          back and stops taking pointer input (the armed canvas is already capturing all of it,
+          see SpaceLayer), rather than sitting there at full strength, tappable but inert. */}
+      <div className={armed ? 'system-chrome dimmed' : 'system-chrome'}>
+        {/* One credit for every globe in the system, rather than a control on each sphere. */}
+        <p className="system-attribution">© OpenStreetMap contributors · tiles by OpenFreeMap</p>
 
-      <div className={entering !== null ? 'system-field has-entering' : 'system-field'}>
-        {myId !== null ? (
-          <button
-            type="button"
-            className={entering === myId ? 'system-centre entering' : 'system-centre'}
-            onClick={() => enter(myId)}
-            onMouseEnter={hoverCapable ? () => setHoveredId(myId) : undefined}
-            onMouseLeave={
-              hoverCapable ? () => setHoveredId((h) => (h === myId ? null : h)) : undefined
-            }
-            disabled={entering !== null && entering !== myId}
-            aria-label="Enter your Sinopia"
+        <div className={entering !== null ? 'system-field has-entering' : 'system-field'}>
+          {myId !== null ? (
+            <button
+              type="button"
+              className={entering === myId ? 'system-centre entering' : 'system-centre'}
+              onClick={() => enter(myId)}
+              onMouseEnter={hoverCapable ? () => setHoveredId(myId) : undefined}
+              onMouseLeave={
+                hoverCapable ? () => setHoveredId((h) => (h === myId ? null : h)) : undefined
+              }
+              disabled={entering !== null && entering !== myId}
+              aria-label="Enter your Sinopia"
+            >
+              {favorites.has(myId) && (
+                <span className="globe-bubble" aria-hidden="true">
+                  <img src={favorites.get(myId)!.thumbUrl} alt="" />
+                </span>
+              )}
+              <GlobeSphere points={myPoints} size={sizes.centre} spin={entering !== myId} />
+              <span className="system-label system-label-mine">Your Sinopia</span>
+            </button>
+          ) : (
+            <div className="system-centre system-centre-empty">
+              <p>
+                Sign in to start a Sinopia of your own.
+                {others.length > 0 && ' Until then, visit someone else’s.'}
+              </p>
+            </div>
+          )}
+
+          {orbiting.map((sinopia, i) => {
+            // Spot, size and spin all come from the account's id, so this world is always here.
+            const place = placeWorld(sinopia.ownerId, i, orbiting.length, sizes.orbiting)
+            const isEntering = entering === sinopia.ownerId
+            const favorite = favorites.get(sinopia.ownerId)
+            return (
+              <button
+                key={sinopia.ownerId}
+                type="button"
+                className={isEntering ? 'system-planet entering' : 'system-planet'}
+                style={{ left: `${place.x}%`, top: `${place.y}%` }}
+                onClick={() => enter(sinopia.ownerId)}
+                onMouseEnter={hoverCapable ? () => setHoveredId(sinopia.ownerId) : undefined}
+                onMouseLeave={
+                  hoverCapable
+                    ? () => setHoveredId((h) => (h === sinopia.ownerId ? null : h))
+                    : undefined
+                }
+                disabled={entering !== null && !isEntering}
+                aria-label={`Enter ${sinopia.name}'s Sinopia, ${sinopia.count} ${
+                  sinopia.count === 1 ? 'fresco' : 'frescoes'
+                }`}
+              >
+                {favorite !== undefined && (
+                  <span className="globe-bubble" aria-hidden="true">
+                    <img src={favorite.thumbUrl} alt="" />
+                  </span>
+                )}
+                <GlobeSphere
+                  points={pointsFor.get(sinopia.ownerId) ?? []}
+                  size={place.size}
+                  spin={!isEntering}
+                  spinSpeed={place.spin}
+                />
+                <span className="system-label">{sinopia.name}</span>
+              </button>
+            )
+          })}
+        </div>
+
+        {/* One line at a time. These all dock to the same spot, so rendering two at once stacked
+          them on top of each other and neither could be read. */}
+        {note !== null && (
+          <p
+            className={note.tone === 'warn' ? 'globe-status notice' : 'globe-status'}
+            role={note.tone === 'warn' ? 'alert' : 'status'}
           >
-            {favorites.has(myId) && (
-              <span className="globe-bubble" aria-hidden="true">
-                <img src={favorites.get(myId)!.thumbUrl} alt="" />
-              </span>
-            )}
-            <GlobeSphere points={myPoints} size={sizes.centre} spin={entering !== myId} />
-            <span className="system-label system-label-mine">Your Sinopia</span>
-          </button>
-        ) : (
-          <div className="system-centre system-centre-empty">
-            <p>
-              Sign in to start a Sinopia of your own.
-              {others.length > 0 && ' Until then, visit someone else’s.'}
-            </p>
-          </div>
+            {note.tone !== 'plain' && <Icon name={note.tone === 'warn' ? 'warn' : 'info'} />}
+            {note.text}
+          </p>
+        )}
+        {others.length > orbiting.length && (
+          <p className="system-more">{others.length - orbiting.length} more worlds further out</p>
         )}
 
-        {orbiting.map((sinopia, i) => {
-          // Spot, size and spin all come from the account's id, so this world is always here.
-          const place = placeWorld(sinopia.ownerId, i, orbiting.length, sizes.orbiting)
-          const isEntering = entering === sinopia.ownerId
-          const favorite = favorites.get(sinopia.ownerId)
-          return (
-            <button
-              key={sinopia.ownerId}
-              type="button"
-              className={isEntering ? 'system-planet entering' : 'system-planet'}
-              style={{ left: `${place.x}%`, top: `${place.y}%` }}
-              onClick={() => enter(sinopia.ownerId)}
-              onMouseEnter={hoverCapable ? () => setHoveredId(sinopia.ownerId) : undefined}
-              onMouseLeave={
-                hoverCapable
-                  ? () => setHoveredId((h) => (h === sinopia.ownerId ? null : h))
-                  : undefined
-              }
-              disabled={entering !== null && !isEntering}
-              aria-label={`Enter ${sinopia.name}'s Sinopia, ${sinopia.count} ${
-                sinopia.count === 1 ? 'fresco' : 'frescoes'
-              }`}
-            >
-              {favorite !== undefined && (
-                <span className="globe-bubble" aria-hidden="true">
-                  <img src={favorite.thumbUrl} alt="" />
-                </span>
-              )}
-              <GlobeSphere
-                points={pointsFor.get(sinopia.ownerId) ?? []}
-                size={place.size}
-                spin={!isEntering}
-                spinSpeed={place.spin}
-              />
-              <span className="system-label">{sinopia.name}</span>
-            </button>
-          )
-        })}
-      </div>
-
-      {/* One line at a time. These all dock to the same spot, so rendering two at once stacked
-          them on top of each other and neither could be read. */}
-      {note !== null && (
-        <p
-          className={note.tone === 'warn' ? 'globe-status notice' : 'globe-status'}
-          role={note.tone === 'warn' ? 'alert' : 'status'}
-        >
-          {note.tone !== 'plain' && <Icon name={note.tone === 'warn' ? 'warn' : 'info'} />}
-          {note.text}
-        </p>
-      )}
-      {others.length > orbiting.length && (
-        <p className="system-more">{others.length - orbiting.length} more worlds further out</p>
-      )}
-
-      {/* Hover preview (desktop only -- see hoverCapable): who a globe belongs to and, if they've
+        {/* Hover preview (desktop only -- see hoverCapable): who a globe belongs to and, if they've
           chosen one, the fresco they're proudest of. sinopias holds an entry for every account
           rendered here, yours included, so one lookup covers the centre and the orbit alike. */}
-      {hoveredId !== null &&
-        (() => {
-          const preview = sinopias.find((s) => s.ownerId === hoveredId)
-          if (preview === undefined) return null
-          const favorite = favorites.get(hoveredId)
-          return (
-            <div className="system-preview">
-              <Avatar config={preview.avatar} size={56} />
-              <div className="system-preview-body">
-                <strong>{hoveredId === myId ? 'You' : preview.name}</strong>
-                <span className="t-small">
-                  {preview.count} {preview.count === 1 ? 'fresco' : 'frescoes'}
-                </span>
+        {hoveredId !== null &&
+          (() => {
+            const preview = sinopias.find((s) => s.ownerId === hoveredId)
+            if (preview === undefined) return null
+            const favorite = favorites.get(hoveredId)
+            return (
+              <div className="system-preview">
+                <Avatar config={preview.avatar} size={56} />
+                <div className="system-preview-body">
+                  <strong>{hoveredId === myId ? 'You' : preview.name}</strong>
+                  <span className="t-small">
+                    {preview.count} {preview.count === 1 ? 'fresco' : 'frescoes'}
+                  </span>
+                </div>
+                {favorite !== undefined && (
+                  <img src={favorite.thumbUrl} alt="" className="system-preview-favorite" />
+                )}
               </div>
-              {favorite !== undefined && (
-                <img src={favorite.thumbUrl} alt="" className="system-preview-favorite" />
-              )}
-            </div>
-          )
-        })()}
+            )
+          })()}
+      </div>
 
       {/* The space between the worlds is the thing you draw on. */}
       <SpaceLayer />

@@ -25,7 +25,8 @@ export interface PendingRequest {
 }
 
 export interface FriendsData {
-  neighbors: Neighbor[]
+  /** Same shape as a request: `id` is the friend_requests row, needed to unfriend (delete it). */
+  neighbors: PendingRequest[]
   /** Sent to you, waiting on your answer. */
   incoming: PendingRequest[]
   /** Sent by you, waiting on theirs. */
@@ -172,7 +173,7 @@ export async function loadFriendsData(myId: string): Promise<FriendsData> {
     const other = byId.get(otherId)
     if (other === undefined) continue
     const entry: PendingRequest = { id: r.id, createdAt: r.created_at, other }
-    if (r.status === 'accepted') data.neighbors.push(other)
+    if (r.status === 'accepted') data.neighbors.push(entry)
     else if (r.requester_id === myId) data.outgoing.push(entry)
     else data.incoming.push(entry)
   }

@@ -74,6 +74,12 @@ function NeighborsPage({ userId }: { userId: string }) {
     if (await removeFriendRequest(requestId)) await load()
     setBusyId(null)
   }
+  const unfriend = async (requestId: string, name: string) => {
+    if (!window.confirm(`Remove ${name} as a Sinopia Neighbor? Their world leaves your orbit.`)) {
+      return
+    }
+    await remove(requestId)
+  }
 
   return (
     <div className="scroll lined">
@@ -199,12 +205,22 @@ function NeighborsPage({ userId }: { userId: string }) {
               </p>
             ) : (
               <ul className="friend-list">
-                {data.neighbors.map((n) => (
-                  <li key={n.id} className="friend-row">
-                    <Link to={`/s/${n.id}`} className="friend-row-link">
-                      <Avatar config={n.avatar} size={44} />
-                      <span className="friend-row-name">{n.name}</span>
+                {data.neighbors.map((entry) => (
+                  <li key={entry.id} className="friend-row">
+                    <Link to={`/s/${entry.other.id}`} className="friend-row-link">
+                      <Avatar config={entry.other.avatar} size={44} />
+                      <span className="friend-row-name">{entry.other.name}</span>
                     </Link>
+                    <div className="friend-row-actions">
+                      <button
+                        type="button"
+                        className="ibtn"
+                        disabled={busyId === entry.id}
+                        onClick={() => unfriend(entry.id, entry.other.name)}
+                      >
+                        <Icon name="x" label={`Remove ${entry.other.name} as a neighbor`} />
+                      </button>
+                    </div>
                   </li>
                 ))}
               </ul>
