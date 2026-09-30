@@ -116,6 +116,28 @@
   background: none;
 }
 
+/* Mobile bar only (below the desktop rail breakpoint): New moves to the true centre of five
+ * items -- Sinopia, Sketchbook, New, Friends, Profile -- instead of sitting one slot left of it.
+ * Visual position only (flex `order`), not the underlying markup, so nothing about the desktop
+ * rail below or any feature changes; DOM/tab order is also untouched, only where each item paints. */
+@media (max-width: 899px) {
+  .nav > a:nth-child(1) {
+    order: 1;
+  } /* Sinopia */
+  .nav > a:nth-child(2) {
+    order: 3;
+  } /* New */
+  .nav > a:nth-child(3) {
+    order: 2;
+  } /* Sketchbook */
+  .nav > a:nth-child(4) {
+    order: 4;
+  } /* Friends */
+  .nav > a:nth-child(5) {
+    order: 5;
+  } /* Profile */
+}
+
 /* Five items now (Sinopia, New, Sketchbook, Friends, Profile): 5 x 76px plus the New button
  * overflows well before a phone screen runs out, so below this width the items give up their
  * fixed minimum and share the row instead. The New button keeps its size: it is the thumb target. */
