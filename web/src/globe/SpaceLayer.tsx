@@ -12,15 +12,15 @@
  * wheel belongs to the map, which is what stops a doodle happening when someone meant to spin the
  * world.
  *
- * Committed strokes live on an offscreen cache canvas, repainted only when the stroke list itself
- * changes (finish a stroke, undo, clear -- all rare). The hand actually moving draws straight to
- * the visible canvas via requestAnimationFrame, skipping React state entirely: the first version
- * ran the *entire* repaint -- every past stroke, plus a canvas resize, which clears and
- * reallocates the whole backing store -- on every single pointer-move event, so the page got
- * slower to draw on the more you'd already drawn, and could lock the tab up on a longer stroke.
+ * Once a mark is finished it drifts and bounces off the edges, like a screensaver, for as long as
+ * the screen stays open (gone on reload, same as every mark here already was). Its perfect-freehand
+ * outline is computed exactly once, into a Path2D, at the moment the stroke finishes -- animating
+ * it afterwards is just translating that already-built shape, never recomputing the geometry. That
+ * matters more here than it would elsewhere: with marks drifting continuously, the canvas repaints
+ * every frame for as long as any exist, not just while a hand is moving.
  */
-import { useEffect, useRef } from 'react'
-import { BRUSHES, type BrushName } from '../draw/brushes'
+import { useEffect, useRef, useState } from 'react'
+import { BRUSHES, isBrush, type BrushName } from '../draw/brushes'
 import { PALETTE } from '../draw/palette'
 import { outlinePoints, type Point } from '../draw/strokeHistory'
 import { Icon } from '../ui/Icon'
@@ -28,13 +28,27 @@ import { useSpaceDrawing, type SpaceStroke } from './spaceDrawingContext'
 
 const MIN_SIZE = 2
 const MAX_SIZE = 24
+/** CSS px/second. Gentle -- a screensaver drift, not something darting around underfoot. */
+const MIN_SPEED = 18
+const MAX_SPEED = 40
 
-/** Fills one stroke's perfect-freehand outline. */
+interface FloatingStroke {
+  path: Path2D
+  color: string
+  tool: SpaceStroke['tool']
+  opacity: number
+  bounds: { minX: number; minY: number; maxX: number; maxY: number }
+  pos: { x: number; y: number }
+  vel: { x: number; y: number }
+}
+
+/** Fills one stroke's perfect-freehand outline directly (used only for the live, still-moving hand). */
 function paintStroke(ctx: CanvasRenderingContext2D, stroke: SpaceStroke) {
   const outline = outlinePoints(stroke.points, stroke.size, stroke.tool)
   if (outline.length < 6) return
-  const brush = BRUSHES[stroke.tool as BrushName]
+  const brush = isBrush(stroke.tool) ? BRUSHES[stroke.tool as BrushName] : undefined
   ctx.save()
+  ctx.globalCompositeOperation = stroke.tool === 'eraser' ? 'destination-out' : 'source-over'
   ctx.globalAlpha = brush?.opacity ?? 1
   ctx.fillStyle = stroke.color
   ctx.beginPath()
@@ -45,82 +59,185 @@ function paintStroke(ctx: CanvasRenderingContext2D, stroke: SpaceStroke) {
   ctx.restore()
 }
 
+/** Builds a finished stroke's outline once into a reusable Path2D, plus its bounds and a random drift. */
+function toFloatingStroke(stroke: SpaceStroke): FloatingStroke | null {
+  const outline = outlinePoints(stroke.points, stroke.size, stroke.tool)
+  if (outline.length < 6) return null
+
+  const path = new Path2D()
+  path.moveTo(outline[0], outline[1])
+  let minX = outline[0]
+  let maxX = outline[0]
+  let minY = outline[1]
+  let maxY = outline[1]
+  for (let i = 2; i < outline.length; i += 2) {
+    const x = outline[i]
+    const y = outline[i + 1]
+    path.lineTo(x, y)
+    if (x < minX) minX = x
+    if (x > maxX) maxX = x
+    if (y < minY) minY = y
+    if (y > maxY) maxY = y
+  }
+  path.closePath()
+
+  const brush = isBrush(stroke.tool) ? BRUSHES[stroke.tool as BrushName] : undefined
+  const angle = Math.random() * Math.PI * 2
+  const speed = MIN_SPEED + Math.random() * (MAX_SPEED - MIN_SPEED)
+  return {
+    path,
+    color: stroke.color,
+    tool: stroke.tool,
+    opacity: brush?.opacity ?? 1,
+    bounds: { minX, minY, maxX, maxY },
+    pos: { x: 0, y: 0 },
+    vel: { x: Math.cos(angle) * speed, y: Math.sin(angle) * speed },
+  }
+}
+
 export function SpaceLayer() {
-  const { strokes, armed, color, size, tool, setArmed, setColor, setSize, addStroke, undo, clear } =
-    useSpaceDrawing()
+  const {
+    strokes,
+    armed,
+    color,
+    size,
+    tool,
+    setArmed,
+    setColor,
+    setSize,
+    setTool,
+    addStroke,
+    undo,
+    clear,
+  } = useSpaceDrawing()
   const canvasRef = useRef<HTMLCanvasElement>(null)
-  /** Committed strokes only. Redrawn far less often than the visible canvas repaints. */
-  const cacheRef = useRef<HTMLCanvasElement | null>(null)
   const ratioRef = useRef(1)
-  const strokesRef = useRef<SpaceStroke[]>(strokes)
+  const sizeRef = useRef({ width: 0, height: 0 })
+  /** Finished strokes only, keyed by id -- built once each, animated every frame. */
+  const floatingRef = useRef(new Map<string, FloatingStroke>())
+  const [reduceMotion] = useState(
+    () => window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false,
+  )
   const drawingRef = useRef<Point[] | null>(null)
   const rafRef = useRef<number | null>(null)
-  /** The live stroke's colour/size/tool, read by the rAF paint loop without waiting on React. */
+  const lastFrameRef = useRef<number | null>(null)
+  /** The live stroke's colour/size/tool, read by the paint loop without waiting on React. */
   const liveStyleRef = useRef({ color, size, tool })
 
   useEffect(() => {
-    strokesRef.current = strokes
     liveStyleRef.current = { color, size, tool }
-  }, [strokes, color, size, tool])
+  }, [color, size, tool])
 
-  const repaintCache = () => {
-    const cache = cacheRef.current
-    if (cache === null) return
-    const ctx = cache.getContext('2d')
-    if (ctx === null) return
-    ctx.setTransform(ratioRef.current, 0, 0, ratioRef.current, 0, 0)
-    ctx.clearRect(0, 0, cache.width, cache.height)
-    for (const stroke of strokesRef.current) paintStroke(ctx, stroke)
-  }
-
-  /** Visible canvas = the committed cache, plus whatever's mid-stroke right now (if anything). */
-  const repaintVisible = (live: Point[] | null) => {
+  const redraw = () => {
     const canvas = canvasRef.current
-    const cache = cacheRef.current
-    if (canvas === null || cache === null) return
+    if (canvas === null) return
     const ctx = canvas.getContext('2d')
     if (ctx === null) return
+    const ratio = ratioRef.current
+
     ctx.setTransform(1, 0, 0, 1, 0, 0)
     ctx.clearRect(0, 0, canvas.width, canvas.height)
-    ctx.drawImage(cache, 0, 0)
+
+    for (const f of floatingRef.current.values()) {
+      ctx.setTransform(ratio, 0, 0, ratio, f.pos.x * ratio, f.pos.y * ratio)
+      ctx.globalCompositeOperation = f.tool === 'eraser' ? 'destination-out' : 'source-over'
+      ctx.globalAlpha = f.opacity
+      ctx.fillStyle = f.color
+      ctx.fill(f.path)
+    }
+    ctx.globalCompositeOperation = 'source-over'
+    ctx.globalAlpha = 1
+
+    const live = drawingRef.current
     if (live !== null && live.length > 1) {
+      ctx.setTransform(ratio, 0, 0, ratio, 0, 0)
       const { color: c, size: s, tool: t } = liveStyleRef.current
-      ctx.setTransform(ratioRef.current, 0, 0, ratioRef.current, 0, 0)
       paintStroke(ctx, { id: 'live', points: live, color: c, size: s, tool: t })
     }
   }
 
-  // Sizes both canvases to the container. Only on mount and on resize -- never while drawing,
-  // since setting canvas.width/height clears and reallocates the whole backing store.
+  /** Runs while a hand is moving and/or anything is drifting; stops itself once neither applies. */
+  const ensureLoop = () => {
+    if (rafRef.current !== null) return
+    lastFrameRef.current = null
+    const step = (now: number) => {
+      const dt = lastFrameRef.current === null ? 0 : (now - lastFrameRef.current) / 1000
+      lastFrameRef.current = now
+
+      if (!reduceMotion && dt > 0) {
+        const { width, height } = sizeRef.current
+        for (const f of floatingRef.current.values()) {
+          f.pos.x += f.vel.x * dt
+          f.pos.y += f.vel.y * dt
+          const left = f.bounds.minX + f.pos.x
+          const right = f.bounds.maxX + f.pos.x
+          const top = f.bounds.minY + f.pos.y
+          const bottom = f.bounds.maxY + f.pos.y
+          if (left < 0) {
+            f.pos.x -= left
+            f.vel.x = Math.abs(f.vel.x)
+          } else if (right > width) {
+            f.pos.x -= right - width
+            f.vel.x = -Math.abs(f.vel.x)
+          }
+          if (top < 0) {
+            f.pos.y -= top
+            f.vel.y = Math.abs(f.vel.y)
+          } else if (bottom > height) {
+            f.pos.y -= bottom - height
+            f.vel.y = -Math.abs(f.vel.y)
+          }
+        }
+      }
+
+      redraw()
+
+      const stillDrawing = drawingRef.current !== null
+      const stillDrifting = !reduceMotion && floatingRef.current.size > 0
+      if (stillDrawing || stillDrifting) {
+        rafRef.current = requestAnimationFrame(step)
+      } else {
+        rafRef.current = null
+      }
+    }
+    rafRef.current = requestAnimationFrame(step)
+  }
+
+  // Sizes the canvas to its container. Only on mount and on resize -- never mid-frame, since
+  // setting canvas.width/height clears and reallocates the whole backing store.
   useEffect(() => {
     const canvas = canvasRef.current
     if (canvas === null) return
-    if (cacheRef.current === null) cacheRef.current = document.createElement('canvas')
-    const cache = cacheRef.current
-
     const resize = () => {
       const ratio = window.devicePixelRatio || 1
       const { width, height } = canvas.getBoundingClientRect()
       ratioRef.current = ratio
+      sizeRef.current = { width, height }
       canvas.width = Math.round(width * ratio)
       canvas.height = Math.round(height * ratio)
-      cache.width = canvas.width
-      cache.height = canvas.height
-      repaintCache()
-      repaintVisible(drawingRef.current)
+      redraw()
     }
     resize()
     window.addEventListener('resize', resize)
     return () => window.removeEventListener('resize', resize)
-    // Deliberately mount-only otherwise: repaintCache/repaintVisible read the current values via
-    // refs, so this doesn't need strokes/color/size/tool as dependencies.
   }, [])
 
-  // Committed strokes changed (a stroke finished, undo, or clear) -- repaint the cache, and the
-  // visible canvas from it. Rare compared to a pointer moving, so redrawing everything is fine.
+  // The committed-stroke list changed: add geometry for anything new, drop anything gone (undo,
+  // clear), and kick the animation loop off again if a fresh mark needs to start drifting.
   useEffect(() => {
-    repaintCache()
-    repaintVisible(drawingRef.current)
+    const known = floatingRef.current
+    const currentIds = new Set(strokes.map((s) => s.id))
+    for (const id of known.keys()) {
+      if (!currentIds.has(id)) known.delete(id)
+    }
+    for (const stroke of strokes) {
+      if (known.has(stroke.id)) continue
+      const built = toFloatingStroke(stroke)
+      if (built !== null) known.set(stroke.id, built)
+    }
+    redraw()
+    ensureLoop()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [strokes])
 
   useEffect(() => {
@@ -134,23 +251,13 @@ export function SpaceLayer() {
     return { x: e.clientX - rect.left, y: e.clientY - rect.top }
   }
 
-  const scheduleRepaint = () => {
-    if (rafRef.current !== null) return
-    rafRef.current = requestAnimationFrame(() => {
-      rafRef.current = null
-      repaintVisible(drawingRef.current)
-    })
-  }
-
   const finish = () => {
     const points = drawingRef.current
     drawingRef.current = null
-    if (rafRef.current !== null) {
-      cancelAnimationFrame(rafRef.current)
-      rafRef.current = null
+    if (points === null || points.length < 2) {
+      redraw()
+      return
     }
-    repaintVisible(null)
-    if (points === null || points.length < 2) return
     addStroke({ id: crypto.randomUUID(), points, color, size, tool })
   }
 
@@ -164,14 +271,12 @@ export function SpaceLayer() {
         onPointerDown={(e) => {
           if (!armed) return
           e.currentTarget.setPointerCapture(e.pointerId)
-          const point = pointFrom(e)
-          drawingRef.current = [point]
-          scheduleRepaint()
+          drawingRef.current = [pointFrom(e)]
+          ensureLoop()
         }}
         onPointerMove={(e) => {
           if (!armed || drawingRef.current === null) return
           drawingRef.current.push(pointFrom(e))
-          scheduleRepaint()
         }}
         onPointerUp={finish}
         onPointerCancel={finish}
@@ -190,23 +295,46 @@ export function SpaceLayer() {
 
         {armed && (
           <>
-            <div className="space-colors" role="group" aria-label="Colour">
-              {PALETTE.map((swatch) => (
-                <button
-                  key={swatch.value}
-                  type="button"
-                  className="space-color"
-                  style={{ background: swatch.value }}
-                  aria-pressed={swatch.value === color}
-                  onClick={() => setColor(swatch.value)}
-                >
-                  <span className="sr-only">{swatch.name}</span>
-                </button>
-              ))}
+            <div className="space-tools" role="group" aria-label="Draw or erase">
+              <button
+                type="button"
+                className="ibtn"
+                aria-pressed={tool !== 'eraser'}
+                onClick={() => setTool('pen')}
+                title="Draw"
+              >
+                <Icon name="brush" label="Draw" />
+              </button>
+              <button
+                type="button"
+                className="ibtn"
+                aria-pressed={tool === 'eraser'}
+                onClick={() => setTool('eraser')}
+                title="Erase"
+              >
+                <Icon name="eraser" label="Erase" />
+              </button>
             </div>
 
+            {tool !== 'eraser' && (
+              <div className="space-colors" role="group" aria-label="Colour">
+                {PALETTE.map((swatch) => (
+                  <button
+                    key={swatch.value}
+                    type="button"
+                    className="space-color"
+                    style={{ background: swatch.value }}
+                    aria-pressed={swatch.value === color}
+                    onClick={() => setColor(swatch.value)}
+                  >
+                    <span className="sr-only">{swatch.name}</span>
+                  </button>
+                ))}
+              </div>
+            )}
+
             <label className="space-size">
-              <span className="sr-only">Brush size</span>
+              <span className="sr-only">{tool === 'eraser' ? 'Eraser size' : 'Brush size'}</span>
               <input
                 type="range"
                 min={MIN_SIZE}

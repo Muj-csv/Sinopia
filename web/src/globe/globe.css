@@ -372,6 +372,14 @@
   border-radius: var(--r-card);
   box-shadow: var(--offset);
 }
+.space-tools {
+  display: flex;
+  gap: 6px;
+}
+.space-tools .ibtn[aria-pressed='true'] {
+  background: var(--yellow-tint);
+  border-radius: var(--r-ctl);
+}
 .space-colors {
   display: grid;
   grid-template-columns: repeat(3, auto);
