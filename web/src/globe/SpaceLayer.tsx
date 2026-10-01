@@ -31,39 +31,33 @@ const MAX_SIZE = 24
 /** CSS px/second. Gentle -- a screensaver drift, not something darting around underfoot. */
 const MIN_SPEED = 18
 const MAX_SPEED = 40
+/**
+ * A new point is only recorded once the hand has moved at least this far from the last one (CSS
+ * px). perfect-freehand's outline cost scales with point *count*, and without this a fast or
+ * high-poll-rate input device can pile up hundreds of points in a couple of seconds even though
+ * the hand barely moved between most of them -- that's what made the brush feel laggier the
+ * longer a stroke went on. 2px is well under what the eye can resolve as a missing waypoint once
+ * perfect-freehand smooths the curve, but cuts point count by an order of magnitude or more.
+ */
+const MIN_POINT_DIST = 2
+const MIN_POINT_DIST_SQ = MIN_POINT_DIST * MIN_POINT_DIST
 
-interface FloatingStroke {
+interface Geometry {
   path: Path2D
+  bounds: { minX: number; minY: number; maxX: number; maxY: number }
+}
+
+interface FloatingStroke extends Geometry {
   color: string
   tool: SpaceStroke['tool']
   opacity: number
-  bounds: { minX: number; minY: number; maxX: number; maxY: number }
   pos: { x: number; y: number }
   vel: { x: number; y: number }
 }
 
-/** Fills one stroke's perfect-freehand outline directly (used only for the live, still-moving hand). */
-function paintStroke(ctx: CanvasRenderingContext2D, stroke: SpaceStroke) {
-  const outline = outlinePoints(stroke.points, stroke.size, stroke.tool)
-  if (outline.length < 6) return
-  const brush = isBrush(stroke.tool) ? BRUSHES[stroke.tool as BrushName] : undefined
-  ctx.save()
-  ctx.globalCompositeOperation = stroke.tool === 'eraser' ? 'destination-out' : 'source-over'
-  ctx.globalAlpha = brush?.opacity ?? 1
-  ctx.fillStyle = stroke.color
-  ctx.beginPath()
-  ctx.moveTo(outline[0], outline[1])
-  for (let i = 2; i < outline.length; i += 2) ctx.lineTo(outline[i], outline[i + 1])
-  ctx.closePath()
-  ctx.fill()
-  ctx.restore()
-}
-
-/** Builds a finished stroke's outline once into a reusable Path2D, plus its bounds and a random drift. */
-function toFloatingStroke(stroke: SpaceStroke): FloatingStroke | null {
-  const outline = outlinePoints(stroke.points, stroke.size, stroke.tool)
+/** A perfect-freehand outline, built into a reusable Path2D exactly once, plus its bounds. */
+function buildGeometry(outline: number[]): Geometry | null {
   if (outline.length < 6) return null
-
   const path = new Path2D()
   path.moveTo(outline[0], outline[1])
   let minX = outline[0]
@@ -80,16 +74,22 @@ function toFloatingStroke(stroke: SpaceStroke): FloatingStroke | null {
     if (y > maxY) maxY = y
   }
   path.closePath()
+  return { path, bounds: { minX, minY, maxX, maxY } }
+}
+
+/** A finished stroke's outline, plus its bounds and a random drift -- built once, at finish time. */
+function toFloatingStroke(stroke: SpaceStroke): FloatingStroke | null {
+  const geometry = buildGeometry(outlinePoints(stroke.points, stroke.size, stroke.tool))
+  if (geometry === null) return null
 
   const brush = isBrush(stroke.tool) ? BRUSHES[stroke.tool as BrushName] : undefined
   const angle = Math.random() * Math.PI * 2
   const speed = MIN_SPEED + Math.random() * (MAX_SPEED - MIN_SPEED)
   return {
-    path,
+    ...geometry,
     color: stroke.color,
     tool: stroke.tool,
     opacity: brush?.opacity ?? 1,
-    bounds: { minX, minY, maxX, maxY },
     pos: { x: 0, y: 0 },
     vel: { x: Math.cos(angle) * speed, y: Math.sin(angle) * speed },
   }
@@ -123,6 +123,15 @@ export function SpaceLayer() {
   const lastFrameRef = useRef<number | null>(null)
   /** The live stroke's colour/size/tool, read by the paint loop without waiting on React. */
   const liveStyleRef = useRef({ color, size, tool })
+  /**
+   * The in-progress stroke's outline, rebuilt only when its point count has actually changed since
+   * the last frame. The animation loop redraws every frame regardless (for the floating marks), but
+   * recomputing perfect-freehand's curve that often for a hand that's moved less than MIN_POINT_DIST
+   * since the last frame was pure waste -- this is what made drawing feel like it had a growing lag
+   * the longer a stroke went on, on top of the point-count growth above.
+   */
+  const liveGeometryRef = useRef<Geometry | null>(null)
+  const liveLengthRef = useRef(0)
 
   useEffect(() => {
     liveStyleRef.current = { color, size, tool }
@@ -150,9 +159,22 @@ export function SpaceLayer() {
 
     const live = drawingRef.current
     if (live !== null && live.length > 1) {
-      ctx.setTransform(ratio, 0, 0, ratio, 0, 0)
-      const { color: c, size: s, tool: t } = liveStyleRef.current
-      paintStroke(ctx, { id: 'live', points: live, color: c, size: s, tool: t })
+      if (live.length !== liveLengthRef.current) {
+        const { size: s, tool: t } = liveStyleRef.current
+        liveGeometryRef.current = buildGeometry(outlinePoints(live, s, t))
+        liveLengthRef.current = live.length
+      }
+      if (liveGeometryRef.current !== null) {
+        const { color: c, tool: t } = liveStyleRef.current
+        const brush = isBrush(t) ? BRUSHES[t as BrushName] : undefined
+        ctx.setTransform(ratio, 0, 0, ratio, 0, 0)
+        ctx.globalCompositeOperation = t === 'eraser' ? 'destination-out' : 'source-over'
+        ctx.globalAlpha = brush?.opacity ?? 1
+        ctx.fillStyle = c
+        ctx.fill(liveGeometryRef.current.path)
+        ctx.globalCompositeOperation = 'source-over'
+        ctx.globalAlpha = 1
+      }
     }
   }
 
@@ -262,6 +284,8 @@ export function SpaceLayer() {
   const finish = () => {
     const points = drawingRef.current
     drawingRef.current = null
+    liveGeometryRef.current = null
+    liveLengthRef.current = 0
     if (points === null || points.length < 2) {
       redraw()
       return
@@ -280,11 +304,31 @@ export function SpaceLayer() {
           if (!armed) return
           e.currentTarget.setPointerCapture(e.pointerId)
           drawingRef.current = [pointFrom(e)]
+          liveGeometryRef.current = null
+          liveLengthRef.current = 0
           ensureLoop()
         }}
         onPointerMove={(e) => {
-          if (!armed || drawingRef.current === null) return
-          drawingRef.current.push(pointFrom(e))
+          const drawing = drawingRef.current
+          if (!armed || drawing === null) return
+          // getCoalescedEvents() recovers every hardware sample behind this one dispatched event --
+          // without it, a fast stroke on a high-poll-rate touchscreen or stylus can visibly skip
+          // corners, because the browser only dispatches one pointermove per animation frame no
+          // matter how many raw samples the device produced in between.
+          const native = e.nativeEvent
+          const samples =
+            typeof native.getCoalescedEvents === 'function' ? native.getCoalescedEvents() : []
+          const rect = e.currentTarget.getBoundingClientRect()
+          for (const sample of samples.length > 0 ? samples : [native]) {
+            const next = { x: sample.clientX - rect.left, y: sample.clientY - rect.top }
+            const last = drawing[drawing.length - 1]
+            const dx = next.x - last.x
+            const dy = next.y - last.y
+            // Distance-gated, not one-per-sample: most of those coalesced samples are still well
+            // under MIN_POINT_DIST apart on typical hand movement, and recording all of them anyway
+            // is exactly the unbounded point growth that caused the lag in the first place.
+            if (dx * dx + dy * dy >= MIN_POINT_DIST_SQ) drawing.push(next)
+          }
         }}
         onPointerUp={finish}
         onPointerCancel={finish}
