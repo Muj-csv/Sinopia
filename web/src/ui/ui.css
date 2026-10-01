@@ -488,6 +488,38 @@
   color: var(--ink-2);
 }
 
+/* ===== Hover/tap lift (app-wide) ===== */
+/* A small rise toward the reader, settling back when the pointer leaves or the finger lifts.
+ * Uses the standalone `translate` property rather than `transform`, which is what every pressable
+ * thing here already uses for its hard-offset press effect (.btn-y:active, .pin:active, .system-
+ * planet:active, and so on) -- translate/scale/rotate compose with transform instead of replacing
+ * it, so this layers on top of that press effect everywhere instead of fighting it. */
+@media (hover: hover) and (pointer: fine) {
+  button:not(:disabled):hover,
+  .btn-y:hover,
+  .btn-o:hover,
+  .ibtn:hover,
+  .nav a:hover,
+  .option:hover {
+    translate: 0 -2px;
+    transition: translate 150ms ease;
+  }
+}
+/* Touch has no hover to lift on, so the same rise happens on the tap itself and settles back the
+ * instant the finger lifts (`:active` ending) -- not a replacement for the existing press-down
+ * look, which still plays underneath via each element's own `transform`. */
+@media (hover: none) {
+  button:not(:disabled):active,
+  .btn-y:active,
+  .btn-o:active,
+  .ibtn:active,
+  .nav a:active,
+  .option:active {
+    translate: 0 -2px;
+    transition: translate 120ms ease-out;
+  }
+}
+
 /* Everything orchestrated is off or instant when the reader asked for that (NFR-006). */
 @media (prefers-reduced-motion: reduce) {
   *,
