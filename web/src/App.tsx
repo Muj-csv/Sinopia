@@ -2,7 +2,6 @@ import { Suspense, lazy } from 'react'
 import { Link, NavLink, Route, Routes, useLocation } from 'react-router-dom'
 import { AuthGate } from './auth/AuthGate'
 import { SpaceDrawingProvider } from './globe/SpaceDrawingProvider'
-import { useSpaceDrawing } from './globe/spaceDrawingContext'
 import { Icon, IconSprite } from './ui/Icon'
 
 // Lazy-loaded per route (ARCHITECTURE.md §7: keep the initial bundle small;
@@ -44,10 +43,10 @@ const FLOW_ROUTES = ['/new', '/new/pin', '/new/draw', '/new/finish']
 
 function AppNav() {
   const { pathname } = useLocation()
-  const { armed } = useSpaceDrawing()
-  // Drawing mode takes the whole screen on the Sinopia tab -- the bar would otherwise sit on top
-  // of it and eat into the one thing this mode is supposed to be: the entire viewport as canvas.
-  if (FLOW_ROUTES.includes(pathname) || (armed && pathname === '/')) return null
+  // Drawing mode used to hide this bar entirely so the canvas could claim the full viewport, but
+  // that left no way to switch tabs without first disarming the brush -- the nav has to stay
+  // reachable so the other icons are always one tap away, armed or not.
+  if (FLOW_ROUTES.includes(pathname)) return null
 
   return (
     <nav className="nav" aria-label="Primary">

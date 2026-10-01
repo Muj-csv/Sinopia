@@ -9,6 +9,7 @@ import { Link } from 'react-router-dom'
 import { AuthGate } from '../auth/AuthGate'
 import { Avatar } from '../auth/Avatar'
 import { useSession } from '../lib/useSession'
+import { ConfirmDialog } from '../ui/ConfirmDialog'
 import { Icon } from '../ui/Icon'
 import './friends.css'
 import {
@@ -30,6 +31,8 @@ function NeighborsPage({ userId }: { userId: string }) {
   const [message, setMessage] = useState<string | null>(null)
   const [scanning, setScanning] = useState(false)
   const [busyId, setBusyId] = useState<string | null>(null)
+  /** The neighbor a removal is pending confirmation for, if any. */
+  const [confirmRemove, setConfirmRemove] = useState<{ id: string; name: string } | null>(null)
 
   const load = useCallback(async () => {
     setStatus('loading')
@@ -74,11 +77,10 @@ function NeighborsPage({ userId }: { userId: string }) {
     if (await removeFriendRequest(requestId)) await load()
     setBusyId(null)
   }
-  const unfriend = async (requestId: string, name: string) => {
-    if (!window.confirm(`Remove ${name} as a Sinopia Neighbor? Their world leaves your orbit.`)) {
-      return
-    }
-    await remove(requestId)
+  const confirmUnfriend = async () => {
+    const target = confirmRemove
+    setConfirmRemove(null)
+    if (target !== null) await remove(target.id)
   }
 
   return (
@@ -216,7 +218,7 @@ function NeighborsPage({ userId }: { userId: string }) {
                         type="button"
                         className="ibtn"
                         disabled={busyId === entry.id}
-                        onClick={() => unfriend(entry.id, entry.other.name)}
+                        onClick={() => setConfirmRemove({ id: entry.id, name: entry.other.name })}
                       >
                         <Icon name="x" label={`Remove ${entry.other.name} as a neighbor`} />
                       </button>
@@ -235,6 +237,16 @@ function NeighborsPage({ userId }: { userId: string }) {
             <ScanCode onClose={() => setScanning(false)} />
           </div>
         </div>
+      )}
+
+      {confirmRemove !== null && (
+        <ConfirmDialog
+          message={`Remove ${confirmRemove.name} as a Sinopia Neighbor? Their world leaves your orbit.`}
+          confirmLabel="Remove"
+          cancelLabel="Cancel"
+          onConfirm={confirmUnfriend}
+          onCancel={() => setConfirmRemove(null)}
+        />
       )}
     </div>
   )
