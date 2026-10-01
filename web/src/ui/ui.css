@@ -284,6 +284,34 @@
   inset: 0;
   background: rgb(26 26 26 / 32%);
   z-index: 40;
+  /* Centres a plain (non position:fixed) child like .confirm-dialog. Doesn't affect .sheet below,
+     which positions itself with its own `position: fixed`, entirely independent of this parent's
+     display type. */
+  display: grid;
+  place-items: center;
+  padding: var(--space-4);
+}
+
+/* ===== Confirm dialog (destructive actions: unfriend, etc.) ===== */
+.confirm-dialog {
+  display: grid;
+  gap: var(--space-4);
+  max-width: 320px;
+  padding: var(--space-4);
+  border: var(--edge);
+  border-radius: var(--r-card);
+  box-shadow: var(--offset);
+  background-color: var(--paper);
+}
+.confirm-dialog p {
+  margin: 0;
+  font: var(--text-body) / var(--leading-body) var(--print);
+  color: var(--ink);
+}
+.confirm-dialog-actions {
+  display: flex;
+  gap: var(--space-2);
+  justify-content: flex-end;
 }
 .sheet {
   position: fixed;
