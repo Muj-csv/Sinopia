@@ -225,8 +225,11 @@ export function SpaceLayer() {
     rafRef.current = requestAnimationFrame(step)
   }
 
-  // Sizes the canvas to its container. Only on mount and on resize -- never mid-frame, since
-  // setting canvas.width/height clears and reallocates the whole backing store.
+  // Sizes the canvas to its container: on mount, on window resize, and whenever `armed` toggles --
+  // entering drawing mode hides the bottom nav bar (App.tsx) so the canvas can claim that space
+  // too, which changes the container's actual height without the window itself resizing.
+  // Re-measuring doesn't lose anything drawn: every mark's geometry lives in floatingRef, not in
+  // the canvas's pixels, so clearing and reallocating the backing store just means one redraw.
   useEffect(() => {
     const canvas = canvasRef.current
     if (canvas === null) return
@@ -239,10 +242,15 @@ export function SpaceLayer() {
       canvas.height = Math.round(height * ratio)
       redraw()
     }
-    resize()
+    // The nav's hide/show is a React commit away, not an instant style change -- wait a frame so
+    // the layout it triggers has actually settled before measuring against it.
+    const raf = requestAnimationFrame(resize)
     window.addEventListener('resize', resize)
-    return () => window.removeEventListener('resize', resize)
-  }, [])
+    return () => {
+      cancelAnimationFrame(raf)
+      window.removeEventListener('resize', resize)
+    }
+  }, [armed])
 
   // The committed-stroke list changed: add geometry for anything new, drop anything gone (undo,
   // clear), and kick the animation loop off again if a fresh mark needs to start drifting.
