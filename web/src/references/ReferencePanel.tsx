@@ -21,8 +21,8 @@ export function ReferencePanel({
   onPin,
 }: {
   onClose: () => void
-  pinned: Reference | null
-  onPin: (reference: Reference | null) => void
+  pinned: Reference[]
+  onPin: (reference: Reference) => void
 }) {
   const [query, setQuery] = useState('')
   const [angleSuffix, setAngleSuffix] = useState<string | null>(null)
@@ -114,6 +114,30 @@ export function ReferencePanel({
         </div>
       )}
 
+      {pinned.length > 0 && (
+        <div className="reference-pinned-section">
+          <h3>Pinned</h3>
+          <div className="reference-grid">
+            {pinned.map((r) => (
+              <div key={r.id} className="reference-card">
+                <button type="button" className="reference-thumb" onClick={() => setEnlarged(r)}>
+                  <img src={r.thumbnail} alt={r.title} loading="lazy" />
+                </button>
+                <button
+                  type="button"
+                  className="chip reference-pin"
+                  aria-pressed="true"
+                  onClick={() => onPin(r)}
+                >
+                  <Icon name="pin" />
+                  Pinned
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {idle && <p className="reference-status">try: {SUGGESTED_WORDS.join(', ')}</p>}
 
       {!idle && status === 'loading' && (
@@ -153,11 +177,11 @@ export function ReferencePanel({
               <button
                 type="button"
                 className="chip reference-pin"
-                aria-pressed={pinned?.id === r.id}
-                onClick={() => onPin(pinned?.id === r.id ? null : r)}
+                aria-pressed={pinned.some((p) => p.id === r.id)}
+                onClick={() => onPin(r)}
               >
                 <Icon name="pin" />
-                {pinned?.id === r.id ? 'Pinned' : 'Pin'}
+                {pinned.some((p) => p.id === r.id) ? 'Pinned' : 'Pin'}
               </button>
               <a
                 className="reference-license"

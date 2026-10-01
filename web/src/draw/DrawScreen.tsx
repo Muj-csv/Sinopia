@@ -8,7 +8,7 @@ import type Konva from 'konva'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { getDraft, updateDraft, type Draft } from '../lib/draftStore'
-import { PinnedReference } from '../references/PinnedReference'
+import { PinnedReferences } from '../references/PinnedReference'
 import { ReferencePanel } from '../references/ReferencePanel'
 import type { Reference } from '../references/referencesClient'
 import { FlowBar } from '../ui/FlowBar'
@@ -56,7 +56,8 @@ export function DrawScreen() {
   const navigate = useNavigate()
   const [resuming, setResuming] = useState(false)
   const [referenceOpen, setReferenceOpen] = useState(false)
-  const [pinnedReference, setPinnedReference] = useState<Reference | null>(null)
+  const [pinnedReferences, setPinnedReferences] = useState<Reference[]>([])
+  const [expandedPinned, setExpandedPinned] = useState<Reference | null>(null)
   const [save, setSave] = useState<SaveResult>({ savedAt: null, failed: false })
 
   useEffect(() => {
@@ -65,6 +66,7 @@ export function DrawScreen() {
       if (d === undefined) return
       setDraft(d)
       setHistory(migrateHistory(d.history))
+      setPinnedReferences(d.pinnedReferences ?? [])
       setResuming(Date.now() - d.updatedAt < RESUME_THRESHOLD_MS && hasAnyStroke(d.history))
     })
   }, [draftId])
@@ -92,6 +94,13 @@ export function DrawScreen() {
     saveDraftPatch(draftId, { history }).then(setSave)
   }, [draftId, history])
 
+  // Same immediate-write reasoning as history above: a pin/unpin is a meaningful commit, not
+  // mid-gesture state, so it's cheap to persist right away rather than waiting on the 10s tick.
+  useEffect(() => {
+    if (draftId === null) return
+    saveDraftPatch(draftId, { pinnedReferences }).then(setSave)
+  }, [draftId, pinnedReferences])
+
   useAutosave(draftId, { history }, setSave)
 
   const addStroke = useCallback(
@@ -117,6 +126,18 @@ export function DrawScreen() {
   // page and, on the canvas, throw away the drawing gesture the artist was mid-way through.
   const clearLayer = useCallback((layerIndex: number) => {
     setHistory((h) => pushEntry(h, { type: 'clear', id: crypto.randomUUID(), layerIndex }))
+  }, [])
+
+  // Toggle: pinning an already-pinned reference (clicking it again in the panel) unpins it.
+  const togglePin = useCallback((reference: Reference) => {
+    setPinnedReferences((prev) =>
+      prev.some((r) => r.id === reference.id)
+        ? prev.filter((r) => r.id !== reference.id)
+        : [...prev, reference],
+    )
+  }, [])
+  const unpin = useCallback((id: string) => {
+    setPinnedReferences((prev) => prev.filter((r) => r.id !== id))
   }, [])
 
   useEffect(() => {
@@ -221,9 +242,11 @@ export function DrawScreen() {
             tool={tool}
             onStrokeComplete={addStroke}
           />
-          {pinnedReference !== null && (
-            <PinnedReference reference={pinnedReference} onUnpin={() => setPinnedReference(null)} />
-          )}
+          <PinnedReferences
+            references={pinnedReferences}
+            onUnpin={unpin}
+            onExpand={setExpandedPinned}
+          />
         </div>
 
         {/* In the page flow, not over the canvas: opening it shrinks the stage instead of
@@ -231,8 +254,8 @@ export function DrawScreen() {
         {referenceOpen && (
           <ReferencePanel
             onClose={() => setReferenceOpen(false)}
-            pinned={pinnedReference}
-            onPin={setPinnedReference}
+            pinned={pinnedReferences}
+            onPin={togglePin}
           />
         )}
 
@@ -251,6 +274,12 @@ export function DrawScreen() {
           onToggleReference={() => setReferenceOpen((v) => !v)}
         />
       </div>
+
+      {expandedPinned !== null && (
+        <div className="reference-lightbox" onClick={() => setExpandedPinned(null)}>
+          <img src={expandedPinned.url} alt={expandedPinned.title} />
+        </div>
+      )}
     </div>
   )
 }

@@ -50,6 +50,18 @@
   color: var(--ink-2);
 }
 
+/* The panel's own view of everything currently pinned -- open it with the panel closed and the
+ * floating thumbs by the canvas corner are still the quick glance; this is the full list. */
+.reference-pinned-section {
+  display: grid;
+  gap: var(--space-2);
+}
+.reference-pinned-section h3 {
+  margin: 0;
+  font: var(--text-h3) / var(--leading-h3) var(--marker);
+  font-weight: 400;
+}
+
 .reference-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
@@ -123,22 +135,40 @@
   background: var(--paper);
 }
 
-/* ===== Pinned reference ===== */
+/* ===== Pinned references ===== */
 /* Stays visible over the canvas corner even when the panel is closed, so the artist can keep
- * looking at it while drawing. */
-.pinned-reference {
+ * looking at them while drawing. More than one stacks downward rather than crowding sideways,
+ * so it never creeps toward the centre of the photo. */
+.pinned-references {
   position: absolute;
   right: var(--space-3);
   top: var(--space-3);
   z-index: 8;
-  width: 120px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  max-height: calc(100% - var(--space-6));
+  overflow-y: auto;
+}
+.pinned-reference {
+  position: relative;
+  width: 96px;
+  flex: none;
   border: var(--edge);
   border-radius: var(--r-card);
   background: var(--paper);
   box-shadow: var(--offset);
   padding: var(--space-1);
 }
-.pinned-reference img {
+.pinned-reference-thumb {
+  display: block;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+}
+.pinned-reference-thumb img {
   width: 100%;
   display: block;
   border-radius: var(--radius-photo);

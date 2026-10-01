@@ -21,7 +21,7 @@ export function PreviewCard({ point, onClose }: { point: GlobePoint; onClose: ()
     frescoImageUrl('public', point.thumb_path).then(setThumbUrl)
     supabase
       .from('frescoes')
-      .select('place_name, profiles(display_name)')
+      .select('place_name, profiles!frescoes_owner_id_fkey(display_name)')
       .eq('id', point.id)
       .single()
       .then(({ data }) => {
