@@ -14,6 +14,7 @@
 import { createStore, del, get, keys, set } from 'idb-keyval'
 import type { LocationSource } from '../capture/LocationFallback'
 import { emptyHistory, type History } from '../draw/strokeHistory'
+import type { Reference } from '../references/referencesClient'
 
 export interface Draft {
   id: string
@@ -32,6 +33,9 @@ export interface Draft {
   history: History
   /** Set once DrawScreen's Finish button has rasterized the canvas (PHASE-3 task 2-3). */
   exported?: { drawing: Blob; composite: Blob }
+  /** References pinned while drawing this underdrawing, so they survive a reload the same way
+   *  the stroke history does. Optional: drafts written before pinning existed won't have it. */
+  pinnedReferences?: Reference[]
 }
 
 const store = createStore('sinopia-drafts', 'drafts')

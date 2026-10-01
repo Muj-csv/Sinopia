@@ -40,7 +40,7 @@ export function FrescoViewer() {
     let cancelled = false
     supabase
       .from('frescoes')
-      .select('*, profiles(display_name)')
+      .select('*, profiles!frescoes_owner_id_fkey(display_name)')
       .eq('id', id)
       .single()
       .then(async ({ data, error }) => {
