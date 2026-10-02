@@ -12,7 +12,8 @@
 import * as tf from '@tensorflow/tfjs'
 import { DOODLE_CLASSES } from './doodleClasses'
 
-const MODEL_URL = 'https://yining1023.github.io/doodleNet/demo/DoodleClassifier_345/model/model.json'
+const MODEL_URL =
+  'https://yining1023.github.io/doodleNet/demo/DoodleClassifier_345/model/model.json'
 /** The model was trained on 28x28 grids, same as the MNIST-style Quick, Draw! bitmaps. */
 const INPUT_SIZE = 28
 

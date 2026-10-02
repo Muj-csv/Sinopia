@@ -165,7 +165,9 @@ export function DrawCanvas({
   return (
     <div
       ref={containerRef}
-      className={eyedropperArmed ? 'draw-canvas-container eyedropper-armed' : 'draw-canvas-container'}
+      className={
+        eyedropperArmed ? 'draw-canvas-container eyedropper-armed' : 'draw-canvas-container'
+      }
     >
       <Stage
         ref={stageRef}

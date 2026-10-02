@@ -40,24 +40,27 @@ export function TermsPage() {
           <li>Exact locations of places where showing the exact spot would put someone at risk.</li>
         </ul>
         <p>
-          Reporting a published fresco hides it from Sinopia immediately, pending review (one
-          report is enough -- there is no threshold to game). Report a specific fresco from its own
-          page; for anything else, including your own account or data, use the contact below.
+          Reporting a published fresco hides it from Sinopia immediately, pending review (one report
+          is enough -- there is no threshold to game). Report a specific fresco from its own page;
+          for anything else, including your own account or data, use the contact below.
         </p>
 
         <h3>Takedown requests</h3>
         <p>
           To report content, request removal of a fresco (yours or someone else&apos;s), or ask
-          about your data, email{' '}
-          <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a>. Include a link to the fresco or
-          profile if you have one -- it&apos;s the fastest way for us to find what you mean.
+          about your data, email <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a>. Include a
+          link to the fresco or profile if you have one -- it&apos;s the fastest way for us to find
+          what you mean.
         </p>
 
         <h3>No warranty</h3>
         <p>
           Sinopia is a small, independently run project provided as-is, with no uptime guarantee.
-          See <Link className="link" to="/about">About</Link> for licensing and the services it
-          relies on.
+          See{' '}
+          <Link className="link" to="/about">
+            About
+          </Link>{' '}
+          for licensing and the services it relies on.
         </p>
 
         <p>
