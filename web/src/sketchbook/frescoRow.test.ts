@@ -22,6 +22,7 @@ function row(overrides: Partial<FrescoRow> = {}): FrescoRow {
     created_at: '2026-09-27T00:00:00.000Z',
     updated_at: '2026-09-27T00:00:00.000Z',
     published_at: null,
+    references_used: [],
     ...overrides,
   }
 }

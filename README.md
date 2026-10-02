@@ -43,6 +43,11 @@ A finished piece is a **fresco**. Keep it private in your **Sketchbook**, or pub
 | In-browser safety check before publishing | Done |
 | Weather at capture ("light rain, 24°C") | Done |
 | About page: licences, privacy and credits | Done |
+| Terms & safety: age requirement, acceptable use, takedown contact | Done |
+| Reference images used while drawing are credited on the published fresco | Done |
+| Photo eyedropper: pick a colour straight from the photo | Done |
+| "Looks like..." doodle-guess chips in the reference panel, from an on-device model | Done |
+| Achievements: private milestones about your own work, not a ranking | Done |
 | Seeded demo frescoes on the map | Script ready, artwork pending |
 
 ## How it works
@@ -83,6 +88,7 @@ flowchart LR
 | References | Openverse API |
 | Street-level imagery | Mapillary (MapillaryJS viewer), Panoramax fallback |
 | Safety check | nsfwjs (TensorFlow.js), lazy-loaded at publish |
+| Doodle-guess chips | DoodleNet (TensorFlow.js), lazy-loaded on request |
 | Weather | Open-Meteo historical API |
 | Tests | Vitest, Playwright, PGlite (schema tests) |
 

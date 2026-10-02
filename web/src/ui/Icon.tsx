@@ -40,6 +40,9 @@ export type IconName =
   | 'friends'
   | 'qr'
   | 'star'
+  | 'eyedropper'
+  | 'trophy'
+  | 'bell'
 
 /**
  * Inlined once at the app root so `<use href="#i-name">` resolves without a network round trip and

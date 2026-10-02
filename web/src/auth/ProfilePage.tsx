@@ -299,6 +299,11 @@ function ProfileEditor({ userId }: { userId: string }) {
 
       {friendCode !== null && <SinopiaCodeCard code={friendCode} />}
 
+      <Link className="btn-o" to="/achievements">
+        <Icon name="trophy" />
+        Achievements
+      </Link>
+
       <button type="button" className="btn-o" onClick={() => supabase.auth.signOut()}>
         Sign out
       </button>

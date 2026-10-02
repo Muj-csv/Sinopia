@@ -76,7 +76,12 @@ create table public.frescoes (
   report_count    int not null default 0,
   created_at      timestamptz not null default now(),
   updated_at      timestamptz not null default now(),
-  published_at    timestamptz
+  published_at    timestamptz,
+  -- Added by 0005_references_used.sql. Metadata only (title/creator/licence/source link) for any
+  -- Openverse reference pinned while drawing -- never the image itself (D-009/ADR-005 already
+  -- forbid storing those). Shaped like referencesClient.ts's `Reference`.
+  references_used jsonb not null default '[]'::jsonb
+    constraint frescoes_references_used_is_array check (jsonb_typeof(references_used) = 'array')
 );
 
 -- Added by 0004_friends.sql. Must be one of this artist's own published frescoes -- enforced by
@@ -327,11 +332,12 @@ create policy "delete own frescoes" on public.frescoes
 
 -- Owners may not touch moderation, report counts or the derived location.
 revoke update on public.frescoes from anon, authenticated;
-grant update (title, caption, memory, tags, visibility, pin_precision, place_name)
+grant update (title, caption, memory, tags, visibility, pin_precision, place_name, references_used)
   on public.frescoes to authenticated;
 revoke insert on public.frescoes from anon, authenticated;
 grant insert (id, owner_id, title, caption, memory, tags, visibility, pin_precision, place_name,
-              captured_at, width, height, photo_path, drawing_path, composite_path, thumb_path)
+              captured_at, width, height, photo_path, drawing_path, composite_path, thumb_path,
+              references_used)
   on public.frescoes to authenticated;
 
 create policy "owner reads own exact location" on public.fresco_locations

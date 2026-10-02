@@ -128,6 +128,10 @@ export function AboutPage() {
         </ul>
 
         <p>
+          <Link className="link" to="/terms">
+            Terms &amp; safety
+          </Link>
+          {' · '}
           <Link className="link" to="/me">
             Back to profile
           </Link>

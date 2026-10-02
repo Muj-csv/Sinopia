@@ -160,6 +160,25 @@ export function FrescoViewer() {
               </ul>
             )}
 
+            {/* CLAUDE.md: a traced reference can carry an attribution duty, so whatever was
+                pinned while drawing travels with the fresco rather than staying implicit. */}
+            {fresco.references_used.length > 0 && (
+              <div className="viewer-references">
+                <h3>References</h3>
+                <ul>
+                  {fresco.references_used.map((ref) => (
+                    <li key={ref.id}>
+                      <a href={ref.foreign_landing_url} target="_blank" rel="noreferrer noopener">
+                        {ref.title}
+                      </a>{' '}
+                      · {ref.license.toUpperCase()}
+                      {ref.license_version ? ` ${ref.license_version}` : ''} · {ref.creator}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
             {spot !== null && <SpotMap lng={spot.lng} lat={spot.lat} />}
 
             {/* FR-015: never for neighborhood precision -- would reveal the exact spot. */}

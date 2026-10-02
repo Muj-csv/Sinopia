@@ -50,6 +50,16 @@
   color: var(--ink-2);
 }
 
+.reference-guess {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+.reference-guess .t-small {
+  color: var(--ink-2);
+}
+
 /* The panel's own view of everything currently pinned -- open it with the panel closed and the
  * floating thumbs by the canvas corner are still the quick glance; this is the full list. */
 .reference-pinned-section {

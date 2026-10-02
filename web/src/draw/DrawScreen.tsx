@@ -7,6 +7,7 @@
 import type Konva from 'konva'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
+import { markMilestone } from '../achievements/localMilestones'
 import { getDraft, updateDraft, type Draft } from '../lib/draftStore'
 import { PinnedReferences } from '../references/PinnedReference'
 import { ReferencePanel } from '../references/ReferencePanel'
@@ -15,7 +16,7 @@ import { FlowBar } from '../ui/FlowBar'
 import { Icon } from '../ui/Icon'
 import { DrawCanvas, type Tool } from './DrawCanvas'
 import './draw.css'
-import { exportFresco } from './exportFresco'
+import { drawingOnlyCanvas, exportFresco } from './exportFresco'
 import { BRUSHES, DEFAULT_BRUSH, DEFAULT_SIZE } from './brushes'
 import { PALETTE, rememberColor } from './palette'
 import {
@@ -59,6 +60,14 @@ export function DrawScreen() {
   const [pinnedReferences, setPinnedReferences] = useState<Reference[]>([])
   const [expandedPinned, setExpandedPinned] = useState<Reference | null>(null)
   const [save, setSave] = useState<SaveResult>({ savedAt: null, failed: false })
+  const [eyedropperArmed, setEyedropperArmed] = useState(false)
+
+  const pickColorFromPhoto = useCallback((hex: string) => {
+    setTool((t) => ({ ...t, color: hex }))
+    setRecentColors((prev) => rememberColor(prev, hex))
+    setEyedropperArmed(false)
+    markMilestone('eyedropper')
+  }, [])
 
   useEffect(() => {
     if (draftId === null) return
@@ -130,14 +139,24 @@ export function DrawScreen() {
 
   // Toggle: pinning an already-pinned reference (clicking it again in the panel) unpins it.
   const togglePin = useCallback((reference: Reference) => {
-    setPinnedReferences((prev) =>
-      prev.some((r) => r.id === reference.id)
-        ? prev.filter((r) => r.id !== reference.id)
-        : [...prev, reference],
-    )
+    setPinnedReferences((prev) => {
+      if (prev.some((r) => r.id === reference.id)) return prev.filter((r) => r.id !== reference.id)
+      markMilestone('pinned-reference')
+      return [...prev, reference]
+    })
   }, [])
   const unpin = useCallback((id: string) => {
     setPinnedReferences((prev) => prev.filter((r) => r.id !== id))
+  }, [])
+
+  // tfjs is a multi-hundred-KB dependency (nsfwCheck.ts's lesson: loading it eagerly blew past
+  // the production build's precache budget), so doodleGuess.ts -- and tfjs with it -- is only
+  // pulled into its own chunk once someone actually taps "What am I drawing?".
+  const handleGuessDoodle = useCallback(async () => {
+    if (stageRef.current === null) return []
+    markMilestone('doodle-guess')
+    const { guessDoodle } = await import('./doodleGuess')
+    return guessDoodle(drawingOnlyCanvas(stageRef.current))
   }, [])
 
   useEffect(() => {
@@ -231,6 +250,15 @@ export function DrawScreen() {
         )}
 
         <div className="draw-stage">
+          {eyedropperArmed && (
+            <p className="draw-eyedropper-hint">
+              <Icon name="eyedropper" />
+              <span>Tap the photo to pick its colour</span>
+              <button type="button" className="link" onClick={() => setEyedropperArmed(false)}>
+                Cancel
+              </button>
+            </p>
+          )}
           <DrawCanvas
             stageRef={stageRef}
             photoUrl={photoUrl}
@@ -241,6 +269,8 @@ export function DrawScreen() {
             layerVisible={layerVisible}
             tool={tool}
             onStrokeComplete={addStroke}
+            eyedropperArmed={eyedropperArmed}
+            onPickColor={pickColorFromPhoto}
           />
           <PinnedReferences
             references={pinnedReferences}
@@ -256,6 +286,7 @@ export function DrawScreen() {
             onClose={() => setReferenceOpen(false)}
             pinned={pinnedReferences}
             onPin={togglePin}
+            onGuessDoodle={handleGuessDoodle}
           />
         )}
 
@@ -272,6 +303,7 @@ export function DrawScreen() {
           onClearLayer={clearLayer}
           referenceOpen={referenceOpen}
           onToggleReference={() => setReferenceOpen((v) => !v)}
+          onPickFromPhoto={() => setEyedropperArmed(true)}
         />
       </div>
 

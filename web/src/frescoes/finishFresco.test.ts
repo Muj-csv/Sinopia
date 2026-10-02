@@ -20,6 +20,7 @@ function input(overrides: Partial<FinishInput> = {}): FinishInput {
     height: 1600,
     capturedAt: null,
     location: { lat: 15.145, lng: 120.593 },
+    referencesUsed: [],
     visibility: 'public',
     precision: 'neighborhood',
     ...overrides,

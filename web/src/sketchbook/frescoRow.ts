@@ -1,5 +1,5 @@
 /** Shape of a `frescoes` row as read back from Supabase (docs/schema.sql). */
-import type { PinPrecision, Visibility } from '../frescoes/fresco'
+import type { PinPrecision, ReferenceUsed, Visibility } from '../frescoes/fresco'
 
 export interface FrescoRow {
   id: string
@@ -21,6 +21,7 @@ export interface FrescoRow {
   created_at: string
   updated_at: string
   published_at: string | null
+  references_used: ReferenceUsed[]
 }
 
 /** Which heading the Sketchbook shelves are cut by (SCREENS.md: a Place / Month segmented control). */

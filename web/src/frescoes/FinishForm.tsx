@@ -11,10 +11,12 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { AuthGate } from '../auth/AuthGate'
+import { checkNewAchievements } from '../achievements/checkAchievements'
 import { deleteDraft, getDraft, type Draft } from '../lib/draftStore'
 import { useSession } from '../lib/useSession'
 import { FlowBar } from '../ui/FlowBar'
 import { Icon } from '../ui/Icon'
+import { useToast } from '../ui/toastContext'
 import './fresco.css'
 import {
   MAX_CAPTION,
@@ -32,6 +34,7 @@ import { finishFresco } from './finishFresco'
 
 function FinishFormInner({ draft, userId }: { draft: Draft; userId: string }) {
   const navigate = useNavigate()
+  const toast = useToast()
   const [fields, setFields] = useState<FinishFields>({
     title: '',
     caption: '',
@@ -84,6 +87,14 @@ function FinishFormInner({ draft, userId }: { draft: Draft; userId: string }) {
       height: draft.height,
       capturedAt: draft.capturedAt,
       location: draft.location,
+      referencesUsed: (draft.pinnedReferences ?? []).map((r) => ({
+        id: r.id,
+        title: r.title,
+        creator: r.creator,
+        license: r.license,
+        license_version: r.license_version,
+        foreign_landing_url: r.foreign_landing_url,
+      })),
       visibility,
       precision,
     })
@@ -103,6 +114,19 @@ function FinishFormInner({ draft, userId }: { draft: Draft; userId: string }) {
       setError(`Saved to your Sketchbook, but publishing didn't go through: ${outcome.error}`)
       return
     }
+
+    toast.show(
+      outcome.status === 'published' ? 'Published to Sinopia' : 'Saved to your Sketchbook',
+      outcome.status === 'published' ? 'globe' : 'book',
+    )
+
+    // Stats can only have moved just now, so this is the one moment worth a round trip to find
+    // out what's newly unlocked; everywhere else just reads localMilestones.ts's flags directly.
+    checkNewAchievements(userId).then((newlyUnlocked) => {
+      for (const achievement of newlyUnlocked) {
+        toast.show(`Achievement unlocked: ${achievement.name}`, 'trophy')
+      }
+    })
 
     navigate('/sketchbook')
   }

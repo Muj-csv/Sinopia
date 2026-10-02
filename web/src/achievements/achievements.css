@@ -1,0 +1,32 @@
+.achievement-list {
+  list-style: none;
+  display: grid;
+  gap: var(--space-2);
+  padding: 0;
+  margin: 0;
+}
+
+.achievement {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  background: var(--paper);
+  border: var(--edge);
+  border-radius: var(--r-card);
+  color: var(--ink-2);
+}
+/* Reached: full ink, not a yellow fill -- yellow stays reserved for the one button per screen
+ * (DESIGN_BRIEF.md §11). */
+.achievement.done {
+  color: var(--ink);
+}
+.achievement .i {
+  flex: none;
+  margin-top: 2px;
+}
+
+.achievement-name {
+  font: 700 17px/22px var(--pencil);
+  margin: 0;
+}

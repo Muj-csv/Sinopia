@@ -30,7 +30,8 @@ CORE MECHANISM    photo of a real place + drawing layer + exact place/time → p
 MUST HAVE         capture + pin · draw with layers/undo · reference panel · save · publish/unpublish with precision
                   · globe with clusters · viewer with Reality↔Drawing slider · Same Wall · report · seeded frescoes
 SUPPORTING        street-level view · angle chips · safety check · weather
-DEFERRED          doodle-to-word suggestions · responses · timelines · collections · AR
+                  · doodle-to-word suggestions (reopened 2026-10-02, D-019: on-device model, no server)
+DEFERRED          responses · timelines · collections · AR
 DO NOT BUILD YET  likes/followers/feeds · comments · generative AI · native apps · anything paid
 FIRST PROOF       Phase 0: deployed globe + sign-in + a real-phone drawing spike + RLS checks on the real project
 ```

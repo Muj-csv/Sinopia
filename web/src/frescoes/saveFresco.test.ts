@@ -40,6 +40,7 @@ const baseInput: SaveFrescoInput = {
   height: 1200,
   capturedAt: null,
   location: { lat: 14.6, lng: 121.05 },
+  referencesUsed: [],
 }
 
 describe('saveFresco', () => {
@@ -67,6 +68,31 @@ describe('saveFresco', () => {
     expect(frescoRow.owner_id).toBe('u1')
     expect(frescoRow.title).toBe('A wall')
     expect(frescoRow.photo_path).toBe(`u1/${result.frescoId}/photo.webp`)
+  })
+
+  it('passes pinned references through to the insert', async () => {
+    const { client, insert } = makeClient()
+    await saveFresco(
+      {
+        ...baseInput,
+        referencesUsed: [
+          {
+            id: 'ov1',
+            title: 'Fire hydrant',
+            creator: 'Jane',
+            license: 'by-sa',
+            license_version: '4.0',
+            foreign_landing_url: 'https://example.org/ov1',
+          },
+        ],
+      },
+      client,
+    )
+
+    const frescoRow = insert.mock.calls.find((c) => !('fresco_id' in c[0]))![0]
+    expect(frescoRow.references_used).toEqual([
+      expect.objectContaining({ id: 'ov1', creator: 'Jane' }),
+    ])
   })
 
   it('inserts fresco_locations when a location is present', async () => {

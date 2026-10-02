@@ -18,6 +18,7 @@
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.117.2",
+    "@tensorflow/tfjs": "^4.22.0",
     "@types/qrcode": "^1.5.6",
     "browser-image-compression": "^2.0.2",
     "exifr": "^7.1.3",

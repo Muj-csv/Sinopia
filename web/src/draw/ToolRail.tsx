@@ -27,6 +27,7 @@ export function ToolRail({
   onClearLayer,
   referenceOpen,
   onToggleReference,
+  onPickFromPhoto,
 }: {
   tool: Tool
   onToolChange: (tool: Tool) => void
@@ -39,6 +40,8 @@ export function ToolRail({
   /** PHASE-2 task 1: the toolbar slot the reference panel plugs into. */
   referenceOpen: boolean
   onToggleReference: () => void
+  /** Arms the canvas so the next tap on the photo picks a colour instead of drawing. */
+  onPickFromPhoto: () => void
 }) {
   const [open, setOpen] = useState<OpenPopover>(null)
   /** Remembered when a brush is picked, so switching to the eraser and back returns to it. */
@@ -151,6 +154,21 @@ export function ToolRail({
                 <Icon name="plus" />
               </label>
             </div>
+
+            {/* COUNCIL_studio-v0.md: "an eyedropper that samples from the photo... the most
+                only-Sinopia tool there is." Closes the popover so the photo is visible to tap. */}
+            <button
+              type="button"
+              className="btn-o"
+              onClick={() => {
+                onPickFromPhoto()
+                close()
+              }}
+            >
+              <Icon name="eyedropper" />
+              Pick from photo
+            </button>
+
             <label className="field">
               <span>Opacity</span>
               <input
