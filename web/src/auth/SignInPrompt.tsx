@@ -36,7 +36,10 @@ export function SignInPrompt({ message }: { message?: string }) {
           publish.
         </p>
         <p className="t-small">
-          You must be 13 or older to continue. <Link className="link" to="/terms">Terms &amp; safety</Link>
+          You must be 13 or older to continue.{' '}
+          <Link className="link" to="/terms">
+            Terms &amp; safety
+          </Link>
         </p>
       </div>
     </div>
