@@ -162,7 +162,7 @@ export function ReferencePanel({
             onClick={runGuess}
             disabled={guessStatus === 'guessing'}
           >
-            {guessStatus === 'guessing' ? 'Looking…' : "What am I drawing?"}
+            {guessStatus === 'guessing' ? 'Looking…' : 'What am I drawing?'}
           </button>
           {guessStatus === 'done' && guesses.length === 0 && (
             <span className="t-small">Draw a bit more first.</span>
