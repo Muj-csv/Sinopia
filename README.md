@@ -97,7 +97,7 @@ flowchart LR
 **Hosting:** Vercel (existing account), importing `Muj-csv/Sinopia` with root directory `web/`. Account setup and every key/value the team needs to send back: [docs/SETUP.md](docs/SETUP.md).
 
 **Requirements**
-- Node.js 20+
+- Node.js 22.22.2+, 24.15.0+, or 26+ (see `web/package.json`'s `engines` field)
 - A free Supabase project (Vercel account already exists)
 - (optional) A free Mapillary client token and Openverse API client
 
@@ -150,7 +150,6 @@ docs/               Concept, PRD, architecture, plan, decisions, design, build p
 ## Roadmap
 
 - [ ] MVP for GIBC V2 (see [implementation plan](docs/IMPLEMENTATION_PLAN.md))
-- [ ] Suggest reference words from what you're drawing
 - [ ] "Draw this wall too": respond to someone's fresco at the same place
 - [ ] Place timelines: the same wall across years
 - [ ] Collections and map stories
