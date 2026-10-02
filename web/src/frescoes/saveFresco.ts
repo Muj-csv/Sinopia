@@ -18,12 +18,16 @@ export interface SaveFrescoInput extends FinishFields {
   capturedAt: string | null
   location: { lat: number; lng: number } | null
   referencesUsed: ReferenceUsed[]
+  /** Draw This Wall: the public fresco this one responds to. */
+  sourceFrescoId?: string | null
 }
 
 export interface SaveFrescoResult {
   ok: boolean
   frescoId: string
   error?: string
+  /** Postgres/PostgREST error code, when there is one ('42501' = a row-level security refusal). */
+  code?: string
 }
 
 async function uploadOne(
@@ -96,6 +100,8 @@ export async function saveFresco(
       composite_path: paths.composite,
       thumb_path: paths.thumb,
       references_used: input.referencesUsed,
+      // Only sent when set, so an ordinary save never depends on 0007_draw_this_wall.sql.
+      ...(input.sourceFrescoId ? { source_fresco_id: input.sourceFrescoId } : {}),
     }
     let { error: insertError } = await client.from('frescoes').insert(frescoRow)
 
@@ -123,6 +129,14 @@ export async function saveFresco(
 
     return { ok: true, frescoId }
   } catch (err) {
-    return { ok: false, frescoId, error: err instanceof Error ? err.message : 'Save failed' }
+    const code =
+      typeof err === 'object' && err !== null && 'code' in err ? String(err.code) : undefined
+    const message =
+      err instanceof Error
+        ? err.message
+        : typeof err === 'object' && err !== null && 'message' in err
+          ? String(err.message)
+          : 'Save failed'
+    return { ok: false, frescoId, error: message, code }
   }
 }

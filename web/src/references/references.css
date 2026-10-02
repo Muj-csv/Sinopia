@@ -178,6 +178,12 @@
   background: none;
   cursor: pointer;
 }
+/* Draw This Wall: the fresco being answered sits at the top of the pinned column. */
+.response-pin .t-small {
+  display: block;
+  padding: var(--space-1) var(--space-1) 0;
+  overflow-wrap: anywhere;
+}
 .pinned-reference-thumb img {
   width: 100%;
   display: block;

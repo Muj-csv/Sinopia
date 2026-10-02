@@ -83,7 +83,11 @@ create table public.frescoes (
   -- Openverse reference pinned while drawing -- never the image itself (D-009/ADR-005 already
   -- forbid storing those). Shaped like referencesClient.ts's `Reference`.
   references_used jsonb not null default '[]'::jsonb
-    constraint frescoes_references_used_is_array check (jsonb_typeof(references_used) = 'array')
+    constraint frescoes_references_used_is_array check (jsonb_typeof(references_used) = 'array'),
+  -- Added by 0007_draw_this_wall.sql. The fresco this one responds to; set once at save time
+  -- (insert grant only). Null when it isn't a response, or once the source is deleted.
+  source_fresco_id uuid references public.frescoes (id) on delete set null
+    constraint frescoes_source_not_self check (source_fresco_id <> id)
 );
 
 -- Added by 0004_friends.sql. Must be one of this artist's own published frescoes -- enforced by
@@ -112,6 +116,8 @@ create table public.reports (
 create index frescoes_owner_idx      on public.frescoes (owner_id, created_at desc);
 create index frescoes_public_loc_idx on public.frescoes using gist (public_location)
   where visibility = 'public' and moderation = 'ok';
+create index frescoes_source_idx     on public.frescoes (source_fresco_id)
+  where source_fresco_id is not null;
 
 -- Added by 0006_missions_and_collaborative_frescos.sql. Deliberately independent of Draw This Wall
 -- and Place Timeline (built in parallel elsewhere): no `places` table -- missions and collaborative
@@ -573,6 +579,18 @@ create policy "read own or public frescoes" on public.frescoes
   );
 create policy "insert own frescoes" on public.frescoes
   for insert with check (owner_id = auth.uid());
+-- Added by 0007_draw_this_wall.sql. A response may only name a fresco you can see as public, or
+-- one of your own. Restrictive, so it narrows the policy above instead of widening it.
+create policy "respond only to a public fresco or your own" on public.frescoes
+  as restrictive for insert to authenticated
+  with check (
+    source_fresco_id is null
+    or exists (
+      select 1 from public.frescoes s
+       where s.id = frescoes.source_fresco_id
+         and ((s.visibility = 'public' and s.moderation = 'ok') or s.owner_id = auth.uid())
+    )
+  );
 create policy "update own frescoes" on public.frescoes
   for update using (owner_id = auth.uid()) with check (owner_id = auth.uid());
 create policy "delete own frescoes" on public.frescoes
@@ -585,7 +603,7 @@ grant update (title, caption, memory, tags, visibility, pin_precision, place_nam
 revoke insert on public.frescoes from anon, authenticated;
 grant insert (id, owner_id, title, caption, memory, tags, visibility, pin_precision, place_name,
               captured_at, width, height, photo_path, drawing_path, composite_path, thumb_path,
-              references_used)
+              references_used, source_fresco_id)
   on public.frescoes to authenticated;
 
 create policy "owner reads own exact location" on public.fresco_locations

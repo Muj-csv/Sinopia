@@ -22,6 +22,9 @@ export interface FrescoRow {
   updated_at: string
   published_at: string | null
   references_used: ReferenceUsed[]
+  /** Draw This Wall (0007): the fresco this one responds to. Absent before that migration runs. */
+  source_fresco_id?: string | null
+  moderation?: 'ok' | 'flagged' | 'removed'
 }
 
 /** Which heading the Sketchbook shelves are cut by (SCREENS.md: a Place / Month segmented control). */

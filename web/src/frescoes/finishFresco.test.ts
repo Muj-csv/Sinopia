@@ -102,6 +102,28 @@ describe('finishFresco', () => {
     })
   })
 
+  it('saves a response without its link when the source was hidden meanwhile, and says so', async () => {
+    const save = vi
+      .fn()
+      .mockResolvedValueOnce({ ok: false, frescoId: 'x', error: 'rls', code: '42501' })
+      .mockResolvedValueOnce({ ok: true, frescoId: FRESCO })
+    const publish = vi.fn().mockResolvedValue({ ok: true })
+    const outcome = await finishFresco(input({ sourceFrescoId: 'src-1' }), { save, publish })
+
+    expect(save).toHaveBeenCalledTimes(2)
+    expect(save.mock.calls[1][0].sourceFrescoId).toBeNull()
+    expect(outcome).toEqual({ status: 'published', frescoId: FRESCO, unlinked: true })
+  })
+
+  it('does not retry an ordinary save failure, even for a response', async () => {
+    const save = vi.fn().mockResolvedValue({ ok: false, frescoId: 'x', error: 'upload failed' })
+    const publish = vi.fn()
+    const outcome = await finishFresco(input({ sourceFrescoId: 'src-1' }), { save, publish })
+
+    expect(save).toHaveBeenCalledTimes(1)
+    expect(outcome).toEqual({ status: 'save-failed', error: 'upload failed' })
+  })
+
   it('does not hand visibility or precision to saveFresco, which always writes private', async () => {
     const d = deps()
     await finishFresco(input(), d)

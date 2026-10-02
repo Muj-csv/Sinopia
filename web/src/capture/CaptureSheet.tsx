@@ -9,6 +9,8 @@
  */
 import { useEffect, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
+import { ResponseSourceCard } from '../frescoes/ResponseSourceCard'
+import { loadDrawSource, type DrawSource } from '../frescoes/responses'
 import { hasGps, readExif } from '../lib/exif'
 import { createDraft, listDrafts, type Draft } from '../lib/draftStore'
 import { prepareImage } from '../lib/images'
@@ -29,6 +31,12 @@ export function CaptureSheet() {
   const [error, setError] = useState<string | null>(null)
   const [drafts, setDrafts] = useState<Draft[]>([])
   const [contextLabel, setContextLabel] = useState<string | null>(null)
+  // Draw This Wall: '/new?from=<fresco id>' starts a response to that fresco.
+  const fromId = params.get('from')
+  const [source, setSource] = useState<DrawSource | null>(null)
+  const [sourceStatus, setSourceStatus] = useState<'none' | 'loading' | 'ready' | 'unavailable'>(
+    fromId === null ? 'none' : 'loading',
+  )
 
   useEffect(() => {
     listDrafts()
@@ -52,6 +60,18 @@ export function CaptureSheet() {
       )
     }
   }, [missionId, collabId])
+  useEffect(() => {
+    if (fromId === null) return
+    let cancelled = false
+    loadDrawSource(fromId).then((loaded) => {
+      if (cancelled) return
+      setSource(loaded)
+      setSourceStatus(loaded === null ? 'unavailable' : 'ready')
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [fromId])
 
   const handleFile = async (file: File | undefined) => {
     if (file === undefined) return
@@ -71,8 +91,10 @@ export function CaptureSheet() {
       // faster, but it raised the browser's location prompt on every capture, including the
       // photos that already carried a position -- a permission request nobody needed to answer.
       // Pin check can still place it by hand, and offers "Use my location" on demand.
-      const devicePosition = hasGps(exif) ? null : await getDevicePosition()
-      const resolved = resolveLocationSource(exif, devicePosition)
+      // A response without photo GPS starts at the source's public pin instead, so no prompt then.
+      const sourcePoint = source?.point ?? null
+      const devicePosition = hasGps(exif) || sourcePoint !== null ? null : await getDevicePosition()
+      const resolved = resolveLocationSource(exif, devicePosition, sourcePoint)
 
       const draft = await createDraft({
         photo: prepared.photo,
@@ -85,9 +107,10 @@ export function CaptureSheet() {
             ? { lat: resolved.lat, lng: resolved.lng }
             : null,
         locationSource: resolved.source,
-        placeName: null,
         missionId: missionId ?? undefined,
         collaborativeFrescoId: collabId ?? undefined,
+        placeName: resolved.source === 'source' ? (source?.placeName ?? null) : null,
+        source: source ?? undefined,
       })
 
       navigate(`/new/pin?draft=${draft.id}`)
@@ -113,6 +136,21 @@ export function CaptureSheet() {
             <p className="capture-subtitle">A photo of where you are, and where it was taken.</p>
           </div>
 
+          {source !== null && (
+            <ResponseSourceCard
+              source={source}
+              hint="Take your own photo of this place. Their fresco stays exactly as it is."
+            />
+          )}
+          {sourceStatus === 'unavailable' && (
+            <p className="notice" role="status">
+              <Icon name="info" />
+              <span>
+                That fresco isn&apos;t public any more, so this will be an ordinary underdrawing.
+              </span>
+            </p>
+          )}
+
           <div className="options">
             {/* Take a photo is the primary action, so it leads. Both are paper: a file input can't
                 be a .btn-y, and this screen's yellow belongs to Confirm spot on the next step. */}
@@ -126,6 +164,7 @@ export function CaptureSheet() {
                 type="file"
                 accept="image/*"
                 capture="environment"
+                disabled={sourceStatus === 'loading'}
                 onChange={(e) => handleFile(e.target.files?.[0])}
               />
             </label>
@@ -139,6 +178,7 @@ export function CaptureSheet() {
               <input
                 type="file"
                 accept="image/*"
+                disabled={sourceStatus === 'loading'}
                 onChange={(e) => handleFile(e.target.files?.[0])}
               />
             </label>
