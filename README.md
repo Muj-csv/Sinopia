@@ -15,7 +15,6 @@ _Sinopia_ (the reddish underdrawing a fresco painter sketched on the wall before
 
 </div>
 
-> **Draft README.** Sinopia is being built for the Global Innovation Build Challenge V2 (Sept–Oct 2026). Features marked _planned_ aren't finished yet, and this document will change as the project does.
 
 ---
 
