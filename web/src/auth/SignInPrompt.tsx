@@ -5,6 +5,7 @@
  * full-width paper buttons of equal weight -- neither is yellow, because neither is the
  * recommended one. No brand-coloured logo buttons.
  */
+import { Link } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import './auth.css'
 
@@ -33,6 +34,9 @@ export function SignInPrompt({ message }: { message?: string }) {
         <p className="t-small">
           We only ever ask for your name and email. Your drafts stay on this device until you
           publish.
+        </p>
+        <p className="t-small">
+          You must be 13 or older to continue. <Link className="link" to="/terms">Terms &amp; safety</Link>
         </p>
       </div>
     </div>

@@ -59,6 +59,20 @@ export function isValid(errors: FieldErrors): boolean {
   return Object.keys(errors).length === 0
 }
 
+/**
+ * Attribution metadata for a reference image traced while drawing (CLAUDE.md: "traced Openverse
+ * references can create attribution duties"). Shaped exactly like referencesClient.ts's
+ * `Reference` minus the thumbnail/url, which are only useful during the drawing session itself.
+ */
+export interface ReferenceUsed {
+  id: string
+  title: string
+  creator: string
+  license: string
+  license_version: string | null
+  foreign_landing_url: string
+}
+
 export type FrescoFile = 'photo' | 'drawing' | 'composite' | 'thumb'
 
 /** ARCHITECTURE.md §7: '<owner_id>/<fresco_id>/<file>.webp' inside each bucket. */

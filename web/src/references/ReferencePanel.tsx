@@ -14,15 +14,21 @@ const SUGGESTED_WORDS = ['fire hydrant', 'cat', 'bicycle', 'tree']
 const ANGLE_CHIPS = ['side view', 'from above', 'close-up']
 
 type Status = 'loading' | 'results' | 'empty' | 'error' | 'rate-limited'
+type GuessStatus = 'idle' | 'guessing' | 'done'
 
 export function ReferencePanel({
   onClose,
   pinned,
   onPin,
+  onGuessDoodle,
 }: {
   onClose: () => void
   pinned: Reference[]
   onPin: (reference: Reference) => void
+  /** "Looks like..." chips (DEFERRED in VALIDATION.md, reopened): a small on-device model guesses
+   *  what the current drawing looks like. Optional so the panel still works if a caller can't
+   *  produce a snapshot (e.g. no stage mounted yet). */
+  onGuessDoodle?: () => Promise<{ label: string; probability: number }[]>
 }) {
   const [query, setQuery] = useState('')
   const [angleSuffix, setAngleSuffix] = useState<string | null>(null)
@@ -30,6 +36,16 @@ export function ReferencePanel({
   const [status, setStatus] = useState<Status>('empty')
   const [results, setResults] = useState<Reference[]>([])
   const [enlarged, setEnlarged] = useState<Reference | null>(null)
+  const [guesses, setGuesses] = useState<string[]>([])
+  const [guessStatus, setGuessStatus] = useState<GuessStatus>('idle')
+
+  const runGuess = async () => {
+    if (onGuessDoodle === undefined) return
+    setGuessStatus('guessing')
+    const result = await onGuessDoodle()
+    setGuesses(result.map((g) => g.label))
+    setGuessStatus('done')
+  }
 
   const effectiveQuery = useMemo(
     () => (angleSuffix !== null ? `${debouncedQuery} ${angleSuffix}` : debouncedQuery),
@@ -135,6 +151,40 @@ export function ReferencePanel({
               </div>
             ))}
           </div>
+        </div>
+      )}
+
+      {idle && onGuessDoodle !== undefined && (
+        <div className="reference-guess">
+          <button
+            type="button"
+            className="chip"
+            onClick={runGuess}
+            disabled={guessStatus === 'guessing'}
+          >
+            {guessStatus === 'guessing' ? 'Looking…' : "What am I drawing?"}
+          </button>
+          {guessStatus === 'done' && guesses.length === 0 && (
+            <span className="t-small">Draw a bit more first.</span>
+          )}
+          {guesses.length > 0 && (
+            <>
+              <span className="t-small">Looks like:</span>
+              {guesses.map((label) => (
+                <button
+                  key={label}
+                  type="button"
+                  className="chip"
+                  onClick={() => {
+                    setQuery(label)
+                    setAngleSuffix(null)
+                  }}
+                >
+                  {label}
+                </button>
+              ))}
+            </>
+          )}
         </div>
       )}
 

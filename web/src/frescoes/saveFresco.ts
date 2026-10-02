@@ -5,7 +5,7 @@
  */
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { supabase } from '../lib/supabase'
-import { frescoPath, pointWkt, type FinishFields } from './fresco'
+import { frescoPath, pointWkt, type FinishFields, type ReferenceUsed } from './fresco'
 
 export interface SaveFrescoInput extends FinishFields {
   ownerId: string
@@ -17,6 +17,7 @@ export interface SaveFrescoInput extends FinishFields {
   height: number
   capturedAt: string | null
   location: { lat: number; lng: number } | null
+  referencesUsed: ReferenceUsed[]
 }
 
 export interface SaveFrescoResult {
@@ -74,6 +75,7 @@ export async function saveFresco(
       drawing_path: paths.drawing,
       composite_path: paths.composite,
       thumb_path: paths.thumb,
+      references_used: input.referencesUsed,
     })
     if (insertError) throw insertError
 

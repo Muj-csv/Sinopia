@@ -39,7 +39,9 @@ export function SinopiaCodeCard({ code }: { code: string }) {
   return (
     <div className="profile-code-card">
       <h2 className="t-small">Your Sinopia code</h2>
-      {qr !== null && <img src={qr} alt="" className="profile-code-qr" />}
+      {qr !== null && (
+        <img src={qr} alt={`QR code for Sinopia code ${code}`} className="profile-code-qr" />
+      )}
       <span className="profile-code-value">{code}</span>
       <p className="t-small">
         Someone can type this code, or scan the QR, on their{' '}

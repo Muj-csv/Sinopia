@@ -51,7 +51,13 @@ await as(A, async () => {
   await q(`insert into public.fresco_locations (fresco_id, owner_id, location)
            values ($1, $2, 'SRID=4326;POINT(120.58831 15.14507)')`, [F, A])
 })
-let r = (await q(`select public_location is null as n from public.frescoes where id=$1`, [F])).rows[0]
+let r = (await q(`select references_used from public.frescoes where id=$1`, [F])).rows[0]
+ok(Array.isArray(r.references_used) && r.references_used.length === 0, 'references_used defaults to an empty array')
+await as(A, () => q(`update public.frescoes set references_used = $2 where id=$1`,
+  [F, JSON.stringify([{ id: 'ov1', title: 'Fire hydrant', creator: 'Jane', license: 'by-sa' }])]))
+r = (await q(`select references_used from public.frescoes where id=$1`, [F])).rows[0]
+ok(r.references_used.length === 1 && r.references_used[0].creator === 'Jane', 'owner can record a pinned reference')
+r = (await q(`select public_location is null as n from public.frescoes where id=$1`, [F])).rows[0]
 ok(r.n, 'private fresco has no public_location')
 
 await as(A, () => q(`update public.frescoes set visibility='public', pin_precision='neighborhood' where id=$1`, [F]))

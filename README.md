@@ -43,6 +43,11 @@ A finished piece is a **fresco**. Keep it private in your **Sketchbook**, or pub
 | In-browser safety check before publishing | Done |
 | Weather at capture ("light rain, 24°C") | Done |
 | About page: licences, privacy and credits | Done |
+| Terms & safety: age requirement, acceptable use, takedown contact | Done |
+| Reference images used while drawing are credited on the published fresco | Done |
+| Photo eyedropper: pick a colour straight from the photo | Done |
+| "Looks like..." doodle-guess chips in the reference panel, from an on-device model | Done |
+| Achievements: private milestones about your own work, not a ranking | Done |
 | Seeded demo frescoes on the map | Script ready, artwork pending |
 
 ## How it works
@@ -83,6 +88,7 @@ flowchart LR
 | References | Openverse API |
 | Street-level imagery | Mapillary (MapillaryJS viewer), Panoramax fallback |
 | Safety check | nsfwjs (TensorFlow.js), lazy-loaded at publish |
+| Doodle-guess chips | DoodleNet (TensorFlow.js), lazy-loaded on request |
 | Weather | Open-Meteo historical API |
 | Tests | Vitest, Playwright, PGlite (schema tests) |
 
@@ -91,7 +97,7 @@ flowchart LR
 **Hosting:** Vercel (existing account), importing `Muj-csv/Sinopia` with root directory `web/`. Account setup and every key/value the team needs to send back: [docs/SETUP.md](docs/SETUP.md).
 
 **Requirements**
-- Node.js 20+
+- Node.js 22.22.2+, 24.15.0+, or 26+ (see `web/package.json`'s `engines` field)
 - A free Supabase project (Vercel account already exists)
 - (optional) A free Mapillary client token and Openverse API client
 
@@ -144,7 +150,6 @@ docs/               Concept, PRD, architecture, plan, decisions, design, build p
 ## Roadmap
 
 - [ ] MVP for GIBC V2 (see [implementation plan](docs/IMPLEMENTATION_PLAN.md))
-- [ ] Suggest reference words from what you're drawing
 - [ ] "Draw this wall too": respond to someone's fresco at the same place
 - [ ] Place timelines: the same wall across years
 - [ ] Collections and map stories

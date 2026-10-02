@@ -35,10 +35,17 @@ function withLayerHidden<T>(stage: Konva.Stage, layerName: string, fn: () => T):
   }
 }
 
+/**
+ * Just the drawing layers, transparent where nothing is drawn -- the same trick the composite
+ * export above uses, pulled out so doodleGuess.ts can read a snapshot without caring how the
+ * photo gets hidden.
+ */
+export function drawingOnlyCanvas(stage: Konva.Stage): HTMLCanvasElement {
+  return withLayerHidden(stage, 'photo-layer', () => stage.toCanvas({ pixelRatio: 1 }))
+}
+
 export async function exportFresco(stage: Konva.Stage): Promise<FrescoExport> {
-  const drawingCanvas = withLayerHidden(stage, 'photo-layer', () =>
-    stage.toCanvas({ pixelRatio: 1 }),
-  )
+  const drawingCanvas = drawingOnlyCanvas(stage)
   const compositeCanvas = stage.toCanvas({ pixelRatio: 1 })
 
   const [drawing, composite] = await Promise.all([

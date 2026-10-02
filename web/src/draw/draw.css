@@ -35,6 +35,30 @@
   overflow: auto;
   touch-action: none;
 }
+.draw-canvas-container.eyedropper-armed {
+  cursor: crosshair;
+}
+
+/* Paper, never yellow, this close to the photo (DESIGN_BRIEF.md §11: no yellow behind or around
+ * the canvas). Docked over the stage rather than pushing it down, like the reference lightbox. */
+.draw-eyedropper-hint {
+  position: absolute;
+  top: var(--space-3);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0;
+  padding: var(--space-2) var(--space-3);
+  background: var(--paper);
+  border: var(--edge);
+  border-radius: var(--r-ctl);
+  box-shadow: var(--offset);
+  font: var(--text-caption) / var(--leading-caption) var(--print);
+  white-space: nowrap;
+}
 
 .draw-resume {
   flex: none;
