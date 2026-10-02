@@ -303,6 +303,14 @@ function ProfileEditor({ userId }: { userId: string }) {
         <Icon name="trophy" />
         Achievements
       </Link>
+      <Link className="btn-o" to="/missions">
+        <Icon name="target" />
+        Missions
+      </Link>
+      <Link className="btn-o" to="/collab">
+        <Icon name="layers" />
+        Collaborative Frescoes
+      </Link>
 
       <button type="button" className="btn-o" onClick={() => supabase.auth.signOut()}>
         Sign out

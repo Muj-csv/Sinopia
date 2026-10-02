@@ -62,12 +62,20 @@
 
 .draw-resume {
   flex: none;
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
   margin: 0;
   padding: var(--space-2) var(--space-4);
   font: var(--text-caption) / var(--leading-caption) var(--print);
   color: var(--ink-2);
   background: var(--paper);
   border-bottom: 2px solid var(--rule);
+}
+.draw-resume .i {
+  width: 16px;
+  height: 16px;
+  flex: none;
 }
 
 /* Save status in the top bar. */

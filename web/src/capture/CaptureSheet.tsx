@@ -8,7 +8,7 @@
  * Not a dashed drop zone -- on a phone that is a desktop idiom with nothing to drop.
  */
 import { useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { hasGps, readExif } from '../lib/exif'
 import { createDraft, listDrafts, type Draft } from '../lib/draftStore'
 import { prepareImage } from '../lib/images'
@@ -22,15 +22,36 @@ type Status = 'idle' | 'reading' | 'error'
 
 export function CaptureSheet() {
   const navigate = useNavigate()
+  const [params] = useSearchParams()
+  const missionId = params.get('mission')
+  const collabId = params.get('collab')
   const [status, setStatus] = useState<Status>('idle')
   const [error, setError] = useState<string | null>(null)
   const [drafts, setDrafts] = useState<Draft[]>([])
+  const [contextLabel, setContextLabel] = useState<string | null>(null)
 
   useEffect(() => {
     listDrafts()
       .then(setDrafts)
       .catch(() => setDrafts([]))
   }, [])
+
+  // UX-03: keep the artist aware of what they're drawing toward, from the first screen of the flow.
+  useEffect(() => {
+    if (missionId !== null) {
+      import('../missions/missions').then(({ fetchMission }) =>
+        fetchMission(missionId).then((m) =>
+          setContextLabel(m !== null ? `Mission: ${m.title}` : null),
+        ),
+      )
+    } else if (collabId !== null) {
+      import('../collab/collaborativeFrescos').then(({ fetchCollaborativeFresco }) =>
+        fetchCollaborativeFresco(collabId).then((cf) =>
+          setContextLabel(cf !== null ? `Adding a layer to: ${cf.title}` : null),
+        ),
+      )
+    }
+  }, [missionId, collabId])
 
   const handleFile = async (file: File | undefined) => {
     if (file === undefined) return
@@ -65,6 +86,8 @@ export function CaptureSheet() {
             : null,
         locationSource: resolved.source,
         placeName: null,
+        missionId: missionId ?? undefined,
+        collaborativeFrescoId: collabId ?? undefined,
       })
 
       navigate(`/new/pin?draft=${draft.id}`)
@@ -79,6 +102,12 @@ export function CaptureSheet() {
       <FlowBar title="New underdrawing" />
       <div className="scroll lined">
         <div className="page capture-sheet">
+          {contextLabel !== null && (
+            <p className="notice" role="status">
+              <Icon name={missionId !== null ? 'target' : 'layers'} />
+              <span>{contextLabel}</span>
+            </p>
+          )}
           <div>
             <h2 className="capture-heading">Start with a real place</h2>
             <p className="capture-subtitle">A photo of where you are, and where it was taken.</p>

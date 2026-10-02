@@ -39,6 +39,27 @@ const FriendAddPage = lazy(() =>
 const AchievementsPage = lazy(() =>
   import('./achievements/AchievementsPage').then((m) => ({ default: m.AchievementsPage })),
 )
+const MissionsPage = lazy(() =>
+  import('./missions/MissionsPage').then((m) => ({ default: m.MissionsPage })),
+)
+const MissionDetailPage = lazy(() =>
+  import('./missions/MissionDetailPage').then((m) => ({ default: m.MissionDetailPage })),
+)
+const CollaborativeFrescosPage = lazy(() =>
+  import('./collab/CollaborativeFrescosPage').then((m) => ({
+    default: m.CollaborativeFrescosPage,
+  })),
+)
+const NewCollaborativeFrescoPage = lazy(() =>
+  import('./collab/NewCollaborativeFrescoPage').then((m) => ({
+    default: m.NewCollaborativeFrescoPage,
+  })),
+)
+const CollaborativeFrescoDetailPage = lazy(() =>
+  import('./collab/CollaborativeFrescoDetailPage').then((m) => ({
+    default: m.CollaborativeFrescoDetailPage,
+  })),
+)
 
 /**
  * Capture, Pin check, Canvas and Finish are full-screen and carry their own exit, so the nav is
@@ -140,6 +161,11 @@ function App() {
                 {/* Linked from Profile rather than the navbar (Update 1.2 §3: "Do not overload
                     the navbar"), the same place Settings, About and Sign out already live. */}
                 <Route path="/achievements" element={<AchievementsPage />} />
+                <Route path="/missions" element={<MissionsPage />} />
+                <Route path="/missions/:id" element={<MissionDetailPage />} />
+                <Route path="/collab" element={<CollaborativeFrescosPage />} />
+                <Route path="/collab/new" element={<NewCollaborativeFrescoPage />} />
+                <Route path="/collab/:id" element={<CollaborativeFrescoDetailPage />} />
                 <Route path="/f/:id" element={<FrescoViewer />} />
                 {/* Someone else's Sinopia: the same Earth, showing their frescoes instead of yours. */}
                 <Route path="/s/:userId" element={<GlobePage />} />

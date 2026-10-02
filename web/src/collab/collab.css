@@ -1,0 +1,47 @@
+.collab-list {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.collab-form {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.collab-detail {
+  display: grid;
+  gap: var(--space-3);
+  align-content: start;
+}
+
+.collab-mosaic {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: var(--space-3);
+}
+.collab-layer img {
+  width: 100%;
+  aspect-ratio: 1;
+  object-fit: cover;
+  display: block;
+  border: var(--edge);
+  border-radius: var(--radius-photo);
+}
+
+.collab-invite {
+  display: grid;
+  gap: var(--space-2);
+}
+.collab-invited-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  gap: var(--space-2);
+}
+.collab-invited-list li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+}

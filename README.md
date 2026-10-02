@@ -48,6 +48,8 @@ A finished piece is a **fresco**. Keep it private in your **Sketchbook**, or pub
 | Photo eyedropper: pick a colour straight from the photo | Done |
 | "Looks like..." doodle-guess chips in the reference panel, from an on-device model | Done |
 | Achievements: private milestones about your own work, not a ranking | Done |
+| Sketch Missions: location-aware creative prompts, with a public submission gallery | Done |
+| Collaborative Fresco: one shared place, many independently credited artist layers | Done |
 | Seeded demo frescoes on the map | Script ready, artwork pending |
 
 ## How it works

@@ -128,6 +128,27 @@ function FinishFormInner({ draft, userId }: { draft: Draft; userId: string }) {
       }
     })
 
+    // A mission or collaborative-fresco context on the draft is linked after the fresco exists --
+    // same resilience pattern as save-then-publish: the artwork is never lost just because the
+    // linkage step fails (the artist still has their fresco; they just see why it didn't count).
+    if (draft.missionId !== undefined) {
+      const { submitMissionFresco } = await import('../missions/missions')
+      const result = await submitMissionFresco(draft.missionId, outcome.frescoId)
+      if (result.ok) {
+        navigate(`/missions/${draft.missionId}`)
+        return
+      }
+      toast.show(`Saved, but not counted for the mission: ${result.error}`, 'warn')
+    } else if (draft.collaborativeFrescoId !== undefined) {
+      const { addContribution } = await import('../collab/collaborativeFrescos')
+      const result = await addContribution(draft.collaborativeFrescoId, outcome.frescoId, null)
+      if (result.ok) {
+        navigate(`/collab/${draft.collaborativeFrescoId}`)
+        return
+      }
+      toast.show(`Saved, but not added as a layer: ${result.error}`, 'warn')
+    }
+
     navigate('/sketchbook')
   }
 
