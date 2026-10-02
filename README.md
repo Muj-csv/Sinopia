@@ -9,12 +9,11 @@ _Sinopia_ (the reddish underdrawing a fresco painter sketched on the wall before
 ![Status](https://img.shields.io/badge/status-in%20development-orange)
 ![Platform](https://img.shields.io/badge/platform-web%20%2F%20PWA-5A67D8)
 ![Cost](https://img.shields.io/badge/cost-%240%20open%20stack-2F3B4C)
-![Hackathon](https://img.shields.io/badge/GIBC%20V2-Track%2003%20Open-blue)
+![Hackathon](https://img.shields.io/badge/FirstCommit-Beginners%20Paradise-blue)
 
 **[Live app: sinopia.vercel.app](https://sinopia.vercel.app)**
 
 </div>
-
 
 ---
 
@@ -227,4 +226,4 @@ Every AI-assisted change was reviewed, tested and integrated by the team before 
 
 ## Acknowledgments
 
-Built for the **Global Innovation Build Challenge V2**. Map data © OpenStreetMap contributors; tiles by OpenFreeMap / OpenMapTiles. Reference images courtesy of their creators via Openverse; street-level imagery from Mapillary and Panoramax contributors.
+Built for **[FirstCommit](https://firstcommit.devpost.com/) — Beginner's Paradise**, a hackathon for young, beginner developers. Map data © OpenStreetMap contributors; tiles by OpenFreeMap / OpenMapTiles. Reference images courtesy of their creators via Openverse; street-level imagery from Mapillary and Panoramax contributors.
