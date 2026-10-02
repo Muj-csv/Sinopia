@@ -1,8 +1,9 @@
 /** Globe preview card (SCREENS.md): thumb, title, artist, place, Open. Open is this screen's
  *  one yellow button -- New in the nav stays a paper button. */
 import { useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
+import { placeHref } from '../place/placeHistory'
 import { frescoImageUrl } from '../sketchbook/frescoImageUrl'
 import { Icon } from '../ui/Icon'
 import type { GlobePoint } from './geoJson'
@@ -49,6 +50,12 @@ export function PreviewCard({ point, onClose }: { point: GlobePoint; onClose: ()
         <button type="button" className="btn-y" onClick={() => navigate(`/f/${point.id}`)}>
           Open
         </button>
+        <Link
+          className="link"
+          to={placeHref({ lat: point.lat, lng: point.lng, name: details?.place_name ?? null })}
+        >
+          Place history
+        </Link>
       </div>
     </div>
   )

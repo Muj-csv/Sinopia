@@ -116,6 +116,7 @@ Every piece of the stack is free and needs no credit card on file — picked del
 | Fresco viewer with a Reality ↔ Drawing slider                                                         | Done                          |
 | Same Wall: other frescoes made within 50 m                                                            | Done                          |
 | Draw it your way: answer a public fresco with your own, credited and linked back to it | Done |
+| Place history: every public fresco around a spot through the years, with side-by-side compare | Done |
 | Report a fresco                                                                                       | Done                          |
 | Street-level view of the real spot beside the fresco                                                  | Done                          |
 | In-browser safety check before publishing                                                             | Done                          |

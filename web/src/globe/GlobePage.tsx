@@ -25,6 +25,7 @@ import type { PlaceResult } from './photonSearch'
 import { PreviewCard } from './PreviewCard'
 import { flyToPlace, warpTo } from './warp'
 import { useSession } from '../lib/useSession'
+import { placeHref } from '../place/placeHistory'
 
 const OPENFREEMAP_STYLE = 'https://tiles.openfreemap.org/styles/positron'
 const SOURCE_ID = 'frescoes'
@@ -293,7 +294,12 @@ export function GlobePage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [visitingId, mapStatus])
 
-  const flyTo = (place: PlaceResult) => flyToPlace(mapRef.current, place.lng, place.lat)
+  // The last place searched for, so its history is one tap away once the map has flown there.
+  const [searched, setSearched] = useState<PlaceResult | null>(null)
+  const flyTo = (place: PlaceResult) => {
+    setSearched(place)
+    flyToPlace(mapRef.current, place.lng, place.lat)
+  }
 
   const mapFailed = mapStatus === 'failed'
 
@@ -307,6 +313,14 @@ export function GlobePage() {
         <>
           <div className="globe-search">
             <PlaceSearch onSelect={flyTo} />
+            {searched !== null && (
+              <Link
+                className="btn-o globe-search-history"
+                to={placeHref({ lat: searched.lat, lng: searched.lng, name: searched.label })}
+              >
+                Place history
+              </Link>
+            )}
           </div>
 
           {/* You are inside one world now. The others are out in the system, not around this. */}

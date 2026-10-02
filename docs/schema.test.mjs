@@ -475,3 +475,83 @@ ok((await q(`select avatar is null as n from public.profiles where id=$1`, [B]))
   const r = (await q(`select source_fresco_id from public.frescoes where id=$1`, [R])).rows[0]
   ok(r !== undefined && r.source_fresco_id === null, 'deleting the source keeps the response and clears the link')
 }
+
+// ===== Place History (0008_place_history.sql) =====
+{
+  // A place in Escolta, Manila, away from every fresco above. All pins exact so distances are known.
+  const LNG = 121.0, LAT = 14.6
+  const T1 = 'aaaaaaaa-0000-0000-0000-000000000001' // A, 2019, at the point
+  const T2 = 'aaaaaaaa-0000-0000-0000-000000000002' // B, 2024-03, ~100 m north
+  const T3 = 'aaaaaaaa-0000-0000-0000-000000000003' // C, no photo date -> saved today, ~50 m east
+  const T4 = 'aaaaaaaa-0000-0000-0000-000000000004' // A, private, at the point
+  const T5 = 'aaaaaaaa-0000-0000-0000-000000000005' // B, public but reported
+  const T6 = 'aaaaaaaa-0000-0000-0000-000000000006' // A, public, ~2 km away
+  const T7 = 'aaaaaaaa-0000-0000-0000-000000000007' // C, 2024-06, a response to T1
+  const put = (id, owner, vis, lng, lat, captured, place, source = null) => as(owner, async () => {
+    await q(
+      `insert into public.frescoes (id, owner_id, title, visibility, pin_precision, place_name, captured_at,
+         photo_path, drawing_path, composite_path, thumb_path, source_fresco_id)
+       values ($1, $2, $3, $4, 'exact', $5, $6, 'p','d','c','t', $7)`,
+      [id, owner, 'T' + id.slice(-1), vis, place, captured, source],
+    )
+    await q(`insert into public.fresco_locations (fresco_id, owner_id, location) values ($1, $2, $3)`,
+      [id, owner, `SRID=4326;POINT(${lng} ${lat})`])
+  })
+  await put(T1, A, 'public', LNG, LAT, '2019-05-01T00:00:00Z', 'Escolta')
+  await put(T2, B, 'public', LNG, LAT + 0.0009, '2024-03-01T00:00:00Z', 'Escolta')
+  await put(T3, C, 'public', LNG + 0.00046, LAT, null, 'Binondo')
+  await put(T4, A, 'private', LNG, LAT, '2025-01-01T00:00:00Z', 'Escolta')
+  await put(T5, B, 'public', LNG, LAT, '2025-01-01T00:00:00Z', 'Escolta')
+  await put(T6, A, 'public', LNG + 0.02, LAT, '2025-01-01T00:00:00Z', 'Elsewhere')
+  await put(T7, C, 'public', LNG, LAT, '2024-06-01T00:00:00Z', null, T1)
+  await as(C, () => q(`insert into public.reports (fresco_id, reporter_id) values ($1, $2)`, [T5, C]))
+
+  const thisYear = new Date().getUTCFullYear()
+  const timeline = (args = '') => q(`select * from public.place_timeline($1, $2, 250${args})`, [LNG, LAT])
+
+  await as(B, async () => {
+    const ids = (await timeline()).rows.map((r) => r.id)
+    ok(JSON.stringify(ids) === JSON.stringify([T3, T7, T2, T1]),
+       'place_timeline: public frescoes in the radius, newest seen first: ' + ids.map((i) => 'T' + i.slice(-1)))
+  })
+  await as(A, async () => {
+    const ids = (await timeline()).rows.map((r) => r.id)
+    ok(!ids.includes(T4), 'place_timeline leaves out even the viewer’s own private fresco')
+  })
+  await as(B, async () => {
+    const rows = (await timeline()).rows
+    ok(rows.find((r) => r.id === T3).seen_year === thisYear, 'no photo date falls back to the saved date')
+    const t7 = rows.find((r) => r.id === T7)
+    ok(t7.source_fresco_id === T1 && t7.source_title === 'T1' && t7.source_artist === 'Ian',
+       'a response carries its public source’s title and artist')
+
+    const y = (await timeline(', 2024')).rows.map((r) => r.id)
+    ok(JSON.stringify(y) === JSON.stringify([T7, T2]), 'year filter keeps only that year')
+
+    const page1 = (await timeline(', null, null, null, 2')).rows
+    const last = page1[page1.length - 1]
+    const page2 = (await q(`select id from public.place_timeline($1, $2, 250, null, $3, $4, 2)`,
+      [LNG, LAT, last.seen_at, last.id])).rows.map((r) => r.id)
+    ok(JSON.stringify(page1.map((r) => r.id)) === JSON.stringify([T3, T7]) &&
+       JSON.stringify(page2) === JSON.stringify([T2, T1]), 'keyset paging continues without gaps or repeats')
+
+    const s = (await q(`select * from public.place_summary($1, $2, 250)`, [LNG, LAT])).rows[0]
+    ok(s.fresco_count === 4 && s.artist_count === 3, `place_summary counts: ${s.fresco_count} frescoes, ${s.artist_count} artists`)
+    ok(JSON.stringify(s.years) === JSON.stringify([thisYear, 2024, 2019]), 'place_summary years, newest first: ' + s.years)
+    ok(s.place_name === 'Escolta', 'place_summary names the place by its most common name')
+    ok(new Date(s.earliest).toISOString().startsWith('2019-05-01'), 'place_summary earliest date')
+
+    // Not (0, 0): the Missions checks above leave a public fresco on Null Island.
+    const empty = (await q(`select * from public.place_summary(-140, -60, 250)`)).rows[0]
+    ok(empty.fresco_count === 0 && empty.years.length === 0, 'an empty place has a zero summary, not an error')
+  })
+
+  // Signed-out visitors can read a place's history too, and still only the public part.
+  await pg.exec(`set role anon; select set_config('request.jwt.claim.sub', '', false);`)
+  try {
+    const ids = (await timeline()).rows.map((r) => r.id)
+    ok(ids.length === 4 && !ids.includes(T4) && !ids.includes(T5), 'anon sees the same public history')
+  } finally {
+    await pg.exec('reset role;')
+  }
+}

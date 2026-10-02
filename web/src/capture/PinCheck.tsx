@@ -22,6 +22,7 @@ const SOURCE_TEXT: Record<LocationSource, string> = {
   device: 'From your device',
   map: 'Placed by you',
   source: "From the fresco you're responding to",
+  place: 'From the place you chose',
 }
 
 export function PinCheck() {

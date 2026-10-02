@@ -27,6 +27,7 @@ describe('resolveLocationSource', () => {
     const result = resolveLocationSource({ lat: 14.6, lng: 121, capturedAt: null }, null, {
       lat: 15.145,
       lng: 120.59,
+      source: 'source',
     })
     expect(result).toEqual({ source: 'exif', lat: 14.6, lng: 121 })
   })
@@ -35,9 +36,18 @@ describe('resolveLocationSource', () => {
     const result = resolveLocationSource(
       { lat: null, lng: null, capturedAt: null },
       { lat: 2, lng: 3 },
-      { lat: 15.145, lng: 120.59 },
+      { lat: 15.145, lng: 120.59, source: 'source' },
     )
     expect(result).toEqual({ source: 'source', lat: 15.145, lng: 120.59 })
+  })
+
+  it('"Add yours" from a place history starts at that place, labelled as the place', () => {
+    const result = resolveLocationSource({ lat: null, lng: null, capturedAt: null }, null, {
+      lat: 14.6,
+      lng: 121,
+      source: 'place',
+    })
+    expect(result).toEqual({ source: 'place', lat: 14.6, lng: 121 })
   })
 
   it('treats a partial EXIF GPS (only one of lat/lng) as absent', () => {

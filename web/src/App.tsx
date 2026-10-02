@@ -36,6 +36,7 @@ const FriendsPage = lazy(() =>
 const FriendAddPage = lazy(() =>
   import('./friends/FriendAddPage').then((m) => ({ default: m.FriendAddPage })),
 )
+const PlacePage = lazy(() => import('./place/PlacePage').then((m) => ({ default: m.PlacePage })))
 const AchievementsPage = lazy(() =>
   import('./achievements/AchievementsPage').then((m) => ({ default: m.AchievementsPage })),
 )
@@ -167,6 +168,8 @@ function App() {
                 <Route path="/collab/new" element={<NewCollaborativeFrescoPage />} />
                 <Route path="/collab/:id" element={<CollaborativeFrescoDetailPage />} />
                 <Route path="/f/:id" element={<FrescoViewer />} />
+                {/* Place History: every public fresco around a public point, through time. */}
+                <Route path="/place" element={<PlacePage />} />
                 {/* Someone else's Sinopia: the same Earth, showing their frescoes instead of yours. */}
                 <Route path="/s/:userId" element={<GlobePage />} />
                 <Route
