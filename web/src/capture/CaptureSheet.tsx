@@ -7,17 +7,22 @@
  * Layout per SCREENS.md "Capture · /new": a lined page with stacked option cards, status below.
  * Not a dashed drop zone -- on a phone that is a desktop idiom with nothing to drop.
  */
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { ResponseSourceCard } from '../frescoes/ResponseSourceCard'
 import { loadDrawSource, type DrawSource } from '../frescoes/responses'
 import { hasGps, readExif } from '../lib/exif'
 import { createDraft, listDrafts, type Draft } from '../lib/draftStore'
 import { prepareImage } from '../lib/images'
+import { parsePlace } from '../place/placeHistory'
 import { FlowBar } from '../ui/FlowBar'
 import { Icon } from '../ui/Icon'
 import './capture.css'
-import { getDevicePosition, resolveLocationSource } from './LocationFallback'
+import {
+  getDevicePosition,
+  resolveLocationSource,
+  type LocationFallbackPoint,
+} from './LocationFallback'
 import { validateCaptureFile } from './validateCapture'
 
 type Status = 'idle' | 'reading' | 'error'
@@ -33,6 +38,8 @@ export function CaptureSheet() {
   const [contextLabel, setContextLabel] = useState<string | null>(null)
   // Draw This Wall: '/new?from=<fresco id>' starts a response to that fresco.
   const fromId = params.get('from')
+  // Place History's "Add yours": '/new?lat=&lng=&name=' starts at that place. A response wins.
+  const atPlace = useMemo(() => (fromId === null ? parsePlace(params) : null), [fromId, params])
   const [source, setSource] = useState<DrawSource | null>(null)
   const [sourceStatus, setSourceStatus] = useState<'none' | 'loading' | 'ready' | 'unavailable'>(
     fromId === null ? 'none' : 'loading',
@@ -91,10 +98,15 @@ export function CaptureSheet() {
       // faster, but it raised the browser's location prompt on every capture, including the
       // photos that already carried a position -- a permission request nobody needed to answer.
       // Pin check can still place it by hand, and offers "Use my location" on demand.
-      // A response without photo GPS starts at the source's public pin instead, so no prompt then.
-      const sourcePoint = source?.point ?? null
-      const devicePosition = hasGps(exif) || sourcePoint !== null ? null : await getDevicePosition()
-      const resolved = resolveLocationSource(exif, devicePosition, sourcePoint)
+      // A response or a place without photo GPS starts at that public point instead, so no prompt.
+      const chosen: LocationFallbackPoint | null =
+        source?.point != null
+          ? { ...source.point, source: 'source' }
+          : atPlace !== null
+            ? { lat: atPlace.lat, lng: atPlace.lng, source: 'place' }
+            : null
+      const devicePosition = hasGps(exif) || chosen !== null ? null : await getDevicePosition()
+      const resolved = resolveLocationSource(exif, devicePosition, chosen)
 
       const draft = await createDraft({
         photo: prepared.photo,
@@ -109,7 +121,12 @@ export function CaptureSheet() {
         locationSource: resolved.source,
         missionId: missionId ?? undefined,
         collaborativeFrescoId: collabId ?? undefined,
-        placeName: resolved.source === 'source' ? (source?.placeName ?? null) : null,
+        placeName:
+          resolved.source === 'source'
+            ? (source?.placeName ?? null)
+            : resolved.source === 'place'
+              ? (atPlace?.name ?? null)
+              : null,
         source: source ?? undefined,
       })
 
@@ -141,6 +158,12 @@ export function CaptureSheet() {
               source={source}
               hint="Take your own photo of this place. Their fresco stays exactly as it is."
             />
+          )}
+          {atPlace !== null && (
+            <p className="t-small">
+              Adding to the history of {atPlace.name ?? 'this place'}. If your photo has no
+              location, the pin starts there.
+            </p>
           )}
           {sourceStatus === 'unavailable' && (
             <p className="notice" role="status">

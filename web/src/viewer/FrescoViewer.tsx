@@ -20,6 +20,7 @@ import {
   responseCredit,
   type ResponseSource,
 } from '../frescoes/responses'
+import { placeHref } from '../place/placeHistory'
 import { FrescoStrip, SameWallStrip } from './SameWallStrip'
 import { SpotMap } from './SpotMap'
 import { StreetLevelPanel } from './StreetLevelPanel'
@@ -248,6 +249,16 @@ export function FrescoViewer() {
             <div className="viewer-same-wall">
               <h2>Same Wall</h2>
               <SameWallStrip frescoId={fresco.id} />
+              {spot !== null && (
+                <p>
+                  <Link
+                    className="link"
+                    to={placeHref({ lat: spot.lat, lng: spot.lng, name: fresco.place_name })}
+                  >
+                    Place history
+                  </Link>
+                </p>
+              )}
               {/* Kept apart from Same Wall: a response is linked by intent, not distance, and a
                   neighbourhood-snapped one can land well outside the 50 m radius (DTW-FR-07). */}
               <h2>Responses</h2>
