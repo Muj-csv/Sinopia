@@ -259,13 +259,11 @@ export async function inviteCollaborator(
   invitedBy: string,
   inviteeId: string,
 ): Promise<{ ok: boolean; error: string | null }> {
-  const { error } = await supabase
-    .from('collaborative_fresco_invitations')
-    .insert({
-      collaborative_fresco_id: collaborativeFrescoId,
-      invitee_id: inviteeId,
-      invited_by: invitedBy,
-    })
+  const { error } = await supabase.from('collaborative_fresco_invitations').insert({
+    collaborative_fresco_id: collaborativeFrescoId,
+    invitee_id: inviteeId,
+    invited_by: invitedBy,
+  })
   // 23505: unique_violation -- already invited. Not worth surfacing as a hard error.
   if (error !== null && error.code !== '23505') return { ok: false, error: error.message }
   return { ok: true, error: null }
