@@ -125,6 +125,8 @@ Every piece of the stack is free and needs no credit card on file — picked del
 | Photo eyedropper: pick a colour straight from the photo                                               | Done                          |
 | "Looks like..." doodle-guess chips in the reference panel, from an on-device model                    | Done                          |
 | Achievements: private milestones about your own work, not a ranking                                   | Done                          |
+| Sketch Missions: location-aware creative prompts, with a public submission gallery                    | Done                          |
+| Collaborative Fresco: one shared place, many independently credited artist layers                     | Done                          |
 | Seeded demo frescoes on the map                                                                       | Script ready, artwork pending |
 
 ## Demo / live deployment

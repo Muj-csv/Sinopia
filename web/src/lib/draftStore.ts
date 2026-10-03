@@ -36,6 +36,12 @@ export interface Draft {
   /** References pinned while drawing this underdrawing, so they survive a reload the same way
    *  the stroke history does. Optional: drafts written before pinning existed won't have it. */
   pinnedReferences?: Reference[]
+  /** Set when this underdrawing was started from a Sketch Mission's Start button (/new?mission=).
+   *  FinishForm calls submit_mission_fresco() with it once the fresco is saved. */
+  missionId?: string
+  /** Set when started from a Collaborative Fresco's Add your layer button (/new?collab=).
+   *  FinishForm calls add_collaborative_contribution() with it once the fresco is saved. */
+  collaborativeFrescoId?: string
 }
 
 const store = createStore('sinopia-drafts', 'drafts')
@@ -53,6 +59,8 @@ export async function createDraft(input: {
   location: { lat: number; lng: number } | null
   locationSource?: LocationSource
   placeName: string | null
+  missionId?: string
+  collaborativeFrescoId?: string
 }): Promise<Draft> {
   const now = Date.now()
   const draft: Draft = {

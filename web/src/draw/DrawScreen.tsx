@@ -61,6 +61,7 @@ export function DrawScreen() {
   const [expandedPinned, setExpandedPinned] = useState<Reference | null>(null)
   const [save, setSave] = useState<SaveResult>({ savedAt: null, failed: false })
   const [eyedropperArmed, setEyedropperArmed] = useState(false)
+  const [contextLabel, setContextLabel] = useState<string | null>(null)
 
   const pickColorFromPhoto = useCallback((hex: string) => {
     setTool((t) => ({ ...t, color: hex }))
@@ -77,6 +78,20 @@ export function DrawScreen() {
       setHistory(migrateHistory(d.history))
       setPinnedReferences(d.pinnedReferences ?? [])
       setResuming(Date.now() - d.updatedAt < RESUME_THRESHOLD_MS && hasAnyStroke(d.history))
+
+      // UX-03: keep showing what this underdrawing is for while drawing, not just at capture.
+      const { missionId, collaborativeFrescoId } = d
+      if (missionId !== undefined) {
+        import('../missions/missions').then(({ fetchMission }) =>
+          fetchMission(missionId).then((m) => setContextLabel(m !== null ? m.title : null)),
+        )
+      } else if (collaborativeFrescoId !== undefined) {
+        import('../collab/collaborativeFrescos').then(({ fetchCollaborativeFresco }) =>
+          fetchCollaborativeFresco(collaborativeFrescoId).then((cf) =>
+            setContextLabel(cf !== null ? cf.title : null),
+          ),
+        )
+      }
     })
   }, [draftId])
 
@@ -246,6 +261,13 @@ export function DrawScreen() {
         {resuming && (
           <p className="draw-resume">
             Continuing your underdrawing from {new Date(draft.updatedAt).toLocaleTimeString()}
+          </p>
+        )}
+        {contextLabel !== null && (
+          <p className="draw-resume">
+            <Icon name={draft.missionId !== undefined ? 'target' : 'layers'} />
+            {draft.missionId !== undefined ? 'Mission: ' : 'Layer for: '}
+            {contextLabel}
           </p>
         )}
 

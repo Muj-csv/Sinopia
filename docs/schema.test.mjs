@@ -242,3 +242,191 @@ ok((await q(`select avatar is null as n from public.profiles where id=$1`, [B]))
   ok((await q(`select favorite_fresco_id is null as n from public.profiles where id=$1`, [A])).rows[0].n,
      'unpublishing the favorited fresco clears the favorite')
 }
+
+// ===== Sketch Missions and Collaborative Fresco (0006_missions_and_collaborative_frescos.sql) =====
+// The migration's demo seed data (Something Ordinary, etc.) is only in the migration file, not in
+// this cumulative schema.sql (seed rows aren't schema), so every fixture here is created inline.
+{
+
+  // A fresh, exact-precision public fresco of A's near a tight-radius test mission.
+  const MF1 = '77777777-7777-7777-7777-777777777771'
+  await as(A, async () => {
+    await q(`insert into public.frescoes (id, owner_id, title, visibility, pin_precision, photo_path, drawing_path, composite_path, thumb_path)
+             values ($1, $2, 'Mission fresco 1', 'public', 'exact', 'a/mp1','a/md1','a/mc1','a/mt1')`, [MF1, A])
+    await q(`insert into public.fresco_locations (fresco_id, owner_id, location) values ($1, $2, 'SRID=4326;POINT(120.58831 15.14507)')`, [MF1, A])
+  })
+  // A second one, outside any radius (POINT 0,0, same "definitely elsewhere" point used above).
+  const MF2 = '77777777-7777-7777-7777-777777777772'
+  await as(A, async () => {
+    await q(`insert into public.frescoes (id, owner_id, title, visibility, pin_precision, photo_path, drawing_path, composite_path, thumb_path)
+             values ($1, $2, 'Mission fresco 2', 'public', 'exact', 'a/mp2','a/md2','a/mc2','a/mt2')`, [MF2, A])
+    await q(`insert into public.fresco_locations (fresco_id, owner_id, location) values ($1, $2, 'SRID=4326;POINT(0 0)')`, [MF2, A])
+  })
+
+  // A tight-radius mission centred on MF1's spot, and limited to one submission per user.
+  const RADIUS_MISSION = '88888888-8888-8888-8888-888888888881'
+  await q(
+    `insert into public.missions (id, title, prompt, mission_type, status, public_location, radius_meters, max_submissions_per_user)
+     values ($1, 'Radius test', 'Draw something nearby.', 'radius', 'active', 'SRID=4326;POINT(120.58831 15.14507)', 50, 1)`,
+    [RADIUS_MISSION],
+  )
+  const DRAFT_MISSION = '88888888-8888-8888-8888-888888888882'
+  await q(
+    `insert into public.missions (id, title, prompt, mission_type, status)
+     values ($1, 'Unlaunched', 'Not yet.', 'global', 'draft')`,
+    [DRAFT_MISSION],
+  )
+
+  await as(B, async () => {
+    const n = (await q(`select count(*)::int n from public.missions where id=$1`, [DRAFT_MISSION])).rows[0].n
+    ok(n === 0, 'a draft mission is invisible to everyone but its creator')
+  })
+
+  await as(B, async () => {
+    let e = null
+    try { await q(`select public.submit_mission_fresco($1,$2)`, [RADIUS_MISSION, MF1]) } catch (x) { e = x }
+    ok(!!e, "B cannot submit A's fresco to a mission")
+  })
+
+  await as(A, async () => {
+    let e = null
+    try { await q(`select public.submit_mission_fresco($1,$2)`, [RADIUS_MISSION, MF2]) } catch (x) { e = x }
+    ok(!!e, 'a fresco outside the mission radius is rejected')
+  })
+
+  await as(A, async () => {
+    let e = null
+    try { await q(`select public.submit_mission_fresco($1,$2)`, [RADIUS_MISSION, MF1]) } catch (x) { e = x }
+    ok(!e, 'a fresco inside the mission radius is accepted' + (e ? ': ' + e.message : ''))
+  })
+  ok((await q(`select count(*)::int n from public.mission_submissions where mission_id=$1 and user_id=$2`, [RADIUS_MISSION, A])).rows[0].n === 1,
+     'the submission was recorded')
+  const stats = (await q(`select * from public.mission_stats($1)`, [RADIUS_MISSION])).rows[0]
+  ok(Number(stats.participant_count) === 1 && Number(stats.fresco_count) === 1, 'mission_stats counts it')
+
+  // max_submissions_per_user=1, and A already has one -- a second fresco at the same spot is rejected.
+  const MF3 = '77777777-7777-7777-7777-777777777773'
+  await as(A, async () => {
+    await q(`insert into public.frescoes (id, owner_id, title, visibility, pin_precision, photo_path, drawing_path, composite_path, thumb_path)
+             values ($1, $2, 'Mission fresco 3', 'public', 'exact', 'a/mp3','a/md3','a/mc3','a/mt3')`, [MF3, A])
+    await q(`insert into public.fresco_locations (fresco_id, owner_id, location) values ($1, $2, 'SRID=4326;POINT(120.58831 15.14507)')`, [MF3, A])
+    let e = null
+    try { await q(`select public.submit_mission_fresco($1,$2)`, [RADIUS_MISSION, MF3]) } catch (x) { e = x }
+    ok(!!e, 'the per-user submission limit is enforced')
+  })
+
+  await as(B, async () => {
+    const n = (await q(`select count(*)::int n from public.mission_submissions where mission_id=$1`, [RADIUS_MISSION])).rows[0].n
+    ok(n === 1, 'B sees the public submission in the mission gallery')
+  })
+
+  // A private fresco can still be submitted (mission participation doesn't require publishing),
+  // but it stays out of the public gallery -- same visibility rule the fresco itself already has.
+  const MF4 = '77777777-7777-7777-7777-777777777774'
+  const GLOBAL_MISSION = '88888888-8888-8888-8888-888888888883'
+  await q(
+    `insert into public.missions (id, title, prompt, mission_type, status) values ($1, 'Something Ordinary', 'Find something people walk past.', 'global', 'active')`,
+    [GLOBAL_MISSION],
+  )
+  await as(A, async () => {
+    await q(`insert into public.frescoes (id, owner_id, title, visibility, photo_path, drawing_path, composite_path, thumb_path)
+             values ($1, $2, 'Private mission fresco', 'private', 'a/mp4','a/md4','a/mc4','a/mt4')`, [MF4, A])
+    const e = await (async () => { try { await q(`select public.submit_mission_fresco($1,$2)`, [GLOBAL_MISSION, MF4]) ; return null } catch (x) { return x } })()
+    ok(!e, 'a private fresco can be submitted to a global mission' + (e ? ': ' + e.message : ''))
+  })
+  await as(B, async () => {
+    const n = (await q(`select count(*)::int n from public.mission_submissions where fresco_id=$1`, [MF4])).rows[0].n
+    ok(n === 0, 'a stranger cannot see a submission whose fresco is private')
+  })
+  await as(A, async () => {
+    const n = (await q(`select count(*)::int n from public.mission_submissions where fresco_id=$1`, [MF4])).rows[0].n
+    ok(n === 1, 'the submitter can always see their own submission')
+  })
+
+  // ----- Collaborative Fresco -----
+  const CF = '99999999-9999-9999-9999-999999999991'
+  await as(A, () =>
+    q(`insert into public.collaborative_frescos (id, owner_id, title) values ($1, $2, 'Heritage Street')`, [CF, A]),
+  )
+
+  const BF = '77777777-7777-7777-7777-777777777775'
+  await as(B, () =>
+    q(`insert into public.frescoes (id, owner_id, title, photo_path, drawing_path, composite_path, thumb_path)
+       values ($1, $2, 'B''s layer', 'b/cp1','b/cd1','b/cc1','b/ct1')`, [BF, B]),
+  )
+  await as(B, async () => {
+    let e = null
+    try { await q(`select public.add_collaborative_contribution($1,$2,null)`, [CF, BF]) } catch (x) { e = x }
+    ok(!!e, 'an uninvited artist cannot contribute to an invite-only collaborative fresco')
+  })
+
+  await as(A, () =>
+    q(`insert into public.collaborative_fresco_invitations (collaborative_fresco_id, invitee_id, invited_by) values ($1,$2,$3)`, [CF, B, A]),
+  )
+  await as(B, async () => {
+    let e = null
+    try { await q(`select public.add_collaborative_contribution($1,$2,'Street details')`, [CF, BF]) } catch (x) { e = x }
+    ok(!e, 'an invited artist can contribute' + (e ? ': ' + e.message : ''))
+  })
+  ok((await q(`select layer_order from public.collaborative_fresco_contributions where fresco_id=$1`, [BF])).rows[0].layer_order === 0,
+     'the first contribution gets layer_order 0')
+
+  const CF2 = '77777777-7777-7777-7777-777777777776'
+  await as(A, () =>
+    q(`insert into public.frescoes (id, owner_id, title, photo_path, drawing_path, composite_path, thumb_path)
+       values ($1, $2, 'A''s second layer', 'a/cp2','a/cd2','a/cc2','a/ct2')`, [CF2, A]),
+  )
+  await as(A, async () => {
+    const e = await (async () => { try { await q(`select public.add_collaborative_contribution($1,$2,'Architecture')`, [CF, CF2]); return null } catch (x) { return x } })()
+    ok(!e, 'the owner can contribute without being separately invited' + (e ? ': ' + e.message : ''))
+  })
+  ok((await q(`select layer_order from public.collaborative_fresco_contributions where fresco_id=$1`, [CF2])).rows[0].layer_order === 1,
+     'the second contribution gets the next layer_order')
+
+  const CCF = '77777777-7777-7777-7777-777777777777'
+  await as(C, () =>
+    q(`insert into public.frescoes (id, owner_id, title, photo_path, drawing_path, composite_path, thumb_path)
+       values ($1, $2, 'C''s layer', 'c/cp1','c/cd1','c/cc1','c/ct1')`, [CCF, C]),
+  )
+  await as(C, async () => {
+    let e = null
+    try { await q(`select public.add_collaborative_contribution($1,$2,null)`, [CF, CCF]) } catch (x) { e = x }
+    ok(!!e, 'a stranger with no invitation still cannot contribute')
+  })
+
+  await as(B, async () => {
+    const u = await q(`update public.collaborative_fresco_contributions set layer_order=5 where fresco_id=$1 returning id`, [BF])
+    ok(u.rows.length === 0, 'a contributor cannot reorder layers (only the organizer can)')
+  })
+  await as(A, async () => {
+    const u = await q(`update public.collaborative_fresco_contributions set layer_order=5 where fresco_id=$1 returning id`, [BF])
+    ok(u.rows.length === 1, 'the organizer can reorder layers')
+  })
+
+  await as(C, async () => {
+    const d = await q(`delete from public.collaborative_fresco_contributions where fresco_id=$1 returning id`, [BF])
+    ok(d.rows.length === 0, "a stranger cannot remove someone else's layer")
+  })
+  await as(B, async () => {
+    const d = await q(`delete from public.collaborative_fresco_contributions where fresco_id=$1 returning id`, [BF])
+    ok(d.rows.length === 1, 'a contributor can remove their own layer')
+  })
+
+  await as(A, () => q(`update public.collaborative_frescos set status='closed' where id=$1`, [CF]))
+  await as(A, async () => {
+    const e = await (async () => { try { await q(`select public.add_collaborative_contribution($1,$2,null)`, [CF, BF]); return null } catch (x) { return x } })()
+    ok(!!e, 'a closed collaborative fresco rejects new contributions, even from the owner')
+  })
+
+  // Visibility: a private collaborative fresco is invisible to a stranger; a public one, with a
+  // public underlying fresco, is visible to anyone.
+  await as(C, async () => {
+    const n = (await q(`select count(*)::int n from public.collaborative_frescos where id=$1`, [CF])).rows[0].n
+    ok(n === 0, 'a stranger cannot see a private collaborative fresco')
+  })
+  await as(A, () => q(`update public.collaborative_frescos set visibility='public' where id=$1`, [CF]))
+  await as(C, async () => {
+    const n = (await q(`select count(*)::int n from public.collaborative_frescos where id=$1`, [CF])).rows[0].n
+    ok(n === 1, 'a public collaborative fresco is visible to a stranger')
+  })
+}
