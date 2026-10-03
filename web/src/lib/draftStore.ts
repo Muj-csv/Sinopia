@@ -14,6 +14,7 @@
 import { createStore, del, get, keys, set } from 'idb-keyval'
 import type { LocationSource } from '../capture/LocationFallback'
 import { emptyHistory, type History } from '../draw/strokeHistory'
+import type { DrawSource } from '../frescoes/responses'
 import type { Reference } from '../references/referencesClient'
 
 export interface Draft {
@@ -42,6 +43,9 @@ export interface Draft {
   /** Set when started from a Collaborative Fresco's Add your layer button (/new?collab=).
    *  FinishForm calls add_collaborative_contribution() with it once the fresco is saved. */
   collaborativeFrescoId?: string
+  /** Draw This Wall: the public fresco this underdrawing responds to. Optional: absent for an
+   *  ordinary underdrawing and for drafts written before responses existed. */
+  source?: DrawSource
 }
 
 const store = createStore('sinopia-drafts', 'drafts')
@@ -61,6 +65,7 @@ export async function createDraft(input: {
   placeName: string | null
   missionId?: string
   collaborativeFrescoId?: string
+  source?: DrawSource
 }): Promise<Draft> {
   const now = Date.now()
   const draft: Draft = {

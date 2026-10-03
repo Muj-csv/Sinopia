@@ -430,3 +430,48 @@ ok((await q(`select avatar is null as n from public.profiles where id=$1`, [B]))
     ok(n === 1, 'a public collaborative fresco is visible to a stranger')
   })
 }
+
+// ===== Draw This Wall (0007_draw_this_wall.sql) =====
+{
+  const S = 'dddddddd-0000-0000-0000-000000000001' // A's public fresco: the source
+  const P = 'dddddddd-0000-0000-0000-000000000002' // A's private fresco
+  const R = 'dddddddd-0000-0000-0000-000000000003' // B's response to S
+  const ins = (id, owner, visibility, source) =>
+    q(
+      `insert into public.frescoes (id, owner_id, title, visibility, pin_precision, photo_path, drawing_path, composite_path, thumb_path, source_fresco_id)
+       values ($1, $2, 'w', $3, 'neighborhood', 'p','d','c','t', $4)`,
+      [id, owner, visibility, source],
+    )
+  const fails = async (fn) => { try { await fn(); return false } catch { return true } }
+
+  await as(A, async () => { await ins(S, A, 'public', null); await ins(P, A, 'private', null) })
+
+  await as(B, async () => {
+    ok(!(await fails(() => ins(R, B, 'public', S))), 'B can respond to A public fresco')
+    ok(await fails(() => ins('dddddddd-0000-0000-0000-000000000011', B, 'private', P)),
+       'B cannot respond to A private fresco')
+    const X = 'dddddddd-0000-0000-0000-000000000012'
+    ok(await fails(() => ins(X, B, 'private', X)), 'a fresco cannot respond to itself')
+    ok(await fails(() => q(`update public.frescoes set source_fresco_id = null where id=$1`, [R])),
+       'the response link cannot be changed after saving')
+  })
+  ok(await fails(() => q(`update public.frescoes set source_fresco_id = id where id=$1`, [R])),
+     'self-reference is rejected by the constraint, not only the policy')
+
+  await as(A, async () => {
+    ok(!(await fails(() => ins('dddddddd-0000-0000-0000-000000000013', A, 'private', P))),
+       'A can respond to their own private fresco')
+  })
+
+  await as(C, async () => {
+    const rows = (await q(`select id from public.frescoes where source_fresco_id=$1`, [S])).rows
+    ok(rows.length === 1 && rows[0].id === R, 'anyone can list the public responses to a fresco')
+    await q(`insert into public.reports (fresco_id, reporter_id) values ($1, $2)`, [S, C])
+    ok(await fails(() => ins('dddddddd-0000-0000-0000-000000000014', C, 'private', S)),
+       'nobody else can respond to a fresco hidden by a report')
+  })
+
+  await as(A, () => q(`delete from public.frescoes where id=$1`, [S]))
+  const r = (await q(`select source_fresco_id from public.frescoes where id=$1`, [R])).rows[0]
+  ok(r !== undefined && r.source_fresco_id === null, 'deleting the source keeps the response and clears the link')
+}

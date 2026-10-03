@@ -23,6 +23,23 @@ describe('resolveLocationSource', () => {
     expect(result).toEqual({ source: 'map', lat: null, lng: null })
   })
 
+  it("a response's own photo GPS beats the source fresco's pin", () => {
+    const result = resolveLocationSource({ lat: 14.6, lng: 121, capturedAt: null }, null, {
+      lat: 15.145,
+      lng: 120.59,
+    })
+    expect(result).toEqual({ source: 'exif', lat: 14.6, lng: 121 })
+  })
+
+  it("without photo GPS, a response starts at the source fresco's public pin", () => {
+    const result = resolveLocationSource(
+      { lat: null, lng: null, capturedAt: null },
+      { lat: 2, lng: 3 },
+      { lat: 15.145, lng: 120.59 },
+    )
+    expect(result).toEqual({ source: 'source', lat: 15.145, lng: 120.59 })
+  })
+
   it('treats a partial EXIF GPS (only one of lat/lng) as absent', () => {
     const result = resolveLocationSource(
       { lat: 14.6, lng: null, capturedAt: null },

@@ -95,6 +95,29 @@ describe('saveFresco', () => {
     ])
   })
 
+  it('records the source fresco of a Draw This Wall response', async () => {
+    const { client, insert } = makeClient()
+    await saveFresco({ ...baseInput, sourceFrescoId: 'src-1' }, client)
+
+    const frescoRow = insert.mock.calls.find((c) => !('fresco_id' in c[0]))![0]
+    expect(frescoRow.source_fresco_id).toBe('src-1')
+  })
+
+  // An ordinary save must keep working against a database that hasn't run 0006 yet.
+  it('omits source_fresco_id entirely when the fresco is not a response', async () => {
+    const { client, insert } = makeClient()
+    await saveFresco(baseInput, client)
+
+    const frescoRow = insert.mock.calls.find((c) => !('fresco_id' in c[0]))![0]
+    expect(frescoRow).not.toHaveProperty('source_fresco_id')
+  })
+
+  it('surfaces the database error code so a refused link can be told apart', async () => {
+    const { client } = makeClient({ insertError: { code: '42501', message: 'rls' } })
+    const result = await saveFresco({ ...baseInput, sourceFrescoId: 'src-1' }, client)
+    expect(result).toMatchObject({ ok: false, code: '42501', error: 'rls' })
+  })
+
   it('inserts fresco_locations when a location is present', async () => {
     const { client, insert } = makeClient()
     await saveFresco(baseInput, client)

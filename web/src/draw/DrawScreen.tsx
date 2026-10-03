@@ -58,7 +58,8 @@ export function DrawScreen() {
   const [resuming, setResuming] = useState(false)
   const [referenceOpen, setReferenceOpen] = useState(false)
   const [pinnedReferences, setPinnedReferences] = useState<Reference[]>([])
-  const [expandedPinned, setExpandedPinned] = useState<Reference | null>(null)
+  // A pinned reference or the Draw This Wall source, opened full-size in the lightbox.
+  const [expandedPinned, setExpandedPinned] = useState<{ url: string; title: string } | null>(null)
   const [save, setSave] = useState<SaveResult>({ savedAt: null, failed: false })
   const [eyedropperArmed, setEyedropperArmed] = useState(false)
   const [contextLabel, setContextLabel] = useState<string | null>(null)
@@ -298,6 +299,34 @@ export function DrawScreen() {
             references={pinnedReferences}
             onUnpin={unpin}
             onExpand={setExpandedPinned}
+            leading={
+              draft.source === undefined ? undefined : (
+                // Context only, never on the canvas (DTW-FR-04): no unpin, and tapping it opens
+                // their fresco full-size the same way a pinned reference does.
+                <div className="pinned-reference response-pin">
+                  {draft.source.thumbUrl !== null && (
+                    <button
+                      type="button"
+                      className="pinned-reference-thumb"
+                      disabled={draft.source.imageUrl === null}
+                      onClick={() =>
+                        draft.source?.imageUrl &&
+                        setExpandedPinned({
+                          url: draft.source.imageUrl,
+                          title: draft.source.title,
+                        })
+                      }
+                    >
+                      <img
+                        src={draft.source.thumbUrl}
+                        alt={`${draft.source.artist}'s “${draft.source.title}”, enlarge`}
+                      />
+                    </button>
+                  )}
+                  <span className="t-small">Responding to {draft.source.artist}</span>
+                </div>
+              )
+            }
           />
         </div>
 

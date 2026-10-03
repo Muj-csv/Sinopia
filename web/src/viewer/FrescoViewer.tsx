@@ -14,7 +14,13 @@ import { FlowBar } from '../ui/FlowBar'
 import { Icon } from '../ui/Icon'
 import { ReportDialog } from './ReportDialog'
 import { RevealSlider } from './RevealSlider'
-import { SameWallStrip } from './SameWallStrip'
+import {
+  loadResponseSource,
+  loadResponses,
+  responseCredit,
+  type ResponseSource,
+} from '../frescoes/responses'
+import { FrescoStrip, SameWallStrip } from './SameWallStrip'
 import { SpotMap } from './SpotMap'
 import { StreetLevelPanel } from './StreetLevelPanel'
 import { formatWeather, fetchWeatherAt, type WeatherResult } from './weather'
@@ -34,6 +40,13 @@ export function FrescoViewer() {
   const [reporting, setReporting] = useState(false)
   const [spot, setSpot] = useState<{ lng: number; lat: number } | null>(null)
   const [weather, setWeather] = useState<WeatherResult | null>(null)
+  // Draw This Wall: what this fresco responds to. 'gone' = the link exists but the viewer can no
+  // longer see the source (unpublished or hidden), so the credit degrades instead of linking.
+  // Keyed by fresco: /f/:id keeps this component mounted when a link opens another fresco.
+  const [responseSource, setResponseSource] = useState<{
+    frescoId: string
+    source: ResponseSource | 'gone'
+  } | null>(null)
 
   useEffect(() => {
     if (id === undefined) return
@@ -72,6 +85,19 @@ export function FrescoViewer() {
       if (cancelled) return
       const point = points.find((p) => p.id === fresco.id)
       if (point !== undefined) setSpot({ lng: point.lng, lat: point.lat })
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [fresco])
+
+  useEffect(() => {
+    if (fresco === null) return
+    const sourceId = fresco.source_fresco_id
+    if (sourceId === undefined || sourceId === null) return
+    let cancelled = false
+    loadResponseSource(sourceId).then((source) => {
+      if (!cancelled) setResponseSource({ frescoId: fresco.id, source: source ?? 'gone' })
     })
     return () => {
       cancelled = true
@@ -119,6 +145,9 @@ export function FrescoViewer() {
   const canReport =
     session !== null && session.user.id !== fresco.owner_id && fresco.visibility === 'public'
   const date = fresco.captured_at ?? fresco.created_at
+  // Only a public, unreported fresco can be answered -- the rule 0006's insert policy enforces.
+  const canRespond = fresco.visibility === 'public' && (fresco.moderation ?? 'ok') === 'ok'
+  const credit = responseSource?.frescoId === fresco.id ? responseSource.source : null
 
   return (
     <>
@@ -150,6 +179,17 @@ export function FrescoViewer() {
               {date !== null && ` · ${new Date(date).toLocaleDateString()}`}
               {weather !== null && ` · ${formatWeather(weather)}`}
             </p>
+            {credit === 'gone' ? (
+              <p className="viewer-meta">A response to a fresco that isn&apos;t shared any more.</p>
+            ) : (
+              credit !== null && (
+                <p className="viewer-meta">
+                  <Link className="link" to={`/f/${credit.id}`}>
+                    {responseCredit(credit)}
+                  </Link>
+                </p>
+              )
+            )}
             {fresco.caption !== null && <p>{fresco.caption}</p>}
             {fresco.memory !== null && <p className="viewer-memory">{fresco.memory}</p>}
             {fresco.tags.length > 0 && (
@@ -158,6 +198,17 @@ export function FrescoViewer() {
                   <li key={t}>{t}</li>
                 ))}
               </ul>
+            )}
+
+            {/* Outlined, not yellow: the viewer's yellow is reserved for the slider thumb
+                (SCREENS.md). Signed-out artists meet the usual sign-in gate on /new. */}
+            {canRespond && (
+              <div>
+                <Link className="btn-o" to={`/new?from=${fresco.id}`}>
+                  <Icon name="brush" />
+                  Draw it your way
+                </Link>
+              </div>
             )}
 
             {/* CLAUDE.md: a traced reference can carry an attribution duty, so whatever was
@@ -197,6 +248,14 @@ export function FrescoViewer() {
             <div className="viewer-same-wall">
               <h2>Same Wall</h2>
               <SameWallStrip frescoId={fresco.id} />
+              {/* Kept apart from Same Wall: a response is linked by intent, not distance, and a
+                  neighbourhood-snapped one can land well outside the 50 m radius (DTW-FR-07). */}
+              <h2>Responses</h2>
+              <FrescoStrip
+                frescoId={fresco.id}
+                load={loadResponses}
+                empty="Nobody has drawn their own version of this yet."
+              />
             </div>
           ) : (
             <div className="viewer-same-wall">

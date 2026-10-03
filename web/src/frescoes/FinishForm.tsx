@@ -31,6 +31,7 @@ import {
   type Visibility,
 } from './fresco'
 import { finishFresco } from './finishFresco'
+import { ResponseSourceCard } from './ResponseSourceCard'
 
 function FinishFormInner({ draft, userId }: { draft: Draft; userId: string }) {
   const navigate = useNavigate()
@@ -95,6 +96,7 @@ function FinishFormInner({ draft, userId }: { draft: Draft; userId: string }) {
         license_version: r.license_version,
         foreign_landing_url: r.foreign_landing_url,
       })),
+      sourceFrescoId: draft.source?.id ?? null,
       visibility,
       precision,
     })
@@ -119,6 +121,9 @@ function FinishFormInner({ draft, userId }: { draft: Draft; userId: string }) {
       outcome.status === 'published' ? 'Published to Sinopia' : 'Saved to your Sketchbook',
       outcome.status === 'published' ? 'globe' : 'book',
     )
+    if (outcome.unlinked) {
+      toast.show("The fresco you responded to isn't public any more, so it isn't linked.", 'info')
+    }
 
     // Stats can only have moved just now, so this is the one moment worth a round trip to find
     // out what's newly unlocked; everywhere else just reads localMilestones.ts's flags directly.
@@ -175,6 +180,13 @@ function FinishFormInner({ draft, userId }: { draft: Draft; userId: string }) {
                   ` · ${new Date(draft.capturedAt).toLocaleDateString()}`}
               </p>
             </div>
+          )}
+
+          {draft.source !== undefined && (
+            <ResponseSourceCard
+              source={draft.source}
+              hint="It's linked from theirs, and yours keeps its own privacy settings."
+            />
           )}
 
           <label className="field">

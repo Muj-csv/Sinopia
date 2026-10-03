@@ -5,6 +5,29 @@
   max-width: 480px;
 }
 
+/* Draw This Wall: the fresco being responded to. A paper card, so its thumbnail never sits on
+   lined paper (DESIGN_BRIEF §11). */
+.response-source {
+  display: flex;
+  gap: var(--space-3);
+  align-items: center;
+  padding: var(--space-2) var(--space-3);
+  border: var(--edge);
+  border-radius: var(--r-card);
+  background: var(--paper);
+}
+.response-source img {
+  width: 56px;
+  height: 56px;
+  flex: none;
+  object-fit: cover;
+  border: var(--edge);
+  border-radius: var(--radius-photo);
+}
+.response-source p {
+  margin: 0;
+}
+
 .finish-preview {
   display: grid;
   gap: var(--space-2);

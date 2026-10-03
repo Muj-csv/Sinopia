@@ -21,6 +21,7 @@ const SOURCE_TEXT: Record<LocationSource, string> = {
   exif: "From your photo's location",
   device: 'From your device',
   map: 'Placed by you',
+  source: "From the fresco you're responding to",
 }
 
 export function PinCheck() {
