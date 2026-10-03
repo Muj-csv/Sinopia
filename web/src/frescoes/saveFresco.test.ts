@@ -126,6 +126,54 @@ describe('saveFresco', () => {
     expect(result.ok).toBe(false)
   })
 
+  // A deploy can land ahead of its database (CLAUDE.md: merging a migration doesn't apply it).
+  // Before this, a project missing 0005_references_used.sql failed every single upload.
+  describe('when references_used is missing (0005_references_used.sql not applied yet)', () => {
+    function makeMissingColumnClient() {
+      const upload = vi.fn().mockResolvedValue({ error: null })
+      const storageFrom = vi.fn().mockReturnValue({ upload })
+
+      const frescoInserts: Record<string, unknown>[] = []
+      const insert = vi.fn().mockImplementation((row: Record<string, unknown>) => {
+        if ('fresco_id' in row) return Promise.resolve({ error: null })
+        frescoInserts.push(row)
+        const isFirstAttempt = frescoInserts.length === 1
+        return Promise.resolve({
+          error: isFirstAttempt
+            ? {
+                code: '42703',
+                message: 'column "references_used" of relation "frescoes" does not exist',
+              }
+            : null,
+        })
+      })
+      const from = vi.fn().mockReturnValue({ insert })
+      const client = { storage: { from: storageFrom }, from } as unknown as SupabaseClient
+      return { client, frescoInserts }
+    }
+
+    it('retries without references_used and still succeeds', async () => {
+      const { client, frescoInserts } = makeMissingColumnClient()
+      const result = await saveFresco(baseInput, client)
+
+      expect(result.ok).toBe(true)
+      expect(frescoInserts).toHaveLength(2)
+      expect(frescoInserts[0]).toHaveProperty('references_used')
+      expect(frescoInserts[1]).not.toHaveProperty('references_used')
+    })
+
+    it('still saves every other field on the retried row', async () => {
+      const { client, frescoInserts } = makeMissingColumnClient()
+      await saveFresco(baseInput, client)
+
+      expect(frescoInserts[1]).toMatchObject({
+        owner_id: 'u1',
+        title: 'A wall',
+        visibility: 'private',
+      })
+    })
+  })
+
   it('fails when the fresco_locations insert fails', async () => {
     const { client } = makeClient({ locationError: new Error('rls denied') })
     const result = await saveFresco(baseInput, client)

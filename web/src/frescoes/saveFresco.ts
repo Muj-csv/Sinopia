@@ -38,6 +38,26 @@ async function uploadOne(
   if (error) throw error
 }
 
+/**
+ * True when Postgres is telling us a column doesn't exist, which means its migration hasn't been
+ * applied to this project yet (same situation ProfilePage.tsx's isMissingAvatarColumn handles for
+ * `avatar` -- merging a migration doesn't run it, CLAUDE.md, so a deploy can land ahead of its
+ * database). Every artist's upload would otherwise fail outright until someone applies
+ * 0005_references_used.sql, regardless of platform -- this is a server-side gap, not a device one.
+ */
+function isMissingColumn(
+  error: { code?: string; message?: string } | null,
+  column: string,
+): boolean {
+  if (error === null) return false
+  // 42703 is Postgres "undefined column"; PGRST204 is PostgREST's schema-cache equivalent.
+  return (
+    error.code === '42703' ||
+    error.code === 'PGRST204' ||
+    (error.message?.includes(column) === true && error.message.includes('column'))
+  )
+}
+
 export async function saveFresco(
   input: SaveFrescoInput,
   client: SupabaseClient = supabase,
@@ -58,7 +78,7 @@ export async function saveFresco(
       uploadOne(client, 'sketchbook', paths.thumb, input.thumb),
     ])
 
-    const { error: insertError } = await client.from('frescoes').insert({
+    const frescoRow = {
       id: frescoId,
       owner_id: input.ownerId,
       title: input.title.trim(),
@@ -76,7 +96,20 @@ export async function saveFresco(
       composite_path: paths.composite,
       thumb_path: paths.thumb,
       references_used: input.referencesUsed,
-    })
+    }
+    let { error: insertError } = await client.from('frescoes').insert(frescoRow)
+
+    // The images are already uploaded at this point -- retrying without the one column a project
+    // might be behind on is what keeps an unapplied migration from blocking every upload outright.
+    if (isMissingColumn(insertError, 'references_used')) {
+      console.warn(
+        'frescoes.references_used is missing (0005_references_used.sql not applied yet) -- ' +
+          'saving without reference attribution.',
+      )
+      const withoutReferencesUsed: Partial<typeof frescoRow> = { ...frescoRow }
+      delete withoutReferencesUsed.references_used
+      ;({ error: insertError } = await client.from('frescoes').insert(withoutReferencesUsed))
+    }
     if (insertError) throw insertError
 
     if (input.location !== null) {
